@@ -143,6 +143,13 @@ window.logout = async () => {
     background-color: #c7d2fe;
     transform: translateY(-1px);
 }
+
+        /* Animation d'entrée pour la modale */
+    .animate-in { animation: modalScale 0.2s ease-out forwards; }
+    @keyframes modalScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
         
     </style>
 </head>
@@ -150,9 +157,13 @@ window.logout = async () => {
 
     <div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
     <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
-        <div class="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100 mb-6">
-            <img src="icon.png" class="w-12 h-12 invert brightness-0" alt="Logo">
+        
+        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-4 opacity-80">Méthode Logistique</p>
+
+        <div class="w-20 h-20 rounded-3xl mx-auto shadow-xl shadow-indigo-100 mb-6 overflow-hidden">
+            <img src="icon.png" class="w-full h-full object-cover block scale-105" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
         </div>
+
         <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
         <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
 
@@ -310,7 +321,7 @@ window.logout = async () => {
 
                 <div class="flex flex-col gap-3 pt-6">
                     <button onclick="addOrUpdateProject()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">ENREGISTRER</button>
-                    <button id="btn-delete" onclick="deleteProject()" class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER LE PROJET</button>
+                    <button id="btn-delete" onclick="showDeleteConfirm()" class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER LE PROJET</button>
                 </div>
             </div>
         </aside>
@@ -524,7 +535,61 @@ window.logout = async () => {
         `;
     }
 };
+
+
+        // Affiche la nouvelle modale au lieu du "confirm" par défaut
+function showDeleteConfirm() {
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    document.getElementById('confirm-modal').classList.add('flex');
+}
+
+// Ferme la modale si on annule
+function closeDeleteConfirm() {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    document.getElementById('confirm-modal').classList.remove('flex');
+}
+
+// Fonction qui exécute la suppression après clic sur le bouton rouge
+async function confirmDeleteProject() {
+    const id = document.getElementById('p-id').value; // C'est l'ID du projet
+    
+    if (id) {
+        try {
+            const { ref, remove } = window.fbMethods;
+            
+            // 1. Supprimer le projet lui-même
+            await remove(ref(window.fbDB, 'projects/' + id));
+            
+            // 2. Supprimer TOUTES les tâches liées à ce projet
+            // On cible le dossier 'tasks' qui porte le même ID que le projet
+            await remove(ref(window.fbDB, 'tasks/' + id));
+            
+            // 3. Interface et retours
+            closeDeleteConfirm(); 
+            closeForm();          
+            showStatus("PROJET & TÂCHES EFFACÉS"); 
+            
+        } catch (error) {
+            console.error("Erreur lors de la suppression :", error);
+            alert("Une erreur est survenue pendant la suppression.");
+        }
+    }
+}
         
     </script>
+
+<div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-white text-center animate-in zoom-in duration-200">
+        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+        <h3 class="text-xl font-black text-slate-800 mb-2 tracking-tight">Supprimer ce projet ?</h3>
+        <p class="text-slate-500 text-sm mb-8 leading-relaxed">Action Irréversible : Vous allez supprimer ce projet et toutes les tâches qui lui sont liées.</p>
+        <div class="flex gap-3">
+            <button onclick="closeDeleteConfirm()" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+            <button onclick="confirmDeleteProject()" class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Supprimer</button>
+        </div>
+    </div>
+</div>
+
+    
 </body>
 </html>
