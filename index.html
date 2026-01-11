@@ -33,7 +33,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-
+        
+        window.auth = auth;
         window.fbDB = db;
         window.fbMethods = { ref, set, onValue, update, remove };
 
@@ -462,42 +463,44 @@ async function addOrUpdateProject() {
 
         // 1. Vérification des dates
         if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
-            alert("Erreur de dates ! La fin ne peut pas être avant le début."); 
+            alert("Erreur de dates !"); 
             return;
         }
 
-        // 2. Récupération de l'utilisateur pour le suivi
-        const user = auth.currentUser;
-        const editorName = user ? (user.displayName || user.email.split('@')[0]) : "Inconnu";
+        // 2. Récupération de l'utilisateur (via window.auth rendu global)
+        const user = window.auth ? window.auth.currentUser : null;
+        const editorName = user ? (user.displayName || user.email.split('@')[0]) : "Anonyme";
+        
         const now = new Date();
-        const dateString = now.toLocaleDateString('fr-FR') + " à " + now.getHours() + "h" + now.getMinutes().toString().padStart(2, '0');
+        const dateString = now.toLocaleDateString('fr-FR') + " à " + 
+                           now.getHours() + "h" + 
+                           now.getMinutes().toString().padStart(2, '0');
 
         // 3. Préparation des données
         const id = document.getElementById('p-id').value || "ID-" + Date.now();
         const pData = {
             id: id,
-            name: document.getElementById('p-name').value,
+            name: document.getElementById('p-name').value || "Projet sans nom",
             owner: document.getElementById('p-owner').value,
             status: document.getElementById('p-status').value,
             start: startVal,
             end: endVal,
             progress: parseInt(document.getElementById('p-progress').value) || 0,
-            // CHAMPS DE SUIVI
             lastEditedBy: editorName,
             lastEditedAt: dateString
         };
 
-        // 4. Envoi à Firebase
-        const { ref, set } = window.fbMethods;
-        await set(ref(window.fbDB, 'projects/' + id), pData);
+        // 4. Envoi à Firebase en utilisant window.fbMethods
+        const fb = window.fbMethods;
+        await fb.set(fb.ref(window.fbDB, 'projects/' + id), pData);
 
         // 5. Fermeture et succès
         closeForm();
         showStatus("ENREGISTRÉ");
 
     } catch (error) {
-        console.error("Erreur lors de l'enregistrement :", error);
-        alert("Erreur de connexion à la base de données.");
+        console.error("Erreur détaillée :", error);
+        alert("Erreur technique : " + error.message);
     }
 }
 
