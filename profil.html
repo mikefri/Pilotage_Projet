@@ -28,7 +28,6 @@
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
-        /* Design de la nouvelle alerte (Toast) */
         #custom-alert {
             transform: translateY(-150%);
             transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -38,14 +37,13 @@
         }
     </style>
 </head>
-<body class="text-slate-900 overflow-hidden">
+<body class="text-slate-900">
 
     <div id="custom-alert" class="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none">
-        <div id="alert-bg" class="bg-slate-900/90 backdrop-blur-md text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/10 pointer-events-auto max-w-sm mx-4">
-            <div id="alert-icon" class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0">
-                </div>
+        <div id="alert-bg" class="bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/10 pointer-events-auto max-w-sm mx-4">
+            <div id="alert-icon" class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"></div>
             <div class="flex flex-col">
-                <p id="alert-title" class="font-black text-xs uppercase tracking-widest opacity-50"></p>
+                <p id="alert-title" class="font-black text-[10px] uppercase tracking-widest opacity-50"></p>
                 <p id="alert-message" class="text-sm font-bold leading-tight"></p>
             </div>
         </div>
@@ -71,12 +69,15 @@
                 <div class="w-24 h-24 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto text-4xl font-black shadow-xl shadow-indigo-100" id="user-initials">
                     ?
                 </div>
+                <div class="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full shadow-sm">
+                    <div class="w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
+                </div>
             </div>
 
             <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-1" id="user-email">Chargement...</h2>
-            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-8">Utilisateur Authentifié</p>
+            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-8">Compte Cloud Actif</p>
 
-            <div class="text-left space-y-6 pt-6 border-t border-slate-50">
+            <div class="text-left space-y-6 pt-6 border-t border-slate-100">
                 <div>
                     <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nouveau mot de passe</label>
                     <input type="password" id="new-password" placeholder="Minimum 6 caractères" 
@@ -84,7 +85,7 @@
                 </div>
 
                 <button onclick="updateUserPassword()" 
-                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:scale-95">
                     METTRE À JOUR
                 </button>
             </div>
@@ -108,23 +109,13 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // NOUVELLE FONCTION D'ALERTE BEAUTIFULL
         window.showAlert = (type, title, message) => {
             const el = document.getElementById('custom-alert');
             const icon = document.getElementById('alert-icon');
-            const bg = document.getElementById('alert-bg');
-            
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-message').innerText = message;
-
-            if(type === 'success') {
-                icon.innerHTML = '✅';
-                icon.className = "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 bg-emerald-500/20 text-xl";
-            } else {
-                icon.innerHTML = '⚠️';
-                icon.className = "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 bg-red-500/20 text-xl";
-            }
-
+            icon.innerHTML = type === 'success' ? '✅' : '⚠️';
+            icon.className = `w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${type === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20'} text-xl`;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 4000);
         };
@@ -141,19 +132,17 @@
         window.updateUserPassword = async () => {
             const user = auth.currentUser;
             const newPass = document.getElementById('new-password').value;
-
             if (newPass.length < 6) {
                 showAlert('error', 'Attention', 'Minimum 6 caractères requis.');
                 return;
             }
-
             try {
                 await updatePassword(user, newPass);
                 showAlert('success', 'Succès', 'Mot de passe mis à jour !');
                 document.getElementById('new-password').value = "";
             } catch (error) {
                 if (error.code === 'auth/requires-recent-login') {
-                    showAlert('error', 'Sécurité', 'Veuillez vous déconnecter et vous reconnecter pour valider.');
+                    showAlert('error', 'Sécurité', 'Veuillez vous reconnecter pour valider.');
                 } else {
                     showAlert('error', 'Erreur', error.message);
                 }
