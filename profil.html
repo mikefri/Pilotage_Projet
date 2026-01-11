@@ -68,15 +68,22 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Vérification de la connexion
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-initials').textContent = user.email.charAt(0).toUpperCase();
-            } else {
-                window.location.href = 'index.html'; // Redirige si pas connecté
+        // Vérification de la connexion avec un petit délai de sécurité
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log("Utilisateur connecté :", user.email);
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('user-initials').textContent = user.email.charAt(0).toUpperCase();
+    } else {
+        // On attend un court instant pour être sûr que Firebase n'est pas juste en train de charger
+        setTimeout(() => {
+            if (!auth.currentUser) {
+                console.log("Aucun utilisateur, redirection...");
+                window.location.href = 'index.html';
             }
-        });
+        }, 1000); 
+    }
+});
 
         // Fonction de mise à jour
         window.updateUserPassword = async () => {
