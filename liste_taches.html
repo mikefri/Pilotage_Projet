@@ -138,7 +138,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-
+        
+        window.auth = auth;
         window.fbDB = db;
         window.fbMethods = { ref, set, onValue, update, remove };
 
@@ -224,6 +225,9 @@
                     <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
                     <label for="edit-task-done" class="font-bold text-slate-700">Marquer comme terminé</label>
                 </div>
+            </div>
+            <div id="task-edit-info" class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 italic hidden">
+                Dernière modif : <span id="task-last-edit-text">-</span>
             </div>
             <div class="flex gap-3 mt-8">
                 <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">Annuler</button>
@@ -411,46 +415,79 @@ onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
         }
 
         window.addEventListener('resize', renderTasks);
-        async function addTask() {
-            const desc = document.getElementById('task-desc').value.trim();
-            const time = document.getElementById('task-time').value || 0;
-            const who = document.getElementById('task-who').value;
-            const date = document.getElementById('task-date').value || currentProject.start;
-            if(!desc) return;
-            const taskId = "TASK-" + Date.now();
-            await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), { 
-                id: taskId, projectId: currentProjectId, desc, time, who, date, done: false 
-            });
-            document.getElementById('task-desc').value = '';
-        }
+async function addTask() {
+    const desc = document.getElementById('task-desc').value.trim();
+    const time = document.getElementById('task-time').value || 0;
+    const who = document.getElementById('task-who').value;
+    const date = document.getElementById('task-date').value || currentProject.start;
+    
+    if(!desc) return;
 
-        function openEditModal(id) {
-            const t = allTasks.find(x => x.id === id);
-            currentEditingId = id;
-            document.getElementById('edit-task-desc').value = t.desc;
-            document.getElementById('edit-task-time').value = t.time;
-            document.getElementById('edit-task-date').value = t.date || '';
-            document.getElementById('edit-task-who').value = t.who;
-            document.getElementById('edit-task-done').checked = t.done || false;
-            // Charger la note
-            document.getElementById('edit-task-note').value = t.note || '';
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
+    // Récupération de l'utilisateur
+    const user = window.auth ? window.auth.currentUser : null;
+    const editorName = user ? (user.email.split('@')[0]) : "Anonyme";
+    const dateString = new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+
+    const taskId = "TASK-" + Date.now();
+    await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), { 
+        id: taskId, 
+        projectId: currentProjectId, 
+        desc, 
+        time, 
+        who, 
+        date, 
+        done: false,
+        // Suivi initial
+        lastEditedBy: editorName,
+        lastEditedAt: dateString
+    });
+    document.getElementById('task-desc').value = '';
+}
+
+function openEditModal(id) {
+    const t = allTasks.find(x => x.id === id);
+    currentEditingId = id;
+    document.getElementById('edit-task-desc').value = t.desc;
+    document.getElementById('edit-task-time').value = t.time;
+    document.getElementById('edit-task-date').value = t.date || '';
+    document.getElementById('edit-task-who').value = t.who;
+    document.getElementById('edit-task-done').checked = t.done || false;
+    document.getElementById('edit-task-note').value = t.note || '';
+
+    // --- AFFICHAGE DU SUIVI ---
+    const infoBox = document.getElementById('task-edit-info');
+    const infoText = document.getElementById('task-last-edit-text');
+    if (t.lastEditedBy && t.lastEditedAt) {
+        infoBox.classList.remove('hidden');
+        infoText.innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
+    } else {
+        infoBox.classList.add('hidden');
+    }
+    // --------------------------
+
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
 
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-        async function saveTaskEdit() {
-            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
-                desc: document.getElementById('edit-task-desc').value, 
-                time: document.getElementById('edit-task-time').value,
-                date: document.getElementById('edit-task-date').value, 
-                who: document.getElementById('edit-task-who').value,
-                done: document.getElementById('edit-task-done').checked,
-                // Sauvegarder la note
-                note: document.getElementById('edit-task-note').value
-            });
-            closeEditModal();
-        }
+async function saveTaskEdit() {
+    const user = window.auth ? window.auth.currentUser : null;
+    const editorName = user ? (user.email.split('@')[0]) : "Anonyme";
+    const dateString = new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+
+    await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
+        desc: document.getElementById('edit-task-desc').value, 
+        time: document.getElementById('edit-task-time').value,
+        date: document.getElementById('edit-task-date').value, 
+        who: document.getElementById('edit-task-who').value,
+        done: document.getElementById('edit-task-done').checked,
+        note: document.getElementById('edit-task-note').value,
+        // Mise à jour du suivi
+        lastEditedBy: editorName,
+        lastEditedAt: dateString
+    });
+    closeEditModal();
+}
 
        function deleteTask() {
     // Au lieu de confirm(), on affiche notre modale personnalisée
