@@ -49,106 +49,119 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CONFIG (Utilise la même que ton fichier principal)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
-            authDomain: "pilotage-gantt.firebaseapp.com",
-            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "pilotage-gantt",
-            storageBucket: "pilotage-gantt.firebasestorage.app",
-            messagingSenderId: "1064606456262",
-            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
-        };
+    // Ta configuration Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+        authDomain: "pilotage-gantt.firebaseapp.com",
+        databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "pilotage-gantt",
+        storageBucket: "pilotage-gantt.firebasestorage.app",
+        messagingSenderId: "1064606456262",
+        appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
 
-        function loadStats() {
-            const projectsRef = ref(db, 'projects');
-            const tasksRef = ref(db, 'taches');
-            const respoRef = ref(db, 'responsables');
+    // VERIFICATION DE L'ACCÈS
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // L'utilisateur est connecté, on charge les données
+            loadStats();
+        } else {
+            // L'utilisateur n'est pas connecté, retour à la page de login
+            window.location.href = "index.html";
+        }
+    });
 
-            onValue(projectsRef, (pSnap) => {
-                onValue(tasksRef, (tSnap) => {
-                    onValue(respoRef, (rSnap) => {
-                        const projects = pSnap.val() || {};
-                        const tasks = Object.values(tSnap.val() || {});
-                        const responsables = rSnap.val() || {};
-                        renderDashboard(projects, tasks, responsables);
-                    });
+    function loadStats() {
+        const projectsRef = ref(db, 'projects');
+        const tasksRef = ref(db, 'taches');
+        const respoRef = ref(db, 'responsables');
+
+        onValue(projectsRef, (pSnap) => {
+            onValue(tasksRef, (tSnap) => {
+                onValue(respoRef, (rSnap) => {
+                    const projects = pSnap.val() || {};
+                    const tasks = Object.values(tSnap.val() || {});
+                    const responsables = rSnap.val() || {};
+                    renderDashboard(projects, tasks, responsables);
                 });
             });
-        }
+        });
+    }
 
-        function renderDashboard(projects, tasks, responsables) {
-            const grid = document.getElementById('projects-stats-grid');
-            grid.innerHTML = '';
+    function renderDashboard(projects, tasks, responsables) {
+        const grid = document.getElementById('projects-stats-grid');
+        grid.innerHTML = '';
+        
+        let totalTasks = tasks.length;
+        let totalDone = tasks.filter(t => t.done).length;
+        let today = new Date().setHours(0,0,0,0);
+        let totalDelays = tasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
+        let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+        // Mise à jour des compteurs du haut
+        document.getElementById('stat-total-projects').innerText = Object.keys(projects).length;
+        document.getElementById('stat-total-delays').innerText = totalDelays;
+        document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
+        document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+
+        // Génération des cartes par projet
+        Object.values(projects).forEach(project => {
+            const projectTasks = tasks.filter(t => t.projectId === project.id);
+            const doneTasks = projectTasks.filter(t => t.done).length;
+            const projectProgress = projectTasks.length > 0 ? Math.round((doneTasks / projectTasks.length) * 100) : 0;
+            const projectDelays = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
             
-            let totalTasks = tasks.length;
-            let totalDone = tasks.filter(t => t.done).length;
-            let totalDelays = tasks.filter(t => !t.done && t.date && new Date(t.date) < new Date().setHours(0,0,0,0)).length;
-            let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+            const respoData = responsables[project.owner];
+            const ownerName = respoData ? respoData.name : "Inconnu";
 
-            // Update Chiffres Clés
-            document.getElementById('stat-total-projects').innerText = Object.keys(projects).length;
-            document.getElementById('stat-total-delays').innerText = totalDelays;
-            document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
-            document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
-
-            // Génération des cartes projets
-            Object.values(projects).forEach(project => {
-                const projectTasks = tasks.filter(t => t.projectId === project.id);
-                const doneTasks = projectTasks.filter(t => t.done).length;
-                const projectProgress = projectTasks.length > 0 ? Math.round((doneTasks / projectTasks.length) * 100) : 0;
-                const projectDelays = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < new Date().setHours(0,0,0,0)).length;
-                
-                const owner = responsables[project.owner]?.name || "Inconnu";
-
-                grid.innerHTML += `
-                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h4 class="text-lg font-black text-slate-800">${project.name}</h4>
-                                <p class="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">Responsable : ${owner}</p>
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-[10px] font-black ${projectDelays > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}">
-                                ${projectDelays} RETARD(S)
-                            </span>
+            grid.innerHTML += `
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h4 class="text-lg font-black text-slate-800">${project.name}</h4>
+                            <p class="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">Responsable : ${ownerName}</p>
                         </div>
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black ${projectDelays > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}">
+                            ${projectDelays} RETARD(S)
+                        </span>
+                    </div>
 
-                        <div class="mb-4">
-                            <div class="flex justify-between text-[10px] font-black text-slate-500 mb-1 uppercase">
-                                <span>Avancement</span>
-                                <span>${projectProgress}%</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div class="bg-indigo-600 h-full progress-bar" style="width: ${projectProgress}%"></div>
-                            </div>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-[10px] font-black text-slate-500 mb-1 uppercase">
+                            <span>Avancement</span>
+                            <span>${projectProgress}%</span>
                         </div>
-
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase">Tâches</p>
-                                <p class="text-sm font-black text-slate-700">${projectTasks.length}</p>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase">Heures</p>
-                                <p class="text-sm font-black text-slate-700">${projectTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0)}</p>
-                            </div>
-                             <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase">Restant</p>
-                                <p class="text-sm font-black text-indigo-600">${projectTasks.length - doneTasks}</p>
-                            </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div class="bg-indigo-600 h-full progress-bar" style="width: ${projectProgress}%"></div>
                         </div>
                     </div>
-                `;
-            });
-        }
 
-        loadStats();
-    </script>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Tâches</p>
+                            <p class="text-sm font-black text-slate-700">${projectTasks.length}</p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Heures</p>
+                            <p class="text-sm font-black text-slate-700">${projectTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0)}</p>
+                        </div>
+                         <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Restant</p>
+                            <p class="text-sm font-black text-indigo-600">${projectTasks.length - doneTasks}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+</script>
 </body>
 </html>
