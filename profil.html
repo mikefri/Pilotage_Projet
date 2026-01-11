@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - Pilotage Projet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="./icon.png">
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <nav class="bg-white shadow-sm p-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="icon.png" alt="Logo" class="w-8 h-8">
+            <h1 class="text-xl font-bold text-slate-800">Mon Profil</h1>
+        </div>
+        <a href="index.html" class="text-indigo-600 hover:text-indigo-800 font-medium">← Retour au projet</a>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold" id="user-initials">
+                    ?
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800" id="user-email">Chargement...</h2>
+                <p class="text-slate-500 text-sm">Gestion de votre compte</p>
+            </div>
+
+            <hr class="my-6 border-slate-100">
+
+            <div class="space-y-4">
+                <h3 class="font-semibold text-slate-700">Modifier le mot de passe</h3>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">Nouveau mot de passe</label>
+                    <input type="password" id="new-password" placeholder="Minimum 6 caractères" 
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <button onclick="updateUserPassword()" 
+                    class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
+                    Enregistrer le nouveau mot de passe
+                </button>
+            </div>
+
+            <p class="mt-8 text-xs text-center text-slate-400">
+                Par sécurité, Firebase peut vous demander de vous reconnecter si votre session est trop ancienne.
+            </p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Ta config Firebase (identique à ton index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFftIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+            authDomain: "pilotage-gantt.firebaseapp.com",
+            projectId: "pilotage-gantt",
+            storageBucket: "pilotage-gantt.firebasestorage.app",
+            messagingSenderId: "1064606456262",
+            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Vérification de la connexion
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-initials').textContent = user.email.charAt(0).toUpperCase();
+            } else {
+                window.location.href = 'index.html'; // Redirige si pas connecté
+            }
+        });
+
+        // Fonction de mise à jour
+        window.updateUserPassword = async () => {
+            const user = auth.currentUser;
+            const newPass = document.getElementById('new-password').value;
+
+            if (newPass.length < 6) {
+                alert("Le mot de passe doit faire au moins 6 caractères.");
+                return;
+            }
+
+            try {
+                await updatePassword(user, newPass);
+                alert("✅ Mot de passe modifié avec succès !");
+                document.getElementById('new-password').value = "";
+            } catch (error) {
+                if (error.code === 'auth/requires-recent-login') {
+                    alert("⚠️ Sécurité : Veuillez vous déconnecter et vous reconnecter avant de changer votre mot de passe.");
+                } else {
+                    alert("❌ Erreur : " + error.message);
+                }
+            }
+        };
+    </script>
+</body>
+</html>
