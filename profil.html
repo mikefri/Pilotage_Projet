@@ -2,52 +2,81 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mon Profil - Pilotage Projet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" href="./icon.png">
-    
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#4f46e5">
+    <style>
+        body { background-color: #F8FAFC !important; font-family: sans-serif; }
+        .profile-card {
+            background: white;
+            border-radius: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        }
+        .input-pill {
+            background-color: #F1F5F9;
+            border: 1px solid #F1F5F9;
+            border-radius: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        .input-pill:focus {
+            background-color: white;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col">
+<body class="text-slate-900">
 
-    <nav class="bg-white shadow-sm p-4 flex justify-between items-center">
+    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <img src="icon.png" alt="Logo" class="w-8 h-8">
-            <h1 class="text-xl font-bold text-slate-800">Mon Profil</h1>
+            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
+            <span class="text-xl font-black text-slate-800 tracking-tight">Mon Profil</span>
         </div>
-        <a href="index.html" class="text-indigo-600 hover:text-indigo-800 font-medium">← Retour au projet</a>
+        <a href="index.html" class="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-black hover:bg-slate-200 transition-all flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            RETOUR
+        </a>
     </nav>
 
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold" id="user-initials">
+    <main class="min-h-[calc(100vh-80px)] flex items-center justify-center p-6">
+        <div class="profile-card p-10 w-full max-w-md text-center">
+            
+            <div class="relative inline-block mb-6">
+                <div class="w-24 h-24 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto text-4xl font-black shadow-xl shadow-indigo-100" id="user-initials">
                     ?
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800" id="user-email">Chargement...</h2>
-                <p class="text-slate-500 text-sm">Gestion de votre compte</p>
+                <div class="absolute -bottom-2 -right-2 bg-emerald-500 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center">
+                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                </div>
             </div>
 
-            <hr class="my-6 border-slate-100">
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-1" id="user-email">Chargement...</h2>
+            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-8">Utilisateur Authentifié</p>
 
-            <div class="space-y-4">
-                <h3 class="font-semibold text-slate-700">Modifier le mot de passe</h3>
+            <div class="text-left space-y-6 pt-6 border-t border-slate-50">
                 <div>
-                    <label class="block text-sm text-slate-600 mb-1">Nouveau mot de passe</label>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nouveau mot de passe</label>
                     <input type="password" id="new-password" placeholder="Minimum 6 caractères" 
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                        class="input-pill w-full p-4 outline-none font-bold text-slate-700">
                 </div>
+
                 <button onclick="updateUserPassword()" 
-                    class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-                    Enregistrer le nouveau mot de passe
+                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                    METTRE À JOUR
                 </button>
             </div>
 
-            <p class="mt-8 text-xs text-center text-slate-400">
-                Par sécurité, Firebase peut vous demander de vous reconnecter si votre session est trop ancienne.
-            </p>
+            <div class="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p class="text-[11px] leading-relaxed text-slate-400 font-medium">
+                    <span class="text-indigo-500 font-bold uppercase tracking-tighter">Sécurité :</span> Firebase peut demander une reconnexion récente pour valider le changement.
+                </p>
+            </div>
         </div>
     </main>
 
@@ -55,38 +84,32 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Ta config Firebase (identique à ton index.html)
         const firebaseConfig = {
-        apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
-        authDomain: "pilotage-gantt.firebaseapp.com",
-        databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "pilotage-gantt",
-        storageBucket: "pilotage-gantt.firebasestorage.app",
-        messagingSenderId: "1064606456262",
-        appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+            authDomain: "pilotage-gantt.firebaseapp.com",
+            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "pilotage-gantt",
+            storageBucket: "pilotage-gantt.firebasestorage.app",
+            messagingSenderId: "1064606456262",
+            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Vérification de la connexion avec un petit délai de sécurité
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("Utilisateur connecté :", user.email);
-        document.getElementById('user-email').textContent = user.email;
-        document.getElementById('user-initials').textContent = user.email.charAt(0).toUpperCase();
-    } else {
-        // On attend un court instant pour être sûr que Firebase n'est pas juste en train de charger
-        setTimeout(() => {
-            if (!auth.currentUser) {
-                console.log("Aucun utilisateur, redirection...");
-                window.location.href = 'index.html';
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-initials').textContent = user.email.charAt(0).toUpperCase();
+            } else {
+                setTimeout(() => {
+                    if (!auth.currentUser) {
+                        window.location.href = 'index.html';
+                    }
+                }, 1000); 
             }
-        }, 1000); 
-    }
-});
+        });
 
-        // Fonction de mise à jour
         window.updateUserPassword = async () => {
             const user = auth.currentUser;
             const newPass = document.getElementById('new-password').value;
