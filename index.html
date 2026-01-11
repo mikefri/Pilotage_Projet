@@ -324,17 +324,19 @@ onAuthStateChanged(auth, (user) => {
                 on_progress_change: (task, progress) => updateQuick(task.id, { progress })
             });
 
-            setTimeout(() => {
-                projects.forEach(p => {
-                    const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
-                    if (bar) bar.style.setProperty('fill', getColor(p.owner), 'important');
-                });
-                document.querySelectorAll('.gantt .grid-row text').forEach((el, idx) => {
-                    el.onclick = (e) => {
-                        e.stopPropagation();
-                        if(projects[idx]) editProject(projects[idx].id);
-                    };
-                });
+setTimeout(() => {
+    projects.forEach(p => {
+        const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
+        if (bar) {
+            if (p.status === "Terminé") {
+                // Si terminé : Gris
+                bar.style.setProperty('fill', '#94a3b8', 'important'); 
+            } else {
+                // Sinon : Couleur du responsable
+                bar.style.setProperty('fill', getColor(p.owner), 'important');
+            }
+        }
+    });
             }, 100);
         }
 
