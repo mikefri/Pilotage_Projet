@@ -89,7 +89,7 @@ onAuthStateChanged(auth, (user) => {
                 const txt = document.getElementById('workflow-text');
                 if (dot && txt) {
                     dot.className = snap.val() ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-red-500 animate-pulse";
-                    txt.innerText = snap.val() ? "BEYOND CLOUD : ONLINE" : "BEYOND CLOUD : OFFLINE";
+                    txt.innerText = snap.val() ? "BEYOND CLOUD : ONLINE" : "CLOUD : OFFLINE";
                 }
             });
         }
