@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Statistiques Globales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .progress-bar { transition: width 1s ease-in-out; }
+        .archive-card { opacity: 0.75; filter: grayscale(0.4); }
+        .archive-card:hover { opacity: 1; filter: grayscale(0); }
+    </style>
+</head>
+<body class="bg-[#F1F5F9] text-slate-900 font-sans">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-black text-slate-800 tracking-tight">COCKPIT <span class="text-indigo-600">GANTT</span></h1>
+        <a href="index.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M5 12L12 19M5 12L12 5"/></svg>
+            RETOUR
+        </a>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-xs font-black uppercase text-slate-400 mb-1">Projets Actifs</p>
+                <h2 id="stat-total-projects" class="text-3xl font-black text-slate-800">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-xs font-black uppercase text-red-400 mb-1">Retards Critiques</p>
+                <h2 id="stat-total-delays" class="text-3xl font-black text-red-500">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-xs font-black uppercase text-indigo-400 mb-1">Charge Totale (Hrs)</p>
+                <h2 id="stat-total-hours" class="text-3xl font-black text-indigo-600">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-xs font-black uppercase text-emerald-400 mb-1">Avancement Global</p>
+                <h2 id="stat-global-progress" class="text-3xl font-black text-emerald-500">0%</h2>
+            </div>
+        </div>
+
+        <h3 class="text-sm font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            Analyse Projets Actifs
+        </h3>
+        <div id="active-projects-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+            <div class="col-span-full py-10 text-center text-slate-400 italic">Chargement...</div>
+        </div>
+
+        <h3 class="text-sm font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+            Archives (Terminés)
+        </h3>
+        <div id="completed-projects-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-80">
+            </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+            authDomain: "pilotage-gantt.firebaseapp.com",
+            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "pilotage-gantt",
+            storageBucket: "pilotage-gantt.firebasestorage.app",
+            messagingSenderId: "1064606456262",
+            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { loadStats(); } else { window.location.href = "index.html"; }
+        });
+
+        function loadStats() {
+            onValue(ref(db, 'projects'), (pSnap) => {
+                onValue(ref(db, 'taches'), (tSnap) => {
+                    onValue(ref(db, 'responsables'), (rSnap) => {
+                        renderDashboard(pSnap.val() || {}, Object.values(tSnap.val() || {}), rSnap.val() || {});
+                    });
+                });
+            });
+        }
+
+        function createCard(project, projectTasks, ownerName, isCompleted) {
+            const doneTasks = projectTasks.filter(t => t.done).length;
+            const progress = projectTasks.length > 0 ? Math.round((doneTasks / projectTasks.length) * 100) : 0;
+            const today = new Date().setHours(0,0,0,0);
+            const delays = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
+            const totalHours = projectTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+            if (isCompleted) {
+                return `
+                <div class="bg-slate-100 rounded-3xl p-5 border border-slate-200 archive-card shadow-inner">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-bold text-slate-500 line-through">${project.name}</h4>
+                        <span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black">TERMINÉ</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-400">
+                        <span>${projectTasks.length} Tâches</span>
+                        <span>${totalHours} Heures cumulées</span>
+                    </div>
+                </div>`;
+            }
+
+            return `
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 hover:border-indigo-200 transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h4 class="text-lg font-black text-slate-800">${project.name}</h4>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">Responsable : ${ownerName}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black ${delays > 0 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-emerald-50 text-emerald-500'}">
+                        ${delays} RETARD(S)
+                    </span>
+                </div>
+                <div class="mb-4">
+                    <div class="flex justify-between text-[10px] font-black text-slate-500 mb-1 uppercase">
+                        <span>Progression</span>
+                        <span>${progress}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                        <div class="bg-indigo-600 h-full progress-bar" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Tâches</p>
+                        <p class="text-sm font-black text-slate-700">${projectTasks.length}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Heures</p>
+                        <p class="text-sm font-black text-slate-700">${totalHours}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Restant</p>
+                        <p class="text-sm font-black text-indigo-600">${projectTasks.length - doneTasks}</p>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+function renderDashboard(projects, tasks, responsables) {
+    const activeGrid = document.getElementById('active-projects-grid');
+    const completedGrid = document.getElementById('completed-projects-grid');
+    activeGrid.innerHTML = '';
+    completedGrid.innerHTML = '';
+    
+    const projectArray = Object.values(projects);
+
+    // FILTRAGE INTELLIGENT (Gère "Terminé", "termine", "Termine", etc.)
+    const activeProjs = projectArray.filter(p => {
+        const s = (p.status || "").toLowerCase();
+        // Un projet est actif s'il n'est pas "terminé" (avec ou sans accent)
+        return s !== 'terminé' && s !== 'termine';
+    });
+
+    const completedProjs = projectArray.filter(p => {
+        const s = (p.status || "").toLowerCase();
+        // Un projet est complété s'il est marqué "terminé" (avec ou sans accent)
+        return s === 'terminé' || s === 'termine';
+    });
+
+    // --- MISE À JOUR DES COMPTEURS DU HAUT ---
+    let totalTasks = tasks.length;
+    let totalDone = tasks.filter(t => t.done).length;
+    let today = new Date().setHours(0,0,0,0);
+    
+    // On ne compte les retards que pour les projets ACTIFS
+    let activeIds = activeProjs.map(p => p.id);
+    let totalDelays = tasks.filter(t => 
+        activeIds.includes(t.projectId) && !t.done && t.date && new Date(t.date) < today
+    ).length;
+
+    let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+    document.getElementById('stat-total-projects').innerText = activeProjs.length;
+    document.getElementById('stat-total-delays').innerText = totalDelays;
+    document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
+    document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+
+    // --- RENDU DES PROJETS ACTIFS ---
+    if(activeProjs.length === 0) {
+        activeGrid.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet en cours.</p>";
+    } else {
+        activeProjs.forEach(p => {
+            const pTasks = tasks.filter(t => t.projectId === p.id);
+            const owner = responsables[p.owner]?.name || "Inconnu";
+            activeGrid.innerHTML += createCard(p, pTasks, owner, false);
+        });
+    }
+
+    // --- RENDU DES ARCHIVES (TERMINÉS) ---
+    if(completedProjs.length > 0) {
+        completedProjs.forEach(p => {
+            const pTasks = tasks.filter(t => t.projectId === p.id);
+            completedGrid.innerHTML += createCard(p, pTasks, "", true);
+        });
+    } else {
+        completedGrid.innerHTML = "<p class='col-span-full text-sm text-slate-400'>Aucune archive pour le moment.</p>";
+    }
+}
+    </script>
+</body>
+</html>

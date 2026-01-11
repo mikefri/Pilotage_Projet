@@ -50,7 +50,32 @@
             }
         };
 
-        window.logout = () => signOut(auth);
+window.logout = async () => {
+    const logoutScreen = document.getElementById('logout-screen');
+    
+    // 1. Vider immédiatement les champs de texte
+    document.getElementById('login-email').value = "";
+    document.getElementById('login-password').value = "";
+    
+    try {
+        logoutScreen.classList.remove('hidden');
+        setTimeout(() => {
+            logoutScreen.classList.remove('opacity-0');
+            logoutScreen.classList.add('opacity-100');
+        }, 10);
+
+        await signOut(auth);
+        
+        // 2. On attend la fin du message d'au revoir
+        setTimeout(() => {
+            // Le reload réinitialise tout le contexte JavaScript
+            window.location.reload();
+        }, 2500);
+
+    } catch (e) {
+        window.location.reload();
+    }
+};
 
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
@@ -100,54 +125,110 @@
         .gantt .grid-row text:hover { fill: #4338ca; text-decoration: underline; }
         .gantt .bar-label { font-weight: 700; font-size: 11px; fill: #1e293b; }
         .gantt .bar-progress { stroke-width: 0; }
+
+.btn-stats {
+    background-color: #e0e7ff; /* Bleu très léger */
+    color: #4338ca; /* Indigo */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 13px;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.btn-stats:hover {
+    background-color: #c7d2fe;
+    transform: translateY(-1px);
+}
+        
     </style>
 </head>
 <body class="text-slate-900 font-sans">
 
     <div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
-            <div class="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100 mb-6">
-                <img src="icon.png" class="w-12 h-12 invert brightness-0" alt="Logo">
-            </div>
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
-            <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
+    <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
+        <div class="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100 mb-6">
+            <img src="icon.png" class="w-12 h-12 invert brightness-0" alt="Logo">
+        </div>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
+        <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
 
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email professionnel" 
-                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
-                <input type="password" id="login-password" placeholder="Mot de passe" 
-                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
-                <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">SE CONNECTER</button>
-                <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
-            </div>
+        <div class="space-y-4">
+            <input type="email" id="login-email" placeholder="Email professionnel" autocomplete="off"
+                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+            
+            <div class="relative">
+                <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password"
+                    class="w-full p-4 pr-12 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+                
+                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">
+                    <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </button>
+            </div> 
+
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                SE CONNECTER
+            </button>
+            
+            <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
+        </div>
+    </div>
+</div>
+
+    <div id="logout-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-500">
+    <div class="text-center">
+        <div class="bg-indigo-500/20 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/20">
+            <span class="text-5xl animate-bounce">👋</span>
+        </div>
+        <h2 class="text-3xl font-black text-white tracking-tight">Au revoir !</h2>
+        <p class="text-indigo-300/60 font-bold uppercase text-[10px] tracking-[0.3em] mt-4">Déconnexion sécurisée en cours</p>
+    </div>
+</div>
+    
+
+    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+    <div class="flex items-center gap-5">
+        <div class="flex items-center gap-3">
+            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
+            <span class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Pilotage Gantt</span>
+        </div>
+        <div id="workflow-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+            <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+            <span id="workflow-text">Sync...</span>
         </div>
     </div>
 
-    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-        <div class="flex items-center gap-5">
-            <div class="flex items-center gap-3">
-                <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
-                <span class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Pilotage Gantt</span>
-            </div>
-            <div id="workflow-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
-                <span id="workflow-text">Sync...</span>
-            </div>
+    <div class="flex items-center gap-4">
+        <div class="flex bg-slate-100 p-1 rounded-xl mr-2">
+            <a href="stats.html" class="px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Stats
+            </a>
+            <a href="responsables.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                <span>👥</span> Équipe
+            </a>
+            <a href="profil.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                <span>👤</span> Profil
+            </a>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="flex bg-slate-100 p-1 rounded-xl mr-2">
-                <a href="responsables.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all">👥 Équipe</a>
-                <a href="profil.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all">👤 Profil</a>
-            </div>
-            <button onclick="openForm()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm">+ PROJET</button>
-            <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Déconnexion">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-            </button>
-        </div>
-    </nav>
+        <button onclick="openForm()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm uppercase">
+            + Projet
+        </button>
+
+        <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Déconnexion">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+        </button>
+    </div>
+</nav>
 
     <main class="p-4 md:p-8 max-w-[1920px] mx-auto">
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
@@ -420,6 +501,30 @@
         document.getElementById('p-progress').oninput = function() {
             document.getElementById('prog-val').innerText = this.value + "%";
         };
+
+
+        window.togglePasswordVisibility = function() {
+    const passwordInput = document.getElementById('login-password');
+    const eyeIcon = document.getElementById('eye-icon');
+    
+    if (passwordInput.type === 'password') {
+        // Afficher le mot de passe
+        passwordInput.type = 'text';
+        // Changer l'icône (œil barré)
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.059 10.059 0 014.473-4.474M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.359a10.014 10.014 0 01-1.125 1.125m-1.513-1.513l-3.374-3.374m0 0l-1.125-1.125m1.125 1.125l3.374 3.374M9 4.612A9.965 9.965 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        `;
+    } else {
+        // Cacher le mot de passe
+        passwordInput.type = 'password';
+        // Remettre l'icône normale
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        `;
+    }
+};
+        
     </script>
 </body>
 </html>
