@@ -2,162 +2,181 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Pilotage Projet - Planning Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4f46e5"> <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="icon" type="image/png" href="./icon.png">
+    <title>Gestion Projet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+    <link rel="manifest" href="./manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
 
-<link rel="manifest" href="https://mikefri.github.io/Pilotage_Projet/manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" type="image/png" href="icon.png">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log("Service Worker Enregistré"));
-  }
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+        authDomain: "pilotage-gantt.firebaseapp.com",
+        databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "pilotage-gantt",
+        storageBucket: "pilotage-gantt.firebasestorage.app",
+        messagingSenderId: "1064606456262",
+        appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    window.fbDB = db;
+    window.fbMethods = { ref, set, onValue, update, remove };
+
+    // --- LOGIQUE DE CONNEXION ---
+    window.login = async () => {
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-password').value;
+        const errorEl = document.getElementById('login-error');
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            errorEl.classList.add('hidden');
+        } catch (e) {
+            errorEl.innerText = "Identifiants incorrects";
+            errorEl.classList.remove('hidden');
+        }
+    };
+
+    window.logout = () => signOut(auth);
+
+    onAuthStateChanged(auth, (user) => {
+        const loginScreen = document.getElementById('login-screen');
+        if (user) {
+            if (loginScreen) loginScreen.classList.add('hidden');
+            if (typeof loadAllData === "function") loadAllData();
+            setupConnectionStatus();
+        } else {
+            if (loginScreen) loginScreen.classList.remove('hidden');
+        }
+    });
+
+    function setupConnectionStatus() {
+        onValue(ref(db, ".info/connected"), (snap) => {
+            const dot = document.getElementById('workflow-dot');
+            const txt = document.getElementById('workflow-text');
+            if (dot && txt) {
+                dot.className = snap.val() ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+                txt.innerText = snap.val() ? "BASE DE DONNÉES : CONNECTÉE" : "BASE DE DONNÉES : HORS-LIGNE";
+            }
+        });
+    }
 </script>
 
-
-
-    
-    <style>
-        <style>
-    body {
-        background-color: #F1F5F9 !important; /* Force la couleur blanc crème */
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('PWA: Service Worker enregistré !', reg.scope))
+                .catch(err => console.log('PWA: Échec de l\'enregistrement', err));
+        });
     }
-    
-    .gantt .bar-label { fill: #1e293b; font-weight: 600; font-size: 12px; }
-    .resizable-gantt { resize: vertical; overflow: auto; min-height: 500px; max-height: 85vh; width: 100%; border: 2px solid #e2e8f0; background: white; border-radius: 0.75rem; position: relative; }
-    .modal-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</script>
 
-
-        
-        .gantt .bar-label { fill: #1e293b; font-weight: 600; font-size: 12px; }
-        .resizable-gantt { resize: vertical; overflow: auto; min-height: 500px; max-height: 85vh; width: 100%; border: 2px solid #e2e8f0; background: white; border-radius: 0.75rem; position: relative; }
+    <style>
+        body { background-color: #F1F5F9 !important; }
+        .resizable-gantt { resize: vertical; overflow: auto; min-height: 500px; max-height: 85vh; width: 100%; border: 1px solid #e2e8f0; background: white; border-radius: 0.75rem; }
         .modal-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Style des textes cliquables à gauche */
+        .gantt .grid-row text { cursor: pointer; fill: #6366f1; font-weight: bold; }
+        .gantt .grid-row text:hover { fill: #4338ca; text-decoration: underline; }
+
+        .gantt .bar-label { font-weight: 600; font-size: 11px; fill: #1e293b; }
+
+        /* Affiche le texte du pourcentage sur la barre */
+.gantt .bar-progress {
+    stroke-width: 0;
+}
+
+/* On personnalise les étiquettes de progression si elles existent */
+.gantt .bar-label.progress-label {
+    fill: #ffffff !important; /* Texte blanc pour contraster avec la couleur de la barre */
+    font-size: 10px;
+    font-weight: bold;
+}
     </style>
 </head>
 <body class="bg-[#F1F5F9] text-slate-900 font-sans">
 
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-        <div class="flex items-center gap-6">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <span class="bg-indigo-600 text-white p-1.5 rounded-lg text-sm">GP</span> Pilotage
-            </h1>
+    <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
+    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-slate-200 text-center">
+        
+        <div class="mb-8 flex flex-col items-center">
+            <div class="w-24 h-24 p-3 bg-white rounded-3xl shadow-sm border border-slate-100 mb-4 flex items-center justify-center">
+                <img src="icon.png" alt="Logo" class="w-full h-full object-contain">
+            </div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight">Gestion Projet</h1>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Gestion Projet</p>
+        </div>
 
+        <div class="space-y-4">
+            <div class="text-left">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Email professionnel</label>
+                <input type="email" id="login-email" placeholder="nom@exemple.com" 
+                    class="w-full mt-1 p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+            </div>
+            <div class="text-left">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Mot de passe</label>
+                <input type="password" id="login-password" placeholder="••••••••" 
+                    class="w-full mt-1 p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+            </div>
             
-            <div id="workflow-status" class="flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 bg-white text-[11px] font-bold text-slate-500">
-    <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
-    <span id="workflow-text">ACTIONS : PRET</span>
+            <button onclick="login()" 
+                class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-indigo-300 transition-all transform active:scale-[0.98] mt-4">
+                Se connecter
+            </button>
+            
+            <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-2 rounded-lg"></p>
+        </div>
+
+        <p class="text-[10px] text-slate-300 mt-10 uppercase font-medium">Système de gestion de projet sécurisé</p>
+    </div>
 </div>
 
-
-            
-            <div class="h-6 w-[1px] bg-slate-200"></div>
-            <a href="responsables.html" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2">
-                👥 Gestion Équipe
-            </a>
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+        <div class="flex items-center gap-6">
+<h1 class="text-xl font-bold flex items-center gap-3">
+    <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
+    <span class="text-slate-800">Gestion Projet</span>
+</h1>
+            <div id="workflow-status" class="flex items-center gap-2 px-3 py-1 rounded-full border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-400">
+                <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                <span id="workflow-text">INITIALISATION...</span>
+            </div>
+            <a href="responsables.html" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2">👥 Équipe</a>
+            <button onclick="logout()" class="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-2 rounded-xl transition">
+    Déconnexion
+</button>
         </div>
-        
-        <div id="save-status" class="text-[11px] font-bold px-3 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition-all duration-300 opacity-0 italic"></div>
-        
-        <div class="flex gap-3">
-            <button onclick="toggleConfig()" class="text-sm border border-slate-300 px-4 py-2 rounded-lg hover:bg-slate-50 transition">🔑 Config</button>
-            <button onclick="openForm()" class="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-bold shadow-md transition">+ Nouveau Projet</button>
+        <div class="flex gap-3 items-center">
+            <div id="save-status" class="text-[11px] font-bold text-emerald-500 opacity-0 transition-opacity italic mr-4"></div>
+            <button onclick="openForm()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl hover:bg-indigo-700 font-bold shadow-sm transition">+ Nouveau / Modifier</button>
         </div>
     </nav>
 
-
-
-
-
-
-<div id="help-modal" class="hidden fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 modal-animate border border-slate-200">
-        <div class="flex justify-between items-start mb-6">
-            <h3 class="text-xl font-bold text-slate-800">Guide du Planning</h3>
-            <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
-        </div>
-        
-        <div class="space-y-6 overflow-y-auto max-h-[60vh] pr-2">
-            <div>
-                <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-3">Navigation & Paramètres</p>
-                <div class="space-y-4 text-sm text-slate-600">
-                    <div class="flex items-start gap-3">
-                        <span class="bg-indigo-600 text-white px-2 py-1 rounded text-[10px] font-bold shrink-0">+ Nouveau</span>
-                        <p><b>Créer un projet :</b> Ouvre un formulaire pour ajouter un nouveau projet au planning.</p>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="border border-slate-300 px-2 py-1 rounded text-[10px] font-bold shrink-0">🔑 Config</span>
-                        <p><b>GitHub :</b> Permet de coller votre "Token" pour que les modifications soient enregistrées sur le serveur.</p>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold shrink-0">Jour / Mois</span>
-                        <p><b>Vues :</b> Change l'échelle du calendrier (précision au jour ou vue d'ensemble au mois).</p>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-100">
-
- <div>
-    <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-3">Gestion Visuelle & Suivi</p>
-    <div class="space-y-4 text-sm text-slate-600">
-        
-        <div class="flex items-start gap-3">
-            <div class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded shrink-0">
-                <span class="text-lg">↔️</span>
-            </div>
-            <div>
-                <p><b>Décaler les dates :</b> Cliquez au <u>centre</u> d'une barre et faites-la glisser vers la gauche ou la droite pour changer les dates de début et de fin sans changer la durée.</p>
-            </div>
-        </div>
-
-        <div class="flex items-start gap-3">
-            <div class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded shrink-0">
-                <span class="text-lg">↕️</span>
-            </div>
-            <div>
-                <p><b>Ajuster la durée :</b> Cliquez sur le <u>bord droit</u> d'une barre et tirez-le pour prolonger ou raccourcir la durée du projet.</p>
-            </div>
-        </div>
-
-        <div class="flex items-start gap-3">
-            <div class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded shrink-0">
-                <span class="text-lg">📊</span>
-            </div>
-            <div>
-                <p><b>Suivi de l'avancement :</b> Cliquez sur le petit <u>curseur à l'intérieur</u> de la barre pour modifier le pourcentage de progression (%) directement à la souris.</p>
-            </div>
-        </div>
-
-        <div class="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-100 text-[11px] italic text-amber-700">
-            💡 Chaque mouvement de barre enregistre automatiquement les nouvelles données sur le serveur.
-        </div>
-    </div>
-</div>
-        </div>
-
-        <button onclick="closeHelpModal()" class="w-full mt-8 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-md">
-            J'ai compris
-        </button>
-    </div>
-</div>
-
-
-
-    
-    
-
     <main class="p-6 max-w-[1920px] mx-auto">
-        <div class="flex justify-between items-center mb-4 px-2">
-            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest italic">Planning Opérationnel</span>
-            <div class="flex gap-4 text-[11px] font-bold text-slate-500 uppercase bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                <button onclick="changeView('Day')" class="px-3 py-1 hover:text-indigo-600 transition">Jour</button>
-                <button onclick="changeView('Week')" class="px-3 py-1 hover:text-indigo-600 transition border-x border-slate-100">Semaine</button>
-                <button onclick="changeView('Month')" class="px-3 py-1 hover:text-indigo-600 transition">Mois</button>
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col">
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Vue d'ensemble</span>
+                <p class="text-xs text-slate-500 italic">Astuce : Cliquez sur une barre pour les tâches, sur le nom pour modifier.</p>
+            </div>
+            <div class="flex gap-2 text-[11px] font-bold text-slate-500 uppercase bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                <button onclick="changeView('Day')" class="px-4 py-1.5 hover:bg-slate-50 rounded-lg transition">Jour</button>
+                <button onclick="changeView('Week')" class="px-4 py-1.5 hover:bg-slate-50 rounded-lg transition border-x border-slate-100">Semaine</button>
+                <button onclick="changeView('Month')" class="px-4 py-1.5 hover:bg-slate-50 rounded-lg transition">Mois</button>
             </div>
         </div>
         <div id="gantt-container" class="resizable-gantt shadow-sm">
@@ -166,403 +185,288 @@
     </main>
 
     <div id="form-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
-        <aside class="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md">
-            <div class="flex justify-between items-center mb-5 border-b pb-2">
-                <h2 id="form-title" class="font-bold text-lg text-slate-800">Détails du Projet</h2>
+        <aside class="bg-white p-8 rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                <h2 class="font-bold text-xl text-slate-800">Gestion Projet</h2>
                 <button onclick="closeForm()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
+
+            <div class="mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                <label class="block text-[10px] font-bold text-indigo-400 uppercase mb-2 ml-1">Modifier un projet existant</label>
+                <select id="project-selector" onchange="loadProjectInForm(this.value)" class="w-full p-2.5 rounded-xl bg-white border border-indigo-200 outline-none text-sm font-bold text-slate-700 shadow-sm">
+                    <option value="">-- Créer un nouveau projet --</option>
+                </select>
+            </div>
+
             <input type="hidden" id="p-id">
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nom du projet</label>
-                    <input type="text" id="p-name" class="w-full p-2.5 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nom du projet</label>
+                    <input type="text" id="p-name" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label>
-                        <select id="p-owner" class="w-full p-2.5 rounded-lg bg-slate-50 border border-slate-200 outline-none"></select>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Responsable</label>
+                        <select id="p-owner" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none"></select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Statut</label>
-                        <select id="p-status" class="w-full p-2.5 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Statut</label>
+                        <select id="p-status" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
                             <option value="À faire">À faire</option>
                             <option value="En cours" selected>En cours</option>
                             <option value="Terminé">Terminé</option>
-                            <option value="Bloqué">Bloqué</option>
                         </select>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date Début</label><input type="date" id="p-start" class="w-full p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date Fin</label><input type="date" id="p-end" class="w-full p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Début</label><input type="date" id="p-start" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Fin</label><input type="date" id="p-end" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm"></div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Avancement (%)</label>
-                    <input type="number" id="p-progress" min="0" max="100" class="w-full p-2.5 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Avancement (%)</label>
+                    <input type="range" id="p-progress" min="0" max="100" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    <div class="text-right text-[10px] font-bold text-slate-400 mt-1" id="prog-val">0%</div>
                 </div>
-                <div class="flex flex-col gap-2 pt-4">
-                    <div id="task-link-container"></div>
-                    <button onclick="addOrUpdateProject()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg">Enregistrer</button>
-                    <button id="btn-delete" onclick="deleteProject()" class="hidden w-full bg-red-50 text-red-600 py-2 rounded-lg font-bold text-sm">Supprimer le projet</button>
+                <div class="flex flex-col gap-3 pt-6 border-t border-slate-100">
+                    <button onclick="addOrUpdateProject()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Enregistrer</button>
+                    <button id="btn-delete" onclick="deleteProject()" class="hidden w-full bg-red-50 text-red-600 py-3 rounded-2xl font-bold text-sm hover:bg-red-100 transition">Supprimer ce projet</button>
                 </div>
-                
             </div>
         </aside>
     </div>
 
-    <div id="delete-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[110] p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-slate-200">
-            <h3 class="text-lg font-bold mb-2">Confirmer la suppression ?</h3>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2 bg-slate-100 rounded-lg">Annuler</button>
-                <button onclick="confirmDeletion()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-bold">Supprimer</button>
-            </div>
-        </div>
-    </div>
-
-
-
-    <div id="config-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[120] p-4">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm text-center">
-            <h2 class="font-bold text-lg text-slate-800 mb-4">Configuration GitHub</h2>
-            <input type="password" id="gh-token" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none mb-4" placeholder="Coller votre Token GitHub ici">
-            <div class="flex gap-2">
-                <button onclick="toggleConfig()" class="flex-1 bg-slate-100 py-2 rounded-lg font-bold">Annuler</button>
-                <button onclick="saveSettings()" class="flex-1 bg-emerald-500 text-white py-2 rounded-lg font-bold">Valider</button>
-            </div>
-            <p class="text-[10px] text-slate-400 mt-4 uppercase">Le token est stocké localement dans votre navigateur.</p>
-        </div>
-    </div>
-
-
-    <button onclick="openHelpModal()" 
-        class="fixed bottom-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white border border-slate-200 text-indigo-600 shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all duration-300 z-[100] group">
-    <span class="text-xl font-bold group-hover:scale-110 transition-transform">?</span>
-</button>
-
     <script>
-        const REPO_NAME = "mikefri/Pilotage_Projet";
-        // COLLE LES DEUX FONCTIONS ICI :
-    function enc(str) { return btoa(unescape(encodeURIComponent(str))); }
-    function dec(str) { 
-        try { return decodeURIComponent(escape(atob(str))); } 
-        catch(e) { return str; } 
-    }
-
         let projects = [];
         let responsables = [];
         let gantt;
         let currentView = 'Day';
-        let projectToDelete = null;
 
-        function getColor(name) {
+        const dec = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch(e) { return str; } };
+
+        const getColor = (name) => {
             let hash = 0;
-            if (!name) return '#cbd5e1';
+            if (!name) return '#6366f1';
             for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            return `hsl(${Math.abs(hash) % 360}, 65%, 45%)`;
-        }
+            return `hsl(${Math.abs(hash) % 360}, 60%, 50%)`;
+        };
 
-        async function loadAllData() {
-    // --- NOUVEAU : CHARGEMENT DU CACHE LOCAL (INSTANTANÉ) ---
-    const localP = localStorage.getItem('cache_projects');
-    const localR = localStorage.getItem('cache_responsables');
+        function loadAllData() {
+            if (!window.fbMethods) return setTimeout(loadAllData, 200);
+            const { onValue, ref } = window.fbMethods;
+
+onValue(ref(window.fbDB, 'responsables'), (snap) => {
+    const data = snap.val();
+    // On récupère les objets, ou un tableau vide
+    responsables = data ? Object.values(data) : [];
     
-    if (localP) projects = JSON.parse(localP);
-    if (localR) responsables = JSON.parse(localR);
-    
-    // On affiche déjà ce qu'on a, pour éviter l'écran vide
-    if (projects.length > 0) renderGantt();
-    if (responsables.length > 0) {
-        document.getElementById('p-owner').innerHTML = responsables.map(r => `<option value="${r}">${dec(r)}</option>`).join('');
-    }
+    // Correction ici : on utilise r.name au lieu de dec(r)
+    document.getElementById('p-owner').innerHTML = responsables.map(r => 
+        `<option value="${r.id}">${r.name}</option>`
+    ).join('') || '<option value="">Aucun membre</option>';
+});;
 
-    try {
-        // 1. Charger Responsables depuis GitHub (avec anti-cache ?t=)
-        const resR = await fetch(`https://raw.githubusercontent.com/${REPO_NAME}/main/responsables.json?t=${Date.now()}`);
-        if (resR.ok) {
-            responsables = await resR.json();
-            // On met à jour le cache local
-            localStorage.setItem('cache_responsables', JSON.stringify(responsables));
-        }
-        
-        const select = document.getElementById('p-owner');
-        if (responsables.length > 0) {
-            select.innerHTML = responsables.map(r => `<option value="${r}">${dec(r)}</option>`).join('');
-        } else {
-            select.innerHTML = '<option value="Non assigné">Aucun responsable</option>';
+            onValue(ref(window.fbDB, 'projects'), (snap) => {
+                const data = snap.val();
+                projects = data ? Object.values(data) : [];
+                renderGantt();
+                updateProjectSelector();
+            });
         }
 
-        // 2. Charger Projets depuis GitHub (avec anti-cache ?t=)
-        const resP = await fetch(`https://raw.githubusercontent.com/${REPO_NAME}/main/data.json?t=${Date.now()}`);
-        if (resP.ok) {
-            projects = await resP.json();
-            // On met à jour le cache local
-            localStorage.setItem('cache_projects', JSON.stringify(projects));
+        function updateProjectSelector() {
+            const selector = document.getElementById('project-selector');
+            if (!selector) return;
+            let html = '<option value="">-- Créer un nouveau projet --</option>';
+            projects.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
+            selector.innerHTML = html;
         }
-        
-        // On rafraîchit le graphique avec les données toutes fraîches de GitHub
-        renderGantt();
 
-    } catch (e) { 
-        console.error("Erreur chargement données", e); 
-        // Si ça échoue, ce n'est pas grave, l'utilisateur voit au moins les données du cache local
-    }
-}
+        function loadProjectInForm(id) {
+            if (!id) { closeForm(); openForm(); return; }
+            editProject(id);
+        }
 
         function renderGantt(view = currentView) {
             currentView = view;
             const chartEl = document.getElementById('gantt-chart');
-            if (projects.length === 0) { chartEl.innerHTML = '<p class="text-center p-20 text-slate-400 italic">Aucun projet.</p>'; return; }
+            if (!projects || projects.length === 0) {
+                chartEl.innerHTML = `<div class="p-20 text-center text-slate-400 italic">Aucun projet. Cliquez sur "+ Nouveau"</div>`;
+                return;
+            }
 
-            const tasks = projects.map(p => ({
-                id: p.id,
-                // On décode le owner pour l'étiquette sur la barre
-                name: `${p.name} (${dec(p.owner)}) - ${p.progress || 0}%`,
-                start: p.start, 
-                end: p.end, 
-                progress: p.progress || 0,
-                custom_class: 'bar-' + p.id
-            }));
+const tasks = projects.map(p => {
+    // On cherche le responsable dans notre liste locale pour avoir son nom
+    const respoFound = responsables.find(r => r.id === p.owner);
+    const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
+
+    return {
+        id: p.id,
+        name: `${p.name} (${displayName}) - ${p.progress || 0}%`,
+        start: p.start || new Date().toISOString().split('T')[0],
+        end: p.end || new Date().toISOString().split('T')[0],
+        progress: p.progress || 0
+    };
+});
 
             chartEl.innerHTML = '';
             gantt = new Gantt("#gantt-chart", tasks, {
-                language: 'fr', 
-                view_mode: view, 
-                bar_height: 40,
-                on_click: task => editProject(task.id),
-                on_date_change: (task, start, end) => {
-                    let p = projects.find(i => i.id === task.id);
-                    p.start = start.toISOString().split('T')[0];
-                    p.end = end.toISOString().split('T')[0];
-                    renderGantt(); 
-                    saveToGitHub("data.json", projects);
+                language: 'fr',
+                view_mode: view,
+                bar_height: 35,
+                on_click: task => {
+                    window.location.href = `liste_taches.html?id=${task.id}`;
                 },
-                on_progress_change: (task, progress) => {
-                    let p = projects.find(i => i.id === task.id);
-                    p.progress = progress;
-                    renderGantt(); 
-                    saveToGitHub("data.json", projects);
-                }
+                on_date_change: (task, start, end) => updateQuick(task.id, {
+                    start: start.toISOString().split('T')[0],
+                    end: end.toISOString().split('T')[0]
+                }),
+                on_progress_change: (task, progress) => updateQuick(task.id, { progress })
             });
 
+            // Gère les couleurs et le clic sur les noms
             setTimeout(() => {
-                projects.forEach(p => {
+                projects.forEach((p, index) => {
+                    // Couleur des barres
                     const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
-                    // Utilisation de p.owner (valeur encodée) pour garantir la même couleur
                     if (bar) bar.style.setProperty('fill', getColor(p.owner), 'important');
                 });
-            }, 50);
+
+                // Clic sur les noms à gauche
+                document.querySelectorAll('.gantt .grid-row text').forEach((el, idx) => {
+                    el.onclick = (e) => {
+                        e.stopPropagation();
+                        if(projects[idx]) editProject(projects[idx].id);
+                    };
+                });
+            }, 100);
         }
 
-        function openForm() { resetForm(); document.getElementById('form-overlay').classList.add('modal-active'); }
-        function closeForm() { document.getElementById('form-overlay').classList.remove('modal-active'); }
-        function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('modal-active'); }
+        async function updateQuick(id, data) {
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'projects/' + id), data);
+            showStatus("SYNCHRONISÉ");
+        }
+
+async function addOrUpdateProject() {
+    const startVal = document.getElementById('p-start').value;
+    const endVal = document.getElementById('p-end').value;
+
+    // --- BLOCAGE SÉCURITÉ DATES ---
+    if (startVal && endVal) {
+        const start = new Date(startVal);
+        const end = new Date(endVal);
+
+        if (end < start) {
+            alert("Erreur : La date de FIN ne peut pas être avant la date de DÉBUT.");
+            return; // Arrête l'enregistrement
+        }
+    }
+    // ------------------------------
+
+    const id = document.getElementById('p-id').value || "ID-" + Date.now();
+    const pData = {
+        id,
+        name: document.getElementById('p-name').value,
+        owner: document.getElementById('p-owner').value,
+        status: document.getElementById('p-status').value,
+        start: startVal,
+        end: endVal,
+        progress: parseInt(document.getElementById('p-progress').value) || 0
+    };
+
+    await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'projects/' + id), pData);
+    closeForm();
+    showStatus("ENREGISTRÉ");
+}
+
+        async function deleteProject() {
+            const id = document.getElementById('p-id').value;
+            if (id && confirm("Supprimer définitivement ?")) {
+                await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'projects/' + id));
+                closeForm();
+                showStatus("SUPPRIMÉ");
+            }
+        }
 
         function editProject(id) {
-            const btnList = `<button onclick="window.location.href='liste_taches.html?id=${id}'" class="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-bold mb-2">📋 Voir la liste des tâches</button>`;
             const p = projects.find(i => i.id === id);
             if(!p) return;
             document.getElementById('p-id').value = p.id;
             document.getElementById('p-name').value = p.name;
             document.getElementById('p-owner').value = p.owner;
-            document.getElementById('p-status').value = p.status || 'En cours';
+            document.getElementById('p-status').value = p.status;
             document.getElementById('p-start').value = p.start;
             document.getElementById('p-end').value = p.end;
-            document.getElementById('p-progress').value = p.progress || 0;
-
-// AJOUT DU BOUTON VERS LA LISTE DES TÂCHES
-            // On l'insère dans un conteneur dédié pour ne pas casser le reste
-            const listContainer = document.getElementById('task-link-container');
-            if (listContainer) {
-                listContainer.innerHTML = `
-                    <button onclick="window.location.href='liste_taches.html?id=${p.id}'" 
-                            class="w-full bg-slate-800 text-white py-3 rounded-lg text-sm font-bold mb-4 flex items-center justify-center gap-2 hover:bg-slate-700 transition shadow-sm">
-                        📋 Ouvrir la Liste des Tâches
-                    </button>
-                `;
-            }
-
-
-            
+            document.getElementById('p-progress').value = p.progress;
+            document.getElementById('prog-val').innerText = p.progress + "%";
             document.getElementById('btn-delete').classList.remove('hidden');
-            document.getElementById('form-overlay').classList.add('modal-active');
+            document.getElementById('project-selector').value = p.id;
+            openForm();
         }
+// Cette fonction vide tout (à garder telle quelle)
+// Vide tous les champs
+function resetFields() {
+    document.getElementById('p-id').value = '';
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-owner').value = ''; 
+    document.getElementById('p-status').value = 'En cours';
+    document.getElementById('p-start').value = '';
+    document.getElementById('p-end').value = '';
+    document.getElementById('p-progress').value = 0;
+    document.getElementById('prog-val').innerText = "0%";
+    document.getElementById('btn-delete').classList.add('hidden');
+    document.getElementById('project-selector').value = "";
+}
 
-        function resetForm() {
+// Ouvre la modale
+function openForm(isEdit = false) { 
+    // On ne vide les champs QUE si ce n'est PAS une modification
+    if (isEdit !== true) {
+        resetFields(); 
+    }
+    document.getElementById('form-overlay').classList.add('modal-active'); 
+}
+
+// Et on modifie légèrement editProject pour prévenir openForm
+function editProject(id) {
+    const p = projects.find(i => i.id === id);
+    if(!p) return;
+    
+    // 1. On remplit les champs d'abord
+    document.getElementById('p-id').value = p.id;
+    document.getElementById('p-name').value = p.name;
+    document.getElementById('p-owner').value = p.owner;
+    document.getElementById('p-status').value = p.status;
+    document.getElementById('p-start').value = p.start;
+    document.getElementById('p-end').value = p.end;
+    document.getElementById('p-progress').value = p.progress;
+    document.getElementById('prog-val').innerText = p.progress + "%";
+    document.getElementById('btn-delete').classList.remove('hidden');
+    document.getElementById('project-selector').value = p.id;
+    
+    // 2. On ouvre la modale avec l'argument "true" pour ne pas reset
+    openForm(true); 
+}
+        function closeForm() {
+            document.getElementById('form-overlay').classList.remove('modal-active');
             document.getElementById('p-id').value = '';
             document.getElementById('p-name').value = '';
             document.getElementById('p-progress').value = 0;
-            document.getElementById('p-status').value = 'En cours';
+            document.getElementById('prog-val').innerText = "0%";
+            document.getElementById('project-selector').value = "";
             document.getElementById('btn-delete').classList.add('hidden');
-            // On vide le lien vers les tâches pour les nouveaux projets
-            if(document.getElementById('task-link-container')) {
-                document.getElementById('task-link-container').innerHTML = '';
-            }
         }
-
-        function deleteProject() {
-            projectToDelete = document.getElementById('p-id').value;
-            if (projectToDelete) document.getElementById('delete-modal').classList.add('modal-active');
-        }
-
-        async function confirmDeletion() {
-            projects = projects.filter(p => p.id !== projectToDelete);
-            renderGantt(); closeForm(); closeDeleteModal();
-            await saveToGitHub("data.json", projects);
-        }
-
-        async function addOrUpdateProject() {
-            const id = document.getElementById('p-id').value;
-            const pData = {
-                name: document.getElementById('p-name').value,
-                owner: document.getElementById('p-owner').value,
-                status: document.getElementById('p-status').value,
-                start: document.getElementById('p-start').value,
-                end: document.getElementById('p-end').value,
-                progress: parseInt(document.getElementById('p-progress').value) || 0
-            };
-            if(!pData.name || !pData.start || !pData.end) return alert("Champs obligatoires.");
-            
-            if(id) {
-                const idx = projects.findIndex(i => i.id === id);
-                projects[idx] = { ...projects[idx], ...pData };
-            } else {
-                projects.push({ id: "ID-" + Date.now(), ...pData });
-            }
-            renderGantt(); closeForm(); await saveToGitHub("data.json", projects);
-        }
-
-        async function saveToGitHub(filename, data) {
-    const token = localStorage.getItem('gh_token');
-    if (!token) return;
-
-    const statusLabel = document.getElementById('save-status');
-    statusLabel.innerText = "⏳ SYNCHRONISATION...";
-    statusLabel.style.opacity = "1";
-
-    try {
-        // 1. Récupération du SHA actuel pour autoriser la modification
-        const res = await fetch(`https://api.github.com/repos/${REPO_NAME}/contents/${filename}`, {
-            headers: { 'Authorization': `token ${token}` }
-        });
-
-        if (!res.ok) throw new Error("Fichier introuvable");
-        const file = await res.json();
-
-        // 2. Envoi de la mise à jour
-        const update = await fetch(`https://api.github.com/repos/${REPO_NAME}/contents/${filename}`, {
-            method: 'PUT',
-            headers: { 
-                'Authorization': `token ${token}`, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({
-                message: `Update ${filename}`,
-                // Utilisation de data qui contient déjà les dernières modifs du Gantt
-                content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))),
-                sha: file.sha
-            })
-        });
-
-        if (update.ok) {
-            statusLabel.innerText = "✅ ENREGISTRÉ";
-            
-            // IMPORTANT : Surtout ne pas appeler loadAllData() ici.
-            // Le Gantt a déjà été mis à jour visuellement par l'interaction utilisateur.
-            
-            setTimeout(() => {
-                statusLabel.style.opacity = "0";
-            }, 2000);
-        } else {
-            throw new Error("Erreur lors de la mise à jour");
-        }
-    } catch (e) {
-        console.error("Erreur de sauvegarde:", e);
-        statusLabel.innerText = "❌ ERREUR";
-        // En cas d'erreur, on peut laisser le message rouge pour alerter l'utilisateur
-    }
-}
 
         function changeView(v) { renderGantt(v); }
-        function toggleConfig() { 
-            document.getElementById('config-overlay').classList.toggle('hidden'); 
-            document.getElementById('config-overlay').classList.toggle('modal-active');
-            
-            // Pré-remplir avec le token actuel s'il existe
-            const savedToken = localStorage.getItem('gh_token');
-            if(savedToken) document.getElementById('gh-token').value = savedToken;
-        }
-        function saveSettings() { 
-            const val = document.getElementById('gh-token').value;
-            if(val) {
-                localStorage.setItem('gh_token', val); 
-                toggleConfig(); // Ferme la modale
-                loadAllData();  // Recharge les données avec le nouveau token
-            } else {
-                alert("Veuillez saisir un token.");
-            }
+
+        function showStatus(txt) {
+            const s = document.getElementById('save-status');
+            s.innerText = "✅ " + txt; s.style.opacity = "1";
+            setTimeout(() => s.style.opacity = "0", 3000);
         }
 
-
-async function checkWorkflows() {
-    const token = localStorage.getItem('gh_token');
-    if (!token) return;
-
-    const dot = document.getElementById('workflow-dot');
-    const text = document.getElementById('workflow-text');
-
-    try {
-        // On ajoute un timestamp à l'URL de l'API pour éviter le cache du navigateur
-        const res = await fetch(`https://api.github.com/repos/${REPO_NAME}/actions/runs?per_page=1&t=${Date.now()}`, {
-            headers: { 
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        
-        if (!res.ok) return;
-        const data = await res.json();
-        const runs = data.workflow_runs;
-
-        if (runs && runs.length > 0) {
-            const lastRun = runs[0];
-            const status = lastRun.status; // in_progress, queued, completed
-            const conclusion = lastRun.conclusion; // success, failure, etc.
-
-            if (status === "in_progress" || status === "queued") {
-                dot.className = "w-2 h-2 rounded-full bg-blue-500 animate-ping"; // Effet radar bleu
-                text.innerText = "ACTIONS : TRAVAIL EN COURS...";
-            } else if (status === "completed") {
-                if (conclusion === "success") {
-                    dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-                    text.innerText = "ACTIONS : TERMINÉ";
-                } else {
-                    dot.className = "w-2 h-2 rounded-full bg-red-500";
-                    text.innerText = "ACTIONS : ÉCHEC";
-                }
-            }
-        }
-    } catch (e) {
-        console.error("Erreur check workflows", e);
-    }
-}
-
-// Lancer la vérification toutes les 15 secondes
-setInterval(checkWorkflows, 15000);
-// Et au chargement
-checkWorkflows();
-
-
-function openHelpModal() {
-    document.getElementById('help-modal').classList.remove('hidden');
-}
-
-function closeHelpModal() {
-    document.getElementById('help-modal').classList.add('hidden');
-}
-        
-
-        window.onload = loadAllData;
+        document.getElementById('p-progress').oninput = function() {
+            document.getElementById('prog-val').innerText = this.value + "%";
+        };
     </script>
 </body>
 </html>

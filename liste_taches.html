@@ -1,403 +1,395 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Détails des Tâches</title>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gantt des Tâches</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="icon" type="image/png" href="./icon.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('PWA Gantt: Connecté'))
+            .catch(err => console.log('PWA Gantt: Erreur', err));
+        });
+      }
+    </script>
     <style>
-        .done { text-decoration: line-through; opacity: 0.5; }
+        .done { opacity: 0.4; filter: grayscale(1); }
         .modal-animate { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .gantt-grid {
+            background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px);
+        }
 
-        /* ... vos styles existants ... */
-    .modal-animate { animation: fadeIn 0.2s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .gantt-row { 
+            height: 50px; 
+            position: relative; 
+            border-bottom: 1px solid #f1f5f9; 
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- MODIFICATION ICI : TITRE COLLANT --- */
+        .task-label {
+            position: sticky; /* Reste fixé au scroll */
+            left: 0;         /* Se colle à gauche du container */
+            width: 160px;    /* Un peu plus large pour la lisibilité */
+            min-width: 160px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            z-index: 30;     /* Passe au dessus de la grille et de la ligne rouge */
+            background: white; /* Fond opaque pour ne pas voir la grille derrière */
+            padding-left: 10px;
+            padding-right: 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            border-right: 1px solid #e2e8f0;
+            box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05); /* Ombre légère pour séparer */
+        }
+
+        .task-bar { 
+            height: 28px; 
+            position: absolute; 
+            border-radius: 6px; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 12px; 
+            font-size: 11px; 
+            font-weight: bold; 
+            color: white; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .task-bar:hover { transform: scale(1.02); z-index: 40; }
+        
+        .today-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #ef4444;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .today-label {
+            position: absolute;
+            top: -25px;
+            left: -50%;
+            background: #ef4444;
+            color: white;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
     </style>
-</head>
-<body class="bg-[#F1F5F9] text-slate-900 font-sans">
 
-    <div id="custom-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 modal-animate border border-slate-200">
-            <h3 id="modal-title" class="text-lg font-bold text-center text-slate-800 mb-2">Confirmation</h3>
-            <p id="modal-text" class="text-slate-500 text-center text-sm mb-6"></p>
-            <div class="flex gap-3">
-                <button id="modal-cancel" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition">Annuler</button>
-                <button id="modal-confirm" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition shadow-md">Supprimer</button>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+            authDomain: "pilotage-gantt.firebaseapp.com",
+            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "pilotage-gantt",
+            storageBucket: "pilotage-gantt.firebasestorage.app",
+            messagingSenderId: "1064606456262",
+            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        window.fbDB = db;
+        window.fbMethods = { ref, set, onValue, update, remove };
+
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                errorEl.classList.add('hidden');
+            } catch (e) {
+                errorEl.innerText = "Identifiants incorrects";
+                errorEl.classList.remove('hidden');
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if (user) {
+                if (loginScreen) loginScreen.classList.add('hidden');
+                loadData();
+            } else {
+                if (loginScreen) loginScreen.classList.remove('hidden');
+            }
+        });
+    </script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 font-sans">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-8">
+                <span class="bg-indigo-600 text-white p-3 rounded-2xl text-xl font-bold">GP</span>
+                <h1 class="text-2xl font-bold mt-4 text-slate-800">Accès Restreint</h1>
+            </div>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
+                <input type="password" id="login-password" placeholder="Mot de passe" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
+                <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Se connecter</button>
+                <p id="login-error" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
             </div>
         </div>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-[50] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">Modifier la tâche</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Détails de la tâche</h3>
+                <button onclick="deleteTask()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                </button>
+            </div>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
-                    <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="edit-task-time" class="p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                    <input type="date" id="edit-task-date" class="p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                 </div>
-                <div class="flex gap-4">
-                    <div class="flex-1">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Heures</label>
-                        <input type="number" id="edit-task-time" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label>
-                        <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none"></select>
-                    </div>
+                <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none"></select>
+                <div class="flex items-center gap-2 py-2">
+                    <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
+                    <label for="edit-task-done" class="font-bold text-slate-700">Marquer comme terminé</label>
                 </div>
             </div>
             <div class="flex gap-3 mt-8">
-                <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition">Annuler</button>
-                <button id="btn-save-edit" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition shadow-md">Enregistrer</button>
+                <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">Annuler</button>
+                <button onclick="saveTaskEdit()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md">Enregistrer</button>
             </div>
         </div>
     </div>
 
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-        <div class="flex items-center gap-6">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <span class="bg-indigo-600 text-white p-1.5 rounded-lg text-sm">GP</span> Pilotage
-            </h1>
-            <div id="workflow-status" class="flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 bg-white text-[11px] font-bold text-slate-500">
-                <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
-                <span id="workflow-text">ACTIONS : PRET</span>
-            </div>
-        </div>
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+<h1 class="text-xl font-bold flex items-center gap-3">
+    <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
+    <span class="text-slate-800">Gantt des Tâches</span>
+</h1>
         <div class="flex items-center gap-4">
-            <a href="index.html" class="text-indigo-600 font-bold flex items-center gap-2 hover:underline">← Retour au Planning</a>
-            <div id="save-status" class="text-[11px] font-bold px-3 py-1 rounded-full border border-slate-200 bg-white opacity-0 transition-all duration-300 italic"></div>
+            <div id="delay-container" class="hidden relative group">
+                <div class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer hover:bg-red-100 transition">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <span id="delay-count">0</span> RETARD(S)
+                </div>
+                <div class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
+                    <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
+                </div>
+            </div>
+            <a href="index.html" class="text-indigo-600 font-bold hover:underline text-sm">← Retour</a>
         </div>
     </nav>
 
+    <main class="max-w-full mx-auto mt-6 px-4">
+        <div class="flex flex-col gap-4 items-start mb-8">
+            <header class="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-3 w-fit min-w-[300px]">
+                <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
+                <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
+            </header>
 
-
-
-    
-
-<div id="help-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 modal-animate border border-slate-200">
-        <div class="flex justify-between items-start mb-6">
-            <h3 class="text-xl font-bold text-slate-800">Guide d'utilisation</h3>
-            <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-3 w-fit">
+                <div class="flex gap-2 items-center">
+                    <input type="text" id="task-desc" placeholder="Nouvelle tâche..." class="w-64 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                    <input type="number" id="task-time" placeholder="Hrs" class="w-14 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                    <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
+                    <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
+                    <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">+</button>
+                </div>
+            </section>
         </div>
-        
-        <div class="space-y-6 overflow-y-auto max-h-[70vh] pr-2">
+
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Timeline Interactive</h2>
+                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
+            </div>
             
-            <div>
-                <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-3">Les Boutons d'action</p>
-                <div class="space-y-4 text-sm text-slate-600">
-                    <div class="flex items-start gap-3">
-                        <span class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-lg font-bold shrink-0">+</span>
-                        <p><b>Bouton Ajouter :</b> Enregistre la nouvelle tâche saisie dans la liste du projet.</p>
+            <div id="gantt-scroll-container" class="overflow-x-auto relative">
+                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10">
                     </div>
-                    <div class="flex items-start gap-3">
-                        <span class="bg-slate-100 text-slate-500 w-8 h-8 flex items-center justify-center rounded-lg shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </span>
-                        <p><b>Bouton Modifier :</b> Ouvre une fenêtre pour corriger le nom, le temps ou le responsable d'une tâche.</p>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="bg-red-50 text-red-500 w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xl shrink-0">&times;</span>
-                        <p><b>Bouton Supprimer :</b> Retire définitivement la tâche après votre confirmation.</p>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" checked class="w-5 h-5 accent-indigo-600 mt-1 shrink-0">
-                        <p><b>Case à cocher :</b> Marque une tâche comme terminée (le texte devient barré et grisé).</p>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-100">
-
-            <div>
-                <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-3">Indicateurs de sauvegarde</p>
-                <div class="space-y-3 text-sm text-slate-600">
-                    <div class="flex items-center gap-3">
-                        <span class="w-3 h-3 rounded-full bg-slate-300"></span> 
-                        <p><b>PRÊT :</b> Aucune action en cours.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span> 
-                        <p><b>SYNC :</b> Sauvegarde en cours sur le serveur (ne pas quitter).</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span> 
-                        <p><b>SUCCESS :</b> Vos modifications sont bien enregistrées.</p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <button onclick="closeHelpModal()" class="w-full mt-8 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-md">
-            J'ai compris
-        </button>
-    </div>
-</div>
-
-
-
-
-
-
-
-    
-
-    <main class="max-w-2xl mx-auto mt-20 mb-10">
-        <header class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6">
-            <h1 id="project-title" class="text-2xl font-bold text-slate-800">Chargement du projet...</h1>
-            <p id="project-info" class="text-slate-500 text-sm mt-1 italic"></p>
-        </header>
-
-        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
-            <div class="flex flex-wrap gap-2">
-                <input type="text" id="task-desc" placeholder="Nouvelle tâche..." 
-                       class="flex-1 min-w-[200px] p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="number" id="task-time" placeholder="Hrs" title="Temps estimé en heures"
-                       class="w-20 p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
-                <select id="task-who" class="p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none w-40"></select>
-                <button onclick="addTask()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">+</button>
             </div>
         </section>
-
-        <div id="task-list" class="space-y-3"></div>
     </main>
 
-
-    <button onclick="openHelpModal()" 
-        class="fixed bottom-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white border border-slate-200 text-indigo-600 shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all duration-300 z-[100] group">
-    <span class="text-xl font-bold group-hover:scale-110 transition-transform">?</span>
-</button>
-
     <script>
-        const REPO_NAME = "mikefri/Pilotage_Projet";
         let allTasks = [];
         let responsables = [];
+        let currentProject = null;
         let currentProjectId = new URLSearchParams(window.location.search).get('id');
         let currentEditingId = null;
 
         const dec = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch(e) { return str; } };
-        const enc = (str) => btoa(unescape(encodeURIComponent(str)));
 
-        async function init() {
-            if (!currentProjectId) {
-                document.getElementById('project-title').innerText = "Aucun projet sélectionné";
-                return;
-            }
-            await loadData();
-        }
+        function loadData() {
+            if (!window.fbMethods) return setTimeout(loadData, 100);
+            const { onValue, ref } = window.fbMethods;
 
-        async function loadData() {
-            const localTasks = localStorage.getItem('cache_taches');
-            const localResp = localStorage.getItem('cache_responsables');
-            const localProj = localStorage.getItem('cache_projects');
+onValue(ref(window.fbDB, 'responsables'), (snap) => {
+    // Correction : on récupère les objets {id, name, email}
+    responsables = snap.val() ? Object.values(snap.val()) : [];
+    
+    // On utilise r.id pour la valeur technique et r.name pour l'affichage
+    const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    document.getElementById('task-who').innerHTML = options;
+    document.getElementById('edit-task-who').innerHTML = options;
+});
 
-            if (localTasks) allTasks = JSON.parse(localTasks);
-            if (localResp) responsables = JSON.parse(localResp);
-            
-            if (responsables.length > 0) {
-                const options = responsables.map(r => `<option value="${r}">${dec(r)}</option>`).join('');
-                document.getElementById('task-who').innerHTML = options;
-            }
-            if (localProj && currentProjectId) {
-                const p = JSON.parse(localProj).find(i => i.id === currentProjectId);
-                if(p) document.getElementById('project-title').innerText = "📝 Liste des Tâches : " + p.name;
-            }
-            renderTasks();
+onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+    currentProject = snap.val();
+    if(currentProject) {
+        document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+        
+        // Trouver le nom du responsable du projet
+        const respo = responsables.find(r => r.id === currentProject.owner);
+        const ownerName = respo ? respo.name : currentProject.owner;
+        document.getElementById('project-info').innerText = "Responsable : " + ownerName;
+        renderTasks();
+    }
+});
 
-            try {
-                const resR = await fetch(`https://raw.githubusercontent.com/${REPO_NAME}/main/responsables.json?t=${Date.now()}`);
-                if (resR.ok) {
-                    responsables = await resR.json();
-                    localStorage.setItem('cache_responsables', JSON.stringify(responsables));
-                    document.getElementById('task-who').innerHTML = responsables.map(r => `<option value="${r}">${dec(r)}</option>`).join('');
-                }
-                const resT = await fetch(`https://raw.githubusercontent.com/${REPO_NAME}/main/taches.json?t=${Date.now()}`);
-                if (resT.ok) {
-                    allTasks = await resT.json();
-                    localStorage.setItem('cache_taches', JSON.stringify(allTasks));
-                }
-                const resP = await fetch(`https://raw.githubusercontent.com/${REPO_NAME}/main/data.json?t=${Date.now()}`);
-                if (resP.ok) {
-                    const projects = await resP.json();
-                    localStorage.setItem('cache_projects', JSON.stringify(projects));
-                    const p = projects.find(i => i.id === currentProjectId);
-                    if(p) document.getElementById('project-title').innerText = "📝 Liste des Tâches : " + p.name;
-                }
+            onValue(ref(window.fbDB, 'taches'), (snap) => {
+                allTasks = snap.val() ? Object.values(snap.val()) : [];
                 renderTasks();
-            } catch (e) { console.error("Erreur sync", e); }
+            });
         }
 
         function renderTasks() {
-            const listEl = document.getElementById('task-list');
-            const projectTasks = allTasks.filter(t => t.projectId === currentProjectId);
+            if(!currentProject) return;
+            const container = document.getElementById('gantt-container');
+            const scrollContainer = document.getElementById('gantt-scroll-container');
+            
+            const pStart = new Date(currentProject.start);
+            const pEnd = new Date(currentProject.end);
+            const today = new Date(); today.setHours(0,0,0,0);
+            
+            const diffTime = Math.abs(pEnd - pStart);
+            const projectDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-            if(projectTasks.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-slate-400 py-10 italic">Aucune tâche pour le moment.</p>';
-                return;
+            const availableWidth = scrollContainer.offsetWidth - 200;
+            const dayWidth = Math.max(45, availableWidth / projectDurationDays);
+            
+            const timelineTotalWidth = (projectDurationDays * dayWidth) + 160; 
+            container.style.width = `${timelineTotalWidth}px`; 
+            container.style.backgroundSize = `${dayWidth}px 100%`;
+            container.style.backgroundPosition = `160px 0`; /* Aligne la grille avec le début des barres */
+
+            let todayLineHTML = '';
+            if (today >= pStart && today <= pEnd) {
+                const daysFromStartToday = (today - pStart) / (24*60*60*1000);
+                todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
             }
 
-            listEl.innerHTML = projectTasks.map(t => `
-                <div class="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm ${t.done ? 'done' : ''}">
-                    <div class="flex items-center gap-4">
-                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask('${t.id}')" class="w-5 h-5 accent-indigo-600 cursor-pointer">
-                        <div>
-                            <p class="font-bold text-slate-700">${t.desc}</p>
-                            <div class="flex gap-3 items-center mt-1">
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">👤 ${dec(t.who)}</p>
-                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">⏱️ ${t.time} h</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openEditModal('${t.id}')" class="text-slate-300 hover:text-indigo-600 p-2 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
-                        <button onclick="deleteTask('${t.id}')" class="text-red-200 hover:text-red-600 p-2 text-xl leading-none transition">&times;</button>
-                    </div>
-                </div>
-            `).join('');
+            const projectTasks = allTasks.filter(t => t.projectId === currentProjectId).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Gestion Retards
+            const delayedTasks = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+            const delayContainer = document.getElementById('delay-container');
+            if(delayedTasks.length > 0) {
+                delayContainer.classList.remove('hidden');
+                document.getElementById('delay-count').innerText = delayedTasks.length;
+                document.getElementById('delay-list').innerHTML = delayedTasks.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100"><div class="font-bold text-red-700">${t.desc}</div><div class="flex justify-between text-red-400 italic"><span>${dec(t.who)}</span><span>${new Date(t.date).toLocaleDateString('fr-FR')}</span></div></div>`).join('');
+            } else { delayContainer.classList.add('hidden'); }
+
+            let totalHrs = 0;
+            const tasksHTML = projectTasks.map((t) => {
+                totalHrs += parseFloat(t.time || 0);
+                const tDate = t.date ? new Date(t.date) : pStart;
+                const daysFromStart = (tDate - pStart) / (24*60*60*1000);
+                const leftPosPx = Math.max(0, daysFromStart * dayWidth);
+                const dateFr = t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--';
+const isLate = !t.done && t.date && new Date(t.date) < today;
+
+// Trouver le nom de la personne assignée à la tâche
+const respoTask = responsables.find(r => r.id === t.who);
+const whoName = respoTask ? respoTask.name : t.who;
+
+return `
+<div class="gantt-row ${t.done ? 'done' : ''}">
+    <div class="task-label" title="${t.desc}">${t.desc}</div>
+    <div class="task-bar ${isLate ? 'bg-red-500 ring-2 ring-red-200' : 'bg-indigo-600'}" 
+         style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
+         onclick="openEditModal('${t.id}')">
+         <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${whoName}</span>
+    </div>
+    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
+         style="left: calc(300px + ${leftPosPx}px);">${dateFr}</div>
+</div>`;
+            }).join('');
+
+            container.innerHTML = todayLineHTML + tasksHTML;
+            document.getElementById('total-hours').innerText = `${totalHrs} h total`;
         }
 
-        // --- FONCTIONS DE GESTION ---
-
-        function showConfirm(title, message, onConfirm) {
-            const modal = document.getElementById('custom-modal');
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-text').innerText = message;
-            modal.classList.remove('hidden');
-            const btnConfirm = document.getElementById('modal-confirm');
-            const btnCancel = document.getElementById('modal-cancel');
-            const newBtnConfirm = btnConfirm.cloneNode(true);
-            btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
-            newBtnConfirm.onclick = () => { modal.classList.add('hidden'); onConfirm(); };
-            btnCancel.onclick = () => modal.classList.add('hidden');
-        }
-
-        function openEditModal(id) {
-            const task = allTasks.find(t => t.id === id);
-            if (!task) return;
-            currentEditingId = id;
-            document.getElementById('edit-task-desc').value = task.desc;
-            document.getElementById('edit-task-time').value = task.time;
-            const selectWho = document.getElementById('edit-task-who');
-            selectWho.innerHTML = responsables.map(r => `<option value="${r}">${dec(r)}</option>`).join('');
-            selectWho.value = task.who;
-            document.getElementById('edit-modal').classList.remove('hidden');
-            document.getElementById('btn-save-edit').onclick = saveTaskEdit;
-        }
-
-        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); currentEditingId = null; }
-
-        async function saveTaskEdit() {
-            const task = allTasks.find(t => t.id === currentEditingId);
-            if (!task) return;
-            const d = document.getElementById('edit-task-desc').value.trim();
-            if(!d) return;
-            task.desc = d;
-            task.time = document.getElementById('edit-task-time').value;
-            task.who = document.getElementById('edit-task-who').value;
-            renderTasks();
-            closeEditModal();
-            await saveToGitHub();
-        }
-
+        window.addEventListener('resize', renderTasks);
         async function addTask() {
             const desc = document.getElementById('task-desc').value.trim();
             const time = document.getElementById('task-time').value || 0;
             const who = document.getElementById('task-who').value;
+            const date = document.getElementById('task-date').value || currentProject.start;
             if(!desc) return;
-            const newTask = { id: "TASK-" + Date.now(), projectId: currentProjectId, desc: desc, time: time, who: who, done: false };
-            allTasks.push(newTask);
+            const taskId = "TASK-" + Date.now();
+            await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), { id: taskId, projectId: currentProjectId, desc, time, who, date, done: false });
             document.getElementById('task-desc').value = '';
-            document.getElementById('task-time').value = '';
-            renderTasks();
-            await saveToGitHub();
         }
-
-        async function toggleTask(id) {
-            const t = allTasks.find(item => item.id === id);
-            if(t) t.done = !t.done;
-            renderTasks();
-            await saveToGitHub();
+        function openEditModal(id) {
+            const t = allTasks.find(x => x.id === id);
+            currentEditingId = id;
+            document.getElementById('edit-task-desc').value = t.desc;
+            document.getElementById('edit-task-time').value = t.time;
+            document.getElementById('edit-task-date').value = t.date || '';
+            document.getElementById('edit-task-who').value = t.who;
+            document.getElementById('edit-task-done').checked = t.done || false;
+            document.getElementById('edit-modal').classList.remove('hidden');
         }
-
-        async function deleteTask(id) {
-            showConfirm("Supprimer la tâche ?", "Cette action est définitive.", async () => {
-                allTasks = allTasks.filter(t => t.id !== id);
-                renderTasks();
-                await saveToGitHub();
+        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+        async function saveTaskEdit() {
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
+                desc: document.getElementById('edit-task-desc').value, time: document.getElementById('edit-task-time').value,
+                date: document.getElementById('edit-task-date').value, who: document.getElementById('edit-task-who').value,
+                done: document.getElementById('edit-task-done').checked
             });
+            closeEditModal();
         }
-
-        async function saveToGitHub() {
-    const token = localStorage.getItem('gh_token');
-    if (!token) return alert("Configurez votre token sur la page planning.");
-    
-    const statusLabel = document.getElementById('save-status');
-    const dot = document.getElementById('workflow-dot');
-    const text = document.getElementById('workflow-text');
-
-    // --- ÉTAT : SYNCHRONISATION EN COURS ---
-    statusLabel.innerText = "⏳ SYNCHRONISATION..."; 
-    statusLabel.style.opacity = "1";
-    dot.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse"; // Orange clignotant
-    text.innerText = "ACTIONS : SYNC...";
-
-    try {
-        const res = await fetch(`https://api.github.com/repos/${REPO_NAME}/contents/taches.json`, {
-            headers: { 'Authorization': `token ${token}` }
-        });
-        
-        if (!res.ok) throw new Error("Fichier introuvable");
-        const file = await res.json();
-        
-        const update = await fetch(`https://api.github.com/repos/${REPO_NAME}/contents/taches.json`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: "Update taches",
-                content: btoa(unescape(encodeURIComponent(JSON.stringify(allTasks, null, 2)))),
-                sha: file.sha
-            })
-        });
-
-        if (update.ok) {
-            // --- ÉTAT : RÉUSSITE ---
-            statusLabel.innerText = "✅ ENREGISTRÉ";
-            dot.className = "w-2 h-2 rounded-full bg-emerald-500"; // Vert
-            text.innerText = "ACTIONS : SUCCESS";
-            
-            localStorage.setItem('cache_taches', JSON.stringify(allTasks));
-
-            setTimeout(() => {
-                statusLabel.style.opacity = "0";
-                dot.className = "w-2 h-2 rounded-full bg-slate-300"; // Retour au gris
-                text.innerText = "ACTIONS : IDLE";
-            }, 3000);
-        } else {
-            throw new Error("Erreur HTTP");
+        async function deleteTask() {
+            if (confirm("Supprimer définitivement cette tâche ?")) {
+                await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
+                closeEditModal();
+            }
         }
-    } catch (e) {
-        // --- ÉTAT : ERREUR ---
-        statusLabel.innerText = "❌ ERREUR SYNC";
-        dot.className = "w-2 h-2 rounded-full bg-red-500"; // Rouge
-        text.innerText = "ACTIONS : ERROR";
-        console.error(e);
-    }
-}
-
-        function openHelpModal() {
-    document.getElementById('help-modal').classList.remove('hidden');
-}
-
-function closeHelpModal() {
-    document.getElementById('help-modal').classList.add('hidden');
-}
-
-        window.onload = init;
     </script>
 </body>
 </html>
