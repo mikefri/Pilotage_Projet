@@ -456,34 +456,49 @@ async function updateQuick(id, data) {
 }
 
 async function addOrUpdateProject() {
-    const startVal = document.getElementById('p-start').value;
-    const endVal = document.getElementById('p-end').value;
-    if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
-        alert("Erreur de dates !"); return;
+    try {
+        const startVal = document.getElementById('p-start').value;
+        const endVal = document.getElementById('p-end').value;
+
+        // 1. Vérification des dates
+        if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
+            alert("Erreur de dates ! La fin ne peut pas être avant le début."); 
+            return;
+        }
+
+        // 2. Récupération de l'utilisateur pour le suivi
+        const user = auth.currentUser;
+        const editorName = user ? (user.displayName || user.email.split('@')[0]) : "Inconnu";
+        const now = new Date();
+        const dateString = now.toLocaleDateString('fr-FR') + " à " + now.getHours() + "h" + now.getMinutes().toString().padStart(2, '0');
+
+        // 3. Préparation des données
+        const id = document.getElementById('p-id').value || "ID-" + Date.now();
+        const pData = {
+            id: id,
+            name: document.getElementById('p-name').value,
+            owner: document.getElementById('p-owner').value,
+            status: document.getElementById('p-status').value,
+            start: startVal,
+            end: endVal,
+            progress: parseInt(document.getElementById('p-progress').value) || 0,
+            // CHAMPS DE SUIVI
+            lastEditedBy: editorName,
+            lastEditedAt: dateString
+        };
+
+        // 4. Envoi à Firebase
+        const { ref, set } = window.fbMethods;
+        await set(ref(window.fbDB, 'projects/' + id), pData);
+
+        // 5. Fermeture et succès
+        closeForm();
+        showStatus("ENREGISTRÉ");
+
+    } catch (error) {
+        console.error("Erreur lors de l'enregistrement :", error);
+        alert("Erreur de connexion à la base de données.");
     }
-
-    // RÉCUPÉRATION DE L'UTILISATEUR CONNECTÉ
-    const user = auth.currentUser; 
-    const editorName = user ? (user.displayName || user.email) : "Système";
-
-    const id = document.getElementById('p-id').value || "ID-" + Date.now();
-    
-    const pData = {
-        id,
-        name: document.getElementById('p-name').value,
-        owner: document.getElementById('p-owner').value,
-        status: document.getElementById('p-status').value,
-        start: startVal,
-        end: endVal,
-        progress: parseInt(document.getElementById('p-progress').value) || 0,
-        // NOUVEAUX CHAMPS DE SUIVI
-        lastEditedBy: editorName,
-        lastEditedAt: new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
-    };
-
-    await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'projects/' + id), pData);
-    closeForm();
-    showStatus("ENREGISTRÉ");
 }
 
         async function deleteProject() {
