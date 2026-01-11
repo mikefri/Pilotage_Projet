@@ -149,23 +149,37 @@ window.logout = async () => {
 <body class="text-slate-900 font-sans">
 
     <div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
-            <div class="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100 mb-6">
-                <img src="icon.png" class="w-12 h-12 invert brightness-0" alt="Logo">
-            </div>
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
-            <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
+    <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
+        <div class="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100 mb-6">
+            <img src="icon.png" class="w-12 h-12 invert brightness-0" alt="Logo">
+        </div>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
+        <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
 
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email professionnel" 
-                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
-                <input type="password" id="login-password" placeholder="Mot de passe" 
-                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
-                <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">SE CONNECTER</button>
-                <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
-            </div>
+        <div class="space-y-4">
+            <input type="email" id="login-email" placeholder="Email professionnel" autocomplete="off"
+                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+            
+            <div class="relative">
+                <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password"
+                    class="w-full p-4 pr-12 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+                
+                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">
+                    <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </button>
+            </div> 
+
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                SE CONNECTER
+            </button>
+            
+            <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
         </div>
     </div>
+</div>
 
     <div id="logout-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-500">
     <div class="text-center">
@@ -487,6 +501,30 @@ window.logout = async () => {
         document.getElementById('p-progress').oninput = function() {
             document.getElementById('prog-val').innerText = this.value + "%";
         };
+
+
+        window.togglePasswordVisibility = function() {
+    const passwordInput = document.getElementById('login-password');
+    const eyeIcon = document.getElementById('eye-icon');
+    
+    if (passwordInput.type === 'password') {
+        // Afficher le mot de passe
+        passwordInput.type = 'text';
+        // Changer l'icône (œil barré)
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.059 10.059 0 014.473-4.474M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.359a10.014 10.014 0 01-1.125 1.125m-1.513-1.513l-3.374-3.374m0 0l-1.125-1.125m1.125 1.125l3.374 3.374M9 4.612A9.965 9.965 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        `;
+    } else {
+        // Cacher le mot de passe
+        passwordInput.type = 'password';
+        // Remettre l'icône normale
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        `;
+    }
+};
+        
     </script>
 </body>
 </html>
