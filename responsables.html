@@ -10,75 +10,68 @@
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+<script>
+    let responsables = {};
+    let statusOnline = {};
 
-        // Config Firebase (Inchangée)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
-            authDomain: "pilotage-gantt.firebaseapp.com",
-            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "pilotage-gantt",
-            storageBucket: "pilotage-gantt.firebasestorage.app",
-            messagingSenderId: "1064606456262",
-            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-
-        window.fbDB = db;
-        window.fbMethods = { ref, set, onValue, remove, update };
-
-        window.login = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (e) {
-                document.getElementById('login-error').innerText = "Identifiants incorrects";
-                document.getElementById('login-error').classList.remove('hidden');
-            }
-        };
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        document.getElementById('login-screen').classList.add('hidden');
-        
-        // --- NOUVEAU : GESTION DE LA PRÉSENCE ---
-        const userStatusRef = ref(db, 'status/' + btoa(user.email).replace(/[/+=]/g, ""));
-        const connectedRef = ref(db, '.info/connected');
-
-        onValue(connectedRef, (snap) => {
-            if (snap.val() === true) {
-                // Quand je me déconnecte (fermeture onglet), Firebase met "offline"
-                update(userStatusRef, { state: 'online', last_changed: Date.now() });
-                set(ref(db, 'status/' + btoa(user.email).replace(/[/+=]/g, "")), { state: 'online' });
-                // Action automatique à la déconnexion
-                onDisconnect(userStatusRef).set({ state: 'offline', last_changed: Date.now() });
-            }
+    // 1. Écoute les statuts de tout le monde
+    function listenToStatus() {
+        const { onValue, ref } = window.fbMethods;
+        onValue(ref(window.fbDB, 'status'), (snapshot) => {
+            statusOnline = snapshot.val() || {};
+            renderList(); // Relance le dessin de la liste pour afficher les points verts
         });
-        // ---------------------------------------
-
-        loadRespos();
-    } else {
-        document.getElementById('login-screen').classList.remove('hidden');
     }
-});
 
-// Ajoute cette fonction pour écouter les statuts de TOUTE l'équipe
-let statusOnline = {};
-function listenToStatus() {
-    const { onValue, ref } = window.fbMethods;
-    onValue(ref(window.fbDB, 'status'), (snapshot) => {
-        statusOnline = snapshot.val() || {};
-        renderList(); // On rafraîchit la liste dès qu'un statut change
-    });
-}
-    </script>
+    // 2. Charge la liste des membres
+    function loadRespos() {
+        if (!window.fbMethods) return setTimeout(loadRespos, 100);
+        const { onValue, ref } = window.fbMethods;
+        
+        listenToStatus(); 
+
+        onValue(ref(window.fbDB, 'responsables'), (snapshot) => {
+            responsables = snapshot.val() || {};
+            renderList();
+        });
+    }
+
+    // 3. Dessine les cartes avec le point vert
+    function renderList() {
+        const list = document.getElementById('respo-list');
+        const keys = Object.keys(responsables);
+        
+        list.innerHTML = keys.map(id => {
+            const respo = responsables[id];
+            const initial = respo.name.charAt(0).toUpperCase();
+            
+            // Vérification du statut online
+            const sId = btoa(respo.email).replace(/[/+=]/g, "");
+            const isOnline = statusOnline[sId] && statusOnline[sId].state === 'online';
+
+            return `
+                <div class="group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-indigo-500">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-lg group-hover:scale-110 transition-transform">
+                                ${initial}
+                            </div>
+                            ${isOnline ? '<span class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm animate-pulse"></span>' : ''}
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-black text-slate-700 leading-tight">${respo.name}</span>
+                            <span class="text-xs font-medium text-slate-400 mt-1">${respo.email || 'Email non renseigné'}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editRespo('${id}')" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-xl transition-all">✏️</button>
+                        <button onclick="removeRespo('${id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-xl transition-all">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+</script>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
