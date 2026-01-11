@@ -44,14 +44,40 @@
             }
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('login-screen').classList.add('hidden');
-                loadRespos();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        document.getElementById('login-screen').classList.add('hidden');
+        
+        // --- NOUVEAU : GESTION DE LA PRÉSENCE ---
+        const userStatusRef = ref(db, 'status/' + btoa(user.email).replace(/[/+=]/g, ""));
+        const connectedRef = ref(db, '.info/connected');
+
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                // Quand je me déconnecte (fermeture onglet), Firebase met "offline"
+                update(userStatusRef, { state: 'online', last_changed: Date.now() });
+                set(ref(db, 'status/' + btoa(user.email).replace(/[/+=]/g, "")), { state: 'online' });
+                // Action automatique à la déconnexion
+                onDisconnect(userStatusRef).set({ state: 'offline', last_changed: Date.now() });
             }
         });
+        // ---------------------------------------
+
+        loadRespos();
+    } else {
+        document.getElementById('login-screen').classList.remove('hidden');
+    }
+});
+
+// Ajoute cette fonction pour écouter les statuts de TOUTE l'équipe
+let statusOnline = {};
+function listenToStatus() {
+    const { onValue, ref } = window.fbMethods;
+    onValue(ref(window.fbDB, 'status'), (snapshot) => {
+        statusOnline = snapshot.val() || {};
+        renderList(); // On rafraîchit la liste dès qu'un statut change
+    });
+}
     </script>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
