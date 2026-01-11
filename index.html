@@ -307,6 +307,7 @@ onAuthStateChanged(auth, (user) => {
                     start: p.start || new Date().toISOString().split('T')[0],
                     end: p.end || new Date().toISOString().split('T')[0],
                     progress: p.progress || 0
+                    custom_class: p.status === "Terminé" ? 'project-finished' : ''
                 };
             });
 
