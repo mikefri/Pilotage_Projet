@@ -50,13 +50,29 @@
             }
         };
 
-        window.logout = async () => {
+window.logout = async () => {
+    const logoutScreen = document.getElementById('logout-screen');
+    const loginScreen = document.getElementById('login-screen');
+    
     try {
+        // 1. Afficher l'écran d'au revoir
+        logoutScreen.classList.remove('hidden');
+        
+        // 2. Déconnexion Firebase
         await signOut(auth);
-        // On recharge la page pour vider la mémoire et revenir à l'état initial
-        window.location.reload(); 
-    } catch (error) {
-        console.error("Erreur de déconnexion", error);
+        
+        // 3. Petite pause pour laisser le message visible
+        setTimeout(() => {
+            // 4. Cacher l'écran d'au revoir
+            logoutScreen.classList.add('hidden');
+            
+            // 5. Recharger proprement la page pour revenir au login vide
+            window.location.reload();
+        }, 2000); 
+
+    } catch (e) {
+        console.error("Erreur déconnexion:", e);
+        window.location.reload();
     }
 };
 
@@ -149,6 +165,17 @@
             </div>
         </div>
     </div>
+
+    <div id="logout-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[300] hidden">
+    <div class="text-center animate-pulse">
+        <div class="bg-white/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span class="text-5xl">👋</span>
+        </div>
+        <h2 class="text-3xl font-black text-white tracking-tight">Au revoir !</h2>
+        <p class="text-slate-400 mt-2">Déconnexion sécurisée en cours...</p>
+    </div>
+</div>
+    
 
     <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
     <div class="flex items-center gap-5">
