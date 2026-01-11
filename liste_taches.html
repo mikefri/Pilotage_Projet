@@ -138,7 +138,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-
+        
+        window.auth = auth;
         window.fbDB = db;
         window.fbMethods = { ref, set, onValue, update, remove };
 
