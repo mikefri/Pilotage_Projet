@@ -50,7 +50,15 @@
             }
         };
 
-        window.logout = () => signOut(auth);
+        window.logout = async () => {
+    try {
+        await signOut(auth);
+        // On recharge la page pour vider la mémoire et revenir à l'état initial
+        window.location.reload(); 
+    } catch (error) {
+        console.error("Erreur de déconnexion", error);
+    }
+};
 
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
