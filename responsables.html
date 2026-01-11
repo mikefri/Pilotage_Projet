@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestion de l'Équipe</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animation pour l'apparition des membres */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .member-card {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        /* Scrollbar discrète pour la liste */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e2e8f0;
+            border-radius: 10px;
+        }
+    </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -25,7 +43,6 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        // Export pour le script classique
         window.fbDB = db;
         window.fbMethods = { ref, set, onValue, remove, update, onDisconnect };
 
@@ -43,14 +60,10 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('login-screen').classList.add('hidden');
-                
-                // Gestion Présence
                 const statusId = btoa(user.email).replace(/[/+=]/g, "");
                 const userStatusRef = ref(db, 'status/' + statusId);
                 onDisconnect(userStatusRef).set({ state: 'offline' });
                 set(userStatusRef, { state: 'online' });
-
-                // Lancement du chargement
                 loadRespos();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
@@ -74,12 +87,10 @@
 
 <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center shadow-sm sticky top-0 z-40">
     <div class="flex items-center gap-4">
-        <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-md">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg">P</div>
         <h1 class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Pilotage Équipe</h1>
     </div>
-    
     <div class="flex-1"></div>
-
     <div class="flex items-center gap-6">
         <div id="save-status" class="hidden md:block text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 opacity-0 transition-all duration-500"></div>
         <a href="profil.html" class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-bold transition-colors">
@@ -90,37 +101,56 @@
     </div>
 </nav>
 
-<main class="max-w-4xl mx-auto p-6 md:p-12">
-    <div class="mb-10 flex justify-between items-end">
+<main class="max-w-7xl mx-auto p-6 lg:p-12">
+    <div class="mb-12 flex justify-between items-end">
         <div>
             <h1 class="text-4xl font-black text-slate-800 tracking-tight">L'Équipe</h1>
-            <p class="text-slate-500 mt-2">Gérez les membres.</p>
+            <p class="text-slate-500 mt-2 font-medium">Gérez les collaborateurs et leur visibilité.</p>
         </div>
-        <div class="text-slate-400 text-sm font-medium" id="member-count">0 membre(s)</div>
+        <div class="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm text-slate-500 text-sm font-bold" id="member-count">0 membre(s)</div>
     </div>
 
-    <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100 mb-12">
-        <input type="hidden" id="edit-id">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input type="text" id="respo-name" placeholder="Nom du responsable" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500">
-            <input type="email" id="respo-email" placeholder="email@sncf.fr" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500">
+    <div class="flex flex-col lg:flex-row gap-10 items-start">
+        
+        <div class="w-full lg:w-[380px] lg:sticky lg:top-28">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
+                <h2 class="text-lg font-black mb-6 flex items-center gap-2">
+                    <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
+                    Nouveau membre
+                </h2>
+                <input type="hidden" id="edit-id">
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 ml-2 mb-1 block uppercase tracking-wider">Nom & Prénom</label>
+                        <input type="text" id="respo-name" placeholder="ex: Jean Dupont" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 ml-2 mb-1 block uppercase tracking-wider">Email SNCF</label>
+                        <input type="email" id="respo-email" placeholder="prenom.nom@sncf.fr" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+                </div>
+                <div class="mt-8 space-y-3">
+                    <button id="btn-save" onclick="saveResponsable()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:scale-95">Ajouter à l'équipe</button>
+                    <button id="btn-cancel" onclick="resetForm()" class="hidden w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black hover:bg-slate-200 transition-all">Annuler</button>
+                </div>
+            </div>
         </div>
-        <div class="mt-8 flex gap-3">
-            <button id="btn-save" onclick="saveResponsable()" class="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">Ajouter à l'équipe</button>
-            <button id="btn-cancel" onclick="resetForm()" class="hidden flex-1 px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black">Annuler</button>
+
+        <div class="flex-1 w-full">
+            <div id="respo-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
         </div>
     </div>
-
-    <div id="respo-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 </main>
 
 <div id="custom-modal" class="hidden fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-[2rem] shadow-2xl max-w-sm w-full p-8 text-center">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 text-center">
+        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
         <h3 id="modal-title" class="text-xl font-black mb-2"></h3>
         <p id="modal-text" class="text-slate-500 mb-8"></p>
         <div class="flex gap-3">
-            <button id="modal-cancel" class="flex-1 px-6 py-3 bg-slate-100 rounded-xl font-bold">Non</button>
-            <button id="modal-confirm" class="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl font-bold shadow-lg">Supprimer</button>
+            <button id="modal-cancel" class="flex-1 px-6 py-4 bg-slate-100 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+            <button id="modal-confirm" class="flex-1 px-6 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all">Supprimer</button>
         </div>
     </div>
 </div>
@@ -140,9 +170,7 @@
     function loadRespos() {
         if (!window.fbMethods) return setTimeout(loadRespos, 100);
         const { onValue, ref } = window.fbMethods;
-        
         listenToStatus(); 
-
         onValue(ref(window.fbDB, 'responsables'), (snapshot) => {
             responsables = snapshot.val() || {};
             renderList();
@@ -156,7 +184,7 @@
         
         if (keys.length === 0) {
             list.classList.remove('grid');
-            list.innerHTML = `<div class="w-full text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400">Aucun membre.</div>`;
+            list.innerHTML = `<div class="w-full text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 text-slate-400 font-medium italic">Aucun membre dans l'équipe.</div>`;
             return;
         }
 
@@ -164,25 +192,24 @@
         list.innerHTML = keys.map(id => {
             const respo = responsables[id];
             const initial = respo.name ? respo.name.charAt(0).toUpperCase() : '?';
-            
             const sId = btoa(respo.email).replace(/[/+=]/g, "");
             const isOnline = statusOnline[sId] && statusOnline[sId].state === 'online';
 
             return `
-                <div class="group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-indigo-500">
+                <div class="member-card group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-indigo-500">
                     <div class="flex items-center gap-4">
                         <div class="relative">
-                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-lg">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-50 text-indigo-600 flex items-center justify-center font-black text-lg border border-slate-100">
                                 ${initial}
                             </div>
-                            ${isOnline ? '<span class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full animate-pulse shadow-sm"></span>' : ''}
+                            ${isOnline ? '<span class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full animate-pulse"></span>' : ''}
                         </div>
                         <div class="flex flex-col">
                             <span class="font-black text-slate-700 leading-tight">${respo.name}</span>
-                            <span class="text-xs font-medium text-slate-400 mt-1">${respo.email || 'Pas d\'email'}</span>
+                            <span class="text-xs font-medium text-slate-400 mt-1">${respo.email}</span>
                         </div>
                     </div>
-                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
                         <button onclick="editRespo('${id}')" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-xl transition-all">✏️</button>
                         <button onclick="removeRespo('${id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-xl transition-all">🗑️</button>
                     </div>
@@ -211,8 +238,9 @@
         document.getElementById('edit-id').value = id;
         document.getElementById('respo-name').value = respo.name;
         document.getElementById('respo-email').value = respo.email;
-        document.getElementById('btn-save').innerText = "Enregistrer les modifications";
+        document.getElementById('btn-save').innerText = "Enregistrer";
         document.getElementById('btn-cancel').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function resetForm() {
