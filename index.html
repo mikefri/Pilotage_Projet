@@ -53,28 +53,27 @@
 window.logout = async () => {
     const logoutScreen = document.getElementById('logout-screen');
     
+    // 1. Vider immédiatement les champs de texte
+    document.getElementById('login-email').value = "";
+    document.getElementById('login-password').value = "";
+    
     try {
-        // 1. Afficher l'écran (on retire hidden d'abord)
         logoutScreen.classList.remove('hidden');
-        
-        // 2. Petit délai pour déclencher l'animation d'opacité (Tailwind transition)
         setTimeout(() => {
             logoutScreen.classList.remove('opacity-0');
             logoutScreen.classList.add('opacity-100');
         }, 10);
 
-        // 3. Déconnexion Firebase effective
         await signOut(auth);
         
-        // 4. On attend 2.5 secondes pour que l'utilisateur voit le message
+        // 2. On attend la fin du message d'au revoir
         setTimeout(() => {
-            // 5. Redirection/Rechargement vers la page de login
+            // Le reload réinitialise tout le contexte JavaScript
             window.location.reload();
         }, 2500);
 
     } catch (e) {
-        console.error("Erreur déconnexion:", e);
-        window.location.reload(); // En cas d'erreur, on recharge quand même par sécurité
+        window.location.reload();
     }
 };
 
