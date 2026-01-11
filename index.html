@@ -17,7 +17,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -56,8 +56,19 @@
             const loginScreen = document.getElementById('login-screen');
             if (user) {
                 if (loginScreen) loginScreen.classList.add('hidden');
-                if (typeof loadAllData === "function") loadAllData();
+                
+                // Déclenchement du chargement et du statut
+                loadAllData(); 
                 setupConnectionStatus();
+                
+                const statusId = btoa(user.email).replace(/[/+=]/g, "");
+                const userStatusRef = ref(db, 'status/' + statusId);
+                onValue(ref(db, '.info/connected'), (snap) => {
+                    if (snap.val() === true) {
+                        onDisconnect(userStatusRef).set({ state: 'offline' });
+                        set(userStatusRef, { state: 'online' });
+                    }
+                });
             } else {
                 if (loginScreen) loginScreen.classList.remove('hidden');
             }
@@ -69,7 +80,7 @@
                 const txt = document.getElementById('workflow-text');
                 if (dot && txt) {
                     dot.className = snap.val() ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-red-500 animate-pulse";
-                    txt.innerText = snap.val() ? "BEYOND CLOUD : ONLINE" : "BEYOND CLOUD : OFFLINE";
+                    txt.innerText = snap.val() ? "CLOUD : ONLINE" : "CLOUD : OFFLINE";
                 }
             });
         }
@@ -266,13 +277,21 @@
         }
 
         function loadProjectInForm(id) {
-            if (!id) { closeForm(); openForm(); return; }
+            if (!id) { 
+                document.getElementById('p-id').value = '';
+                document.getElementById('p-name').value = '';
+                document.getElementById('p-progress').value = 0;
+                document.getElementById('prog-val').innerText = "0%";
+                document.getElementById('btn-delete').classList.add('hidden');
+                return; 
+            }
             editProject(id);
         }
 
         function renderGantt(view = currentView) {
             currentView = view;
             const chartEl = document.getElementById('gantt-chart');
+            
             if (!projects || projects.length === 0) {
                 chartEl.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold italic">Aucun projet actif.</div>`;
                 return;
@@ -286,11 +305,13 @@
                     name: `${p.name} [${displayName}]`,
                     start: p.start || new Date().toISOString().split('T')[0],
                     end: p.end || new Date().toISOString().split('T')[0],
-                    progress: p.progress || 0
+                    progress: p.progress || 0,
+                    custom_class: p.status === "Terminé" ? 'project-finished' : ''
                 };
             });
 
             chartEl.innerHTML = '';
+            
             gantt = new Gantt("#gantt-chart", tasks, {
                 language: 'fr',
                 view_mode: view,
@@ -306,15 +327,19 @@
             setTimeout(() => {
                 projects.forEach(p => {
                     const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
-                    if (bar) bar.style.setProperty('fill', getColor(p.owner), 'important');
+                    if (bar) {
+                        const color = p.status === "Terminé" ? '#94a3b8' : getColor(p.owner);
+                        bar.style.setProperty('fill', color, 'important');
+                    }
                 });
+                
                 document.querySelectorAll('.gantt .grid-row text').forEach((el, idx) => {
                     el.onclick = (e) => {
                         e.stopPropagation();
                         if(projects[idx]) editProject(projects[idx].id);
                     };
                 });
-            }, 100);
+            }, 150);
         }
 
         async function updateQuick(id, data) {
@@ -375,6 +400,7 @@
                 document.getElementById('p-progress').value = 0;
                 document.getElementById('prog-val').innerText = "0%";
                 document.getElementById('btn-delete').classList.add('hidden');
+                document.getElementById('project-selector').value = '';
             }
             document.getElementById('form-overlay').classList.add('modal-active'); 
         }

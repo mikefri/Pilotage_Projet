@@ -137,14 +137,43 @@
         };
 
         onAuthStateChanged(auth, (user) => {
-            const loginScreen = document.getElementById('login-screen');
-            if (user) {
-                if (loginScreen) loginScreen.classList.add('hidden');
-                loadData();
-            } else {
-                if (loginScreen) loginScreen.classList.remove('hidden');
+    const loginScreen = document.getElementById('login-screen');
+    
+    if (user) {
+        // 1. Masquer l'écran de login
+        if (loginScreen) loginScreen.classList.add('hidden');
+        
+        // 2. Charger les données existantes
+        loadData();
+
+        // 3. --- GESTION DE LA PRÉSENCE (Point Vert) ---
+        // On crée un identifiant unique basé sur l'email
+        const statusId = btoa(user.email).replace(/[/+=]/g, "");
+        const userStatusRef = ref(db, 'status/' + statusId);
+        const connectedRef = ref(db, '.info/connected');
+
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                // Si on ferme l'onglet ou perd le réseau, Firebase mettra "offline"
+                onDisconnect(userStatusRef).set({ 
+                    state: 'offline', 
+                    last_changed: Date.now() 
+                });
+                
+                // On se déclare "online" immédiatement
+                set(userStatusRef, { 
+                    state: 'online', 
+                    last_changed: Date.now() 
+                });
             }
         });
+        // ----------------------------------------------
+
+    } else {
+        // Afficher le login si déconnecté
+        if (loginScreen) loginScreen.classList.remove('hidden');
+    }
+});
     </script>
 </head>
 <body class="bg-[#F8FAFC] text-slate-900 font-sans">
