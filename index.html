@@ -54,31 +54,24 @@
 
 onAuthStateChanged(auth, (user) => {
     const loginScreen = document.getElementById('login-screen');
-    
     if (user) {
-        // 1. Masquer l'écran de login
         if (loginScreen) loginScreen.classList.add('hidden');
         
-        // 2. Lancer tes fonctions habituelles
-        if (typeof loadAllData === "function") loadAllData();
+        // C'est cet appel qui déclenche l'affichage au démarrage
+        loadAllData(); 
+        
         setupConnectionStatus();
-
-        // 3. GESTION DE LA PRÉSENCE (Le point vert)
+        
+        // Gestion présence
         const statusId = btoa(user.email).replace(/[/+=]/g, "");
         const userStatusRef = ref(db, 'status/' + statusId);
-        const connectedRef = ref(db, '.info/connected');
-
-        onValue(connectedRef, (snap) => {
+        onValue(ref(db, '.info/connected'), (snap) => {
             if (snap.val() === true) {
-                // Prépare le passage en "offline" automatique à la fermeture
                 onDisconnect(userStatusRef).set({ state: 'offline' });
-                // Marque "online" immédiatement
                 set(userStatusRef, { state: 'online' });
             }
         });
-
     } else {
-        // Si pas connecté, afficher le login
         if (loginScreen) loginScreen.classList.remove('hidden');
     }
 });
@@ -290,26 +283,61 @@ onAuthStateChanged(auth, (user) => {
             editProject(id);
         }
 
-        function renderGantt(view = currentView) {
-            currentView = view;
-            const chartEl = document.getElementById('gantt-chart');
-            if (!projects || projects.length === 0) {
-                chartEl.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold italic">Aucun projet actif.</div>`;
-                return;
-            }
+function renderGantt(view = currentView) {
+    currentView = view;
+    const chartEl = document.getElementById('gantt-chart');
+    
+    if (!projects || projects.length === 0) {
+        chartEl.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold italic">Aucun projet actif.</div>`;
+        return;
+    }
 
-            const tasks = projects.map(p => {
-                const respoFound = responsables.find(r => r.id === p.owner);
-                const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
-                return {
-                    id: p.id,
-                    name: `${p.name} [${displayName}]`,
-                    start: p.start || new Date().toISOString().split('T')[0],
-                    end: p.end || new Date().toISOString().split('T')[0],
-                    progress: p.progress || 0
-                    custom_class: p.status === "Terminé" ? 'project-finished' : ''
-                };
-            });
+    const tasks = projects.map(p => {
+        const respoFound = responsables.find(r => r.id === p.owner);
+        const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
+        return {
+            id: p.id,
+            name: `${p.name} [${displayName}]`,
+            start: p.start || new Date().toISOString().split('T')[0],
+            end: p.end || new Date().toISOString().split('T')[0],
+            progress: p.progress || 0,
+            custom_class: p.status === "Terminé" ? 'project-finished' : ''
+        };
+    });
+
+    chartEl.innerHTML = ''; // Nettoie avant de redessiner
+    
+    gantt = new Gantt("#gantt-chart", tasks, {
+        language: 'fr',
+        view_mode: view,
+        bar_height: 38,
+        on_click: task => { window.location.href = `liste_taches.html?id=${task.id}`; },
+        on_date_change: (task, start, end) => updateQuick(task.id, {
+            start: start.toISOString().split('T')[0],
+            end: end.toISOString().split('T')[0]
+        }),
+        on_progress_change: (task, progress) => updateQuick(task.id, { progress })
+    });
+
+    // Correction des couleurs après rendu
+    setTimeout(() => {
+        projects.forEach(p => {
+            const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
+            if (bar) {
+                const color = p.status === "Terminé" ? '#94a3b8' : getColor(p.owner);
+                bar.style.setProperty('fill', color, 'important');
+            }
+        });
+        
+        // Permet d'ouvrir l'édition en cliquant sur le texte à gauche
+        document.querySelectorAll('.gantt .grid-row text').forEach((el, idx) => {
+            el.onclick = (e) => {
+                e.stopPropagation();
+                if(projects[idx]) editProject(projects[idx].id);
+            };
+        });
+    }, 150);
+}
 
             chartEl.innerHTML = '';
             gantt = new Gantt("#gantt-chart", tasks, {
