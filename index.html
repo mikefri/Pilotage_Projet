@@ -52,16 +52,36 @@
 
         window.logout = () => signOut(auth);
 
-        onAuthStateChanged(auth, (user) => {
-            const loginScreen = document.getElementById('login-screen');
-            if (user) {
-                if (loginScreen) loginScreen.classList.add('hidden');
-                if (typeof loadAllData === "function") loadAllData();
-                setupConnectionStatus();
-            } else {
-                if (loginScreen) loginScreen.classList.remove('hidden');
+onAuthStateChanged(auth, (user) => {
+    const loginScreen = document.getElementById('login-screen');
+    
+    if (user) {
+        // 1. Masquer l'écran de login
+        if (loginScreen) loginScreen.classList.add('hidden');
+        
+        // 2. Lancer tes fonctions habituelles
+        if (typeof loadAllData === "function") loadAllData();
+        setupConnectionStatus();
+
+        // 3. GESTION DE LA PRÉSENCE (Le point vert)
+        const statusId = btoa(user.email).replace(/[/+=]/g, "");
+        const userStatusRef = ref(db, 'status/' + statusId);
+        const connectedRef = ref(db, '.info/connected');
+
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                // Prépare le passage en "offline" automatique à la fermeture
+                onDisconnect(userStatusRef).set({ state: 'offline' });
+                // Marque "online" immédiatement
+                set(userStatusRef, { state: 'online' });
             }
         });
+
+    } else {
+        // Si pas connecté, afficher le login
+        if (loginScreen) loginScreen.classList.remove('hidden');
+    }
+});
 
         function setupConnectionStatus() {
             onValue(ref(db, ".info/connected"), (snap) => {
