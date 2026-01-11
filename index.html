@@ -324,6 +324,13 @@ window.logout = async () => {
                     <button id="btn-delete" onclick="showDeleteConfirm()" class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER LE PROJET</button>
                 </div>
             </div>
+
+
+            <div id="edit-info" class="mt-6 pt-4 border-t border-slate-50 text-[10px] text-slate-400 italic hidden">
+                    Dernière modif : <span id="last-edit-text">-</span>
+            </div>
+
+            
         </aside>
     </div>
 
@@ -434,31 +441,50 @@ window.logout = async () => {
             }, 150);
         }
 
-        async function updateQuick(id, data) {
-            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'projects/' + id), data);
-            showStatus("SYNCHRO OK");
-        }
+async function updateQuick(id, data) {
+    const user = auth.currentUser;
+    const editorName = user ? (user.displayName || user.email) : "Système";
 
-        async function addOrUpdateProject() {
-            const startVal = document.getElementById('p-start').value;
-            const endVal = document.getElementById('p-end').value;
-            if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
-                alert("Erreur de dates !"); return;
-            }
-            const id = document.getElementById('p-id').value || "ID-" + Date.now();
-            const pData = {
-                id,
-                name: document.getElementById('p-name').value,
-                owner: document.getElementById('p-owner').value,
-                status: document.getElementById('p-status').value,
-                start: startVal,
-                end: endVal,
-                progress: parseInt(document.getElementById('p-progress').value) || 0
-            };
-            await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'projects/' + id), pData);
-            closeForm();
-            showStatus("ENREGISTRÉ");
-        }
+    const extendedData = {
+        ...data,
+        lastEditedBy: editorName,
+        lastEditedAt: new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+    };
+
+    await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'projects/' + id), extendedData);
+    showStatus("SYNCHRO OK");
+}
+
+async function addOrUpdateProject() {
+    const startVal = document.getElementById('p-start').value;
+    const endVal = document.getElementById('p-end').value;
+    if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
+        alert("Erreur de dates !"); return;
+    }
+
+    // RÉCUPÉRATION DE L'UTILISATEUR CONNECTÉ
+    const user = auth.currentUser; 
+    const editorName = user ? (user.displayName || user.email) : "Système";
+
+    const id = document.getElementById('p-id').value || "ID-" + Date.now();
+    
+    const pData = {
+        id,
+        name: document.getElementById('p-name').value,
+        owner: document.getElementById('p-owner').value,
+        status: document.getElementById('p-status').value,
+        start: startVal,
+        end: endVal,
+        progress: parseInt(document.getElementById('p-progress').value) || 0,
+        // NOUVEAUX CHAMPS DE SUIVI
+        lastEditedBy: editorName,
+        lastEditedAt: new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+    };
+
+    await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'projects/' + id), pData);
+    closeForm();
+    showStatus("ENREGISTRÉ");
+}
 
         async function deleteProject() {
             const id = document.getElementById('p-id').value;
@@ -469,21 +495,40 @@ window.logout = async () => {
             }
         }
 
-        function editProject(id) {
-            const p = projects.find(i => i.id === id);
-            if(!p) return;
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-owner').value = p.owner;
-            document.getElementById('p-status').value = p.status;
-            document.getElementById('p-start').value = p.start;
-            document.getElementById('p-end').value = p.end;
-            document.getElementById('p-progress').value = p.progress;
-            document.getElementById('prog-val').innerText = p.progress + "%";
-            document.getElementById('btn-delete').classList.remove('hidden');
-            document.getElementById('project-selector').value = p.id;
-            openForm(true);
-        }
+function editProject(id) {
+    const p = projects.find(i => i.id === id);
+    if(!p) return;
+
+    // Remplissage des champs classiques
+    document.getElementById('p-id').value = p.id;
+    document.getElementById('p-name').value = p.name;
+    document.getElementById('p-owner').value = p.owner;
+    document.getElementById('p-status').value = p.status;
+    document.getElementById('p-start').value = p.start;
+    document.getElementById('p-end').value = p.end;
+    document.getElementById('p-progress').value = p.progress;
+    document.getElementById('prog-val').innerText = p.progress + "%";
+    
+    // Gestion du sélecteur de projet et du bouton supprimer
+    document.getElementById('btn-delete').classList.remove('hidden');
+    document.getElementById('project-selector').value = p.id;
+
+    // --- LOGIQUE DE SUIVI DES MODIFICATIONS ---
+    const infoBox = document.getElementById('edit-info');
+    const infoText = document.getElementById('last-edit-text');
+
+    if (p.lastEditedBy && p.lastEditedAt) {
+        // Si les données de suivi existent, on les affiche
+        if (infoBox) infoBox.classList.remove('hidden');
+        if (infoText) infoText.innerText = `${p.lastEditedBy} le ${p.lastEditedAt}`;
+    } else {
+        // Sinon, on cache la zone pour les anciens projets
+        if (infoBox) infoBox.classList.add('hidden');
+    }
+    // ------------------------------------------
+
+    openForm(true);
+}
 
         function openForm(isEdit = false) { 
             if (isEdit !== true) {
