@@ -143,6 +143,13 @@ window.logout = async () => {
     background-color: #c7d2fe;
     transform: translateY(-1px);
 }
+
+        /* Animation d'entrée pour la modale */
+    .animate-in { animation: modalScale 0.2s ease-out forwards; }
+    @keyframes modalScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
         
     </style>
 </head>
@@ -524,7 +531,45 @@ window.logout = async () => {
         `;
     }
 };
+
+
+        // Affiche la nouvelle modale au lieu du "confirm" par défaut
+function showDeleteConfirm() {
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    document.getElementById('confirm-modal').classList.add('flex');
+}
+
+// Ferme la modale si on annule
+function closeDeleteConfirm() {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    document.getElementById('confirm-modal').classList.remove('flex');
+}
+
+// Fonction qui exécute la suppression après clic sur le bouton rouge
+async function confirmDeleteProject() {
+    const id = document.getElementById('p-id').value;
+    if (id) {
+        await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'projects/' + id));
+        closeDeleteConfirm(); // Ferme la petite modale
+        closeForm();          // Ferme le formulaire d'édition
+        showStatus("EFFACÉ"); // Affiche ta notification de succès
+    }
+}
         
     </script>
+
+<div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-white text-center animate-in zoom-in duration-200">
+        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+        <h3 class="text-xl font-black text-slate-800 mb-2 tracking-tight">Supprimer ce projet ?</h3>
+        <p class="text-slate-500 text-sm mb-8 leading-relaxed">Cette action est irréversible. Toutes les données du projet seront perdues.</p>
+        <div class="flex gap-3">
+            <button onclick="closeDeleteConfirm()" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+            <button onclick="confirmDeleteProject()" class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Supprimer</button>
+        </div>
+    </div>
+</div>
+
+    
 </body>
 </html>
