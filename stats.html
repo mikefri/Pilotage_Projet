@@ -150,42 +150,66 @@
             </div>`;
         }
 
-        function renderDashboard(projects, tasks, responsables) {
-            const activeGrid = document.getElementById('active-projects-grid');
-            const completedGrid = document.getElementById('completed-projects-grid');
-            activeGrid.innerHTML = '';
-            completedGrid.innerHTML = '';
-            
-            const projectArray = Object.values(projects);
-            const activeProjs = projectArray.filter(p => p.status !== 'termine');
-            const completedProjs = projectArray.filter(p => p.status === 'termine');
+function renderDashboard(projects, tasks, responsables) {
+    const activeGrid = document.getElementById('active-projects-grid');
+    const completedGrid = document.getElementById('completed-projects-grid');
+    activeGrid.innerHTML = '';
+    completedGrid.innerHTML = '';
+    
+    const projectArray = Object.values(projects);
 
-            // Update Global Stats
-            let totalTasks = tasks.length;
-            let totalDone = tasks.filter(t => t.done).length;
-            let today = new Date().setHours(0,0,0,0);
-            let totalDelays = tasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
-            let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+    // FILTRAGE INTELLIGENT (Gère "Terminé", "termine", "Termine", etc.)
+    const activeProjs = projectArray.filter(p => {
+        const s = (p.status || "").toLowerCase();
+        // Un projet est actif s'il n'est pas "terminé" (avec ou sans accent)
+        return s !== 'terminé' && s !== 'termine';
+    });
 
-            document.getElementById('stat-total-projects').innerText = activeProjs.length;
-            document.getElementById('stat-total-delays').innerText = totalDelays;
-            document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
-            document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+    const completedProjs = projectArray.filter(p => {
+        const s = (p.status || "").toLowerCase();
+        // Un projet est complété s'il est marqué "terminé" (avec ou sans accent)
+        return s === 'terminé' || s === 'termine';
+    });
 
-            // Render Actifs
-            if(activeProjs.length === 0) activeGrid.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400'>Aucun projet actif.</p>";
-            activeProjs.forEach(p => {
-                const pTasks = tasks.filter(t => t.projectId === p.id);
-                const owner = responsables[p.owner]?.name || "Inconnu";
-                activeGrid.innerHTML += createCard(p, pTasks, owner, false);
-            });
+    // --- MISE À JOUR DES COMPTEURS DU HAUT ---
+    let totalTasks = tasks.length;
+    let totalDone = tasks.filter(t => t.done).length;
+    let today = new Date().setHours(0,0,0,0);
+    
+    // On ne compte les retards que pour les projets ACTIFS
+    let activeIds = activeProjs.map(p => p.id);
+    let totalDelays = tasks.filter(t => 
+        activeIds.includes(t.projectId) && !t.done && t.date && new Date(t.date) < today
+    ).length;
 
-            // Render Terminés
-            completedProjs.forEach(p => {
-                const pTasks = tasks.filter(t => t.projectId === p.id);
-                completedGrid.innerHTML += createCard(p, pTasks, "", true);
-            });
-        }
+    let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+    document.getElementById('stat-total-projects').innerText = activeProjs.length;
+    document.getElementById('stat-total-delays').innerText = totalDelays;
+    document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
+    document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+
+    // --- RENDU DES PROJETS ACTIFS ---
+    if(activeProjs.length === 0) {
+        activeGrid.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet en cours.</p>";
+    } else {
+        activeProjs.forEach(p => {
+            const pTasks = tasks.filter(t => t.projectId === p.id);
+            const owner = responsables[p.owner]?.name || "Inconnu";
+            activeGrid.innerHTML += createCard(p, pTasks, owner, false);
+        });
+    }
+
+    // --- RENDU DES ARCHIVES (TERMINÉS) ---
+    if(completedProjs.length > 0) {
+        completedProjs.forEach(p => {
+            const pTasks = tasks.filter(t => t.projectId === p.id);
+            completedGrid.innerHTML += createCard(p, pTasks, "", true);
+        });
+    } else {
+        completedGrid.innerHTML = "<p class='col-span-full text-sm text-slate-400'>Aucune archive pour le moment.</p>";
+    }
+}
     </script>
 </body>
 </html>
