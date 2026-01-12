@@ -255,7 +255,7 @@
 
         <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning Projet</h2>
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning</h2>
                 <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
             </div>
             <div id="gantt-scroll-container" class="overflow-x-auto relative">
@@ -273,31 +273,73 @@
 
         const dec = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch(e) { return str; } };
 
-        function loadData() {
-            if (!window.fbMethods) return setTimeout(loadData, 100);
-            const { onValue, ref } = window.fbMethods;
+function loadData() {
+    if (!window.fbMethods) return setTimeout(loadData, 100);
+    const { onValue, ref } = window.fbMethods;
 
-            onValue(ref(window.fbDB, 'responsables'), (snap) => {
-                responsables = snap.val() ? Object.values(snap.val()) : [];
-                const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                document.getElementById('task-who').innerHTML = options;
-                document.getElementById('edit-task-who').innerHTML = options;
-                document.getElementById('filter-who').innerHTML = '<option value="all">👥 Tous les responsables</option>' + options;
-            });
+    // 1. Chargement des responsables
+    onValue(ref(window.fbDB, 'responsables'), (snap) => {
+        responsables = snap.val() ? Object.values(snap.val()) : [];
+        
+        // Options pour les menus d'ajout et d'édition (tous les responsables)
+        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        document.getElementById('task-who').innerHTML = options;
+        document.getElementById('edit-task-who').innerHTML = options;
 
-            onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
-                currentProject = snap.val();
-                if (currentProject) {
-                    document.getElementById('project-title').innerText = "📝 " + currentProject.name;
-                    renderTasks();
-                }
-            });
+        // Appel de la mise à jour du filtre de recherche
+        updateFilterDropdown();
+    });
 
-            onValue(ref(window.fbDB, 'taches'), (snap) => {
-                allTasks = snap.val() ? Object.values(snap.val()) : [];
-                renderTasks();
-            });
+    // 2. Chargement du projet actuel
+    onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+        currentProject = snap.val();
+        if (currentProject) {
+            document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+            
+            // Récupération du responsable du projet pour les infos
+            const respo = responsables.find(r => r.id === currentProject.owner);
+            const ownerName = respo ? respo.name : currentProject.owner;
+            const infoEl = document.getElementById('project-info');
+            if (infoEl) infoEl.innerText = "Responsable : " + ownerName;
+            
+            renderTasks();
         }
+    });
+
+    // 3. Chargement de toutes les tâches
+    onValue(ref(window.fbDB, 'taches'), (snap) => {
+        allTasks = snap.val() ? Object.values(snap.val()) : [];
+        
+        // On met à jour le filtre de recherche car les tâches ont pu changer
+        updateFilterDropdown();
+        renderTasks();
+    });
+
+    // Fonction interne pour filtrer la liste des responsables dans le menu de recherche
+    function updateFilterDropdown() {
+        const filterEl = document.getElementById('filter-who');
+        if (!filterEl || responsables.length === 0) return;
+
+        // On identifie les IDs des responsables qui ont au moins une tâche dans ce projet
+        const idsActifs = [...new Set(allTasks
+            .filter(t => t.projectId === currentProjectId)
+            .map(t => t.who)
+        )];
+
+        // On filtre la liste globale des responsables pour ne garder que les actifs
+        const responsablesActifs = responsables.filter(r => idsActifs.includes(r.id));
+
+        // On génère le HTML du filtre
+        const filterOptions = responsablesActifs
+            .map(r => `<option value="${r.id}">👤 ${r.name}</option>`)
+            .join('');
+
+        // On conserve la valeur sélectionnée pour ne pas la perdre lors du rafraîchissement
+        const currentSelection = filterEl.value;
+        filterEl.innerHTML = '<option value="all">👥 Tous les responsables du projet</option>' + filterOptions;
+        filterEl.value = currentSelection;
+    }
+}
 
 function renderTasks() {
     if (!currentProject) return;
