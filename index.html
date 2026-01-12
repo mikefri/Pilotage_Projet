@@ -151,6 +151,33 @@ window.logout = async () => {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
     }
+
+
+.resizable-gantt { 
+    overflow: auto; 
+    width: 100%; 
+    background: white; 
+    border-radius: 1.5rem; 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    /* On retire le min-height fixe pour éviter l'espace blanc */
+}
+
+/* Force le SVG à ne pas prendre plus de place que nécessaire */
+#gantt-chart svg {
+    vertical-align: top;
+    display: block;
+}
+
+/* Pour que le scroll soit collé au contenu du Gantt */
+#gantt-container {
+    overflow-x: auto;
+    overflow-y: hidden; /* Évite le double scroll */
+}
+
+
+
+        
         
     </style>
 </head>
@@ -208,7 +235,7 @@ window.logout = async () => {
     <div class="flex items-center gap-5">
         <div class="flex items-center gap-3">
             <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
-            <span class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Pilotage Gantt</span>
+            <span class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Gestion de projet</span>
         </div>
         <div id="workflow-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
             <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
@@ -242,11 +269,12 @@ window.logout = async () => {
     </div>
 </nav>
 
-    <main class="p-4 md:p-8 max-w-[1920px] mx-auto">
+    <main class="w-full px-4 md:px-6 py-4 mx-auto">
+    <div class="px-6 py-8">
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
             <div>
-                <h2 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Planning Opérationnel</h2>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Tableau de bord</h1>
+                <h2 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Performance Méthodes Logistique Industrielle</h2>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Planning</h1>
             </div>
             
             <div class="flex items-center gap-4">
@@ -258,11 +286,12 @@ window.logout = async () => {
                 </div>
             </div>
         </div>
+    </div>
 
-        <div id="gantt-container" class="resizable-gantt">
-            <div id="gantt-chart"></div>
-        </div>
-    </main>
+    <div id="gantt-container" class="resizable-gantt border-x-0">
+        <div id="gantt-chart"></div>
+    </div>
+</main>
 
     <div id="form-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
         <aside class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-white animate-in zoom-in duration-300">
