@@ -151,6 +151,33 @@ window.logout = async () => {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
     }
+
+
+.resizable-gantt { 
+    overflow: auto; 
+    width: 100%; 
+    background: white; 
+    border-radius: 1.5rem; 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    /* On retire le min-height fixe pour éviter l'espace blanc */
+}
+
+/* Force le SVG à ne pas prendre plus de place que nécessaire */
+#gantt-chart svg {
+    vertical-align: top;
+    display: block;
+}
+
+/* Pour que le scroll soit collé au contenu du Gantt */
+#gantt-container {
+    overflow-x: auto;
+    overflow-y: hidden; /* Évite le double scroll */
+}
+
+
+
+        
         
     </style>
 </head>
