@@ -242,7 +242,8 @@ window.logout = async () => {
     </div>
 </nav>
 
-    <main class="p-4 md:p-8 max-w-[1920px] mx-auto">
+    <main class="w-full">
+    <div class="px-6 py-8">
         <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
             <div>
                 <h2 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Planning Opérationnel</h2>
@@ -258,11 +259,12 @@ window.logout = async () => {
                 </div>
             </div>
         </div>
+    </div>
 
-        <div id="gantt-container" class="resizable-gantt">
-            <div id="gantt-chart"></div>
-        </div>
-    </main>
+    <div id="gantt-container" class="resizable-gantt border-x-0">
+        <div id="gantt-chart"></div>
+    </div>
+</main>
 
     <div id="form-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
         <aside class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-white animate-in zoom-in duration-300">
