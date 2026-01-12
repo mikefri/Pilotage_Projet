@@ -347,72 +347,77 @@ onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
             });
         }
 
-        function renderTasks() {
-            if(!currentProject) return;
-            const container = document.getElementById('gantt-container');
-            const scrollContainer = document.getElementById('gantt-scroll-container');
-            
-            const pStart = new Date(currentProject.start);
-            const pEnd = new Date(currentProject.end);
-            const today = new Date(); today.setHours(0,0,0,0);
-            
-            const diffTime = Math.abs(pEnd - pStart);
-            const projectDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+function renderTasks() {
+    if (!currentProject) return;
+    const container = document.getElementById('gantt-container');
+    const scrollContainer = document.getElementById('gantt-scroll-container');
 
-            const availableWidth = scrollContainer.offsetWidth - 200;
-            const dayWidth = Math.max(45, availableWidth / projectDurationDays);
-            
-            const timelineTotalWidth = (projectDurationDays * dayWidth) + 160; 
-            container.style.width = `${timelineTotalWidth}px`; 
-            container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `160px 0`;
+    const pStart = new Date(currentProject.start);
+    const pEnd = new Date(currentProject.end);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
 
-            let todayLineHTML = '';
-            if (today >= pStart && today <= pEnd) {
-                const daysFromStartToday = (today - pStart) / (24*60*60*1000);
-                todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
-            }
+    const diffTime = Math.abs(pEnd - pStart);
+    const projectDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-            const projectTasks = allTasks.filter(t => t.projectId === currentProjectId).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const availableWidth = scrollContainer.offsetWidth - 200;
+    const dayWidth = Math.max(45, availableWidth / projectDurationDays);
 
-            // Gestion Retards
-            const delayedTasks = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-            const delayContainer = document.getElementById('delay-container');
-            if(delayedTasks.length > 0) {
-                delayContainer.classList.remove('hidden');
-                document.getElementById('delay-count').innerText = delayedTasks.length;
-                document.getElementById('delay-list').innerHTML = delayedTasks.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100"><div class="font-bold text-red-700">${t.desc}</div><div class="flex justify-between text-red-400 italic"><span>${dec(t.who)}</span><span>${new Date(t.date).toLocaleDateString('fr-FR')}</span></div></div>`).join('');
-            } else { delayContainer.classList.add('hidden'); }
+    const timelineTotalWidth = (projectDurationDays * dayWidth) + 160;
+    container.style.width = `${timelineTotalWidth}px`;
+    container.style.backgroundSize = `${dayWidth}px 100%`;
+    container.style.backgroundPosition = `160px 0`;
 
-            let totalHrs = 0;
-            const tasksHTML = projectTasks.map((t) => {
-                totalHrs += parseFloat(t.time || 0);
-                const tDate = t.date ? new Date(t.date) : pStart;
-                const daysFromStart = (tDate - pStart) / (24*60*60*1000);
-                const leftPosPx = Math.max(0, daysFromStart * dayWidth);
-                const dateFr = t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--';
-                const isLate = !t.done && t.date && new Date(t.date) < today;
+    let todayLineHTML = '';
+    if (today >= pStart && today <= pEnd) {
+        const daysFromStartToday = (today - pStart) / (24 * 60 * 60 * 1000);
+        todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
+    }
 
-                const respoTask = responsables.find(r => r.id === t.who);
-                const whoName = respoTask ? respoTask.name : t.who;
+    const projectTasks = allTasks.filter(t => t.projectId === currentProjectId).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                return `
+    // Gestion Retards
+    const delayedTasks = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+    const delayContainer = document.getElementById('delay-container');
+    if (delayedTasks.length > 0) {
+        delayContainer.classList.remove('hidden');
+        document.getElementById('delay-count').innerText = delayedTasks.length;
+        document.getElementById('delay-list').innerHTML = delayedTasks.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100"><div class="font-bold text-red-700">${t.desc}</div><div class="flex justify-between text-red-400 italic"><span>${dec(t.who)}</span><span>${new Date(t.date).toLocaleDateString('fr-FR')}</span></div></div>`).join('');
+    } else { delayContainer.classList.add('hidden'); }
+
+    let totalHrs = 0;
+    const tasksHTML = projectTasks.map((t) => {
+        totalHrs += parseFloat(t.time || 0);
+        const tDate = t.date ? new Date(t.date) : pStart;
+        const daysFromStart = (tDate - pStart) / (24 * 60 * 60 * 1000);
+        const leftPosPx = Math.max(0, daysFromStart * dayWidth);
+        const dateFr = t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--';
+        const isLate = !t.done && t.date && new Date(t.date) < today;
+
+        const respoTask = responsables.find(r => r.id === t.who);
+        const whoName = respoTask ? respoTask.name : t.who;
+
+        // --- PRÉPARATION DE L'INFOBULLE ---
+        // On combine la description et la note (avec un saut de ligne si la note existe)
+        const tooltipText = t.note ? `${t.desc}\nNote : ${t.note}` : t.desc;
+
+        return `
 <div class="gantt-row ${t.done ? 'done' : ''}">
-    <div class="task-label" title="${t.desc}">${t.desc}</div>
+    <div class="task-label" title="${tooltipText}">${t.desc}</div>
     <div class="task-bar ${isLate ? 'bg-red-500 ring-2 ring-red-200' : 'bg-indigo-600'}" 
          style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
-         onclick="openEditModal('${t.id}')">
+         onclick="openEditModal('${t.id}')"
+         title="${tooltipText}">
          <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${whoName}</span>
          ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
     </div>
     <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
          style="left: calc(300px + ${leftPosPx}px);">${dateFr}</div>
 </div>`;
-            }).join('');
+    }).join('');
 
-            container.innerHTML = todayLineHTML + tasksHTML;
-            document.getElementById('total-hours').innerText = `${totalHrs} h total`;
-        }
+    container.innerHTML = todayLineHTML + tasksHTML;
+    document.getElementById('total-hours').innerText = `${totalHrs} h total`;
+}
 
         window.addEventListener('resize', renderTasks);
 async function addTask() {
