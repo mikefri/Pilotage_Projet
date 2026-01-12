@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestion des tâches</title>
     
     <link rel="manifest" href="./manifest.json">
-    
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,100 +23,42 @@
         });
       }
     </script>
+
     <style>
         .done { opacity: 0.4; filter: grayscale(1); }
         .modal-animate { animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
-        .gantt-grid {
-            background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px);
-        }
+        .gantt-grid { background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px); }
+        .gantt-row { height: 50px; position: relative; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; }
 
-        .gantt-row { 
-            height: 50px; 
-            position: relative; 
-            border-bottom: 1px solid #f1f5f9; 
-            display: flex;
-            align-items: center;
-        }
-
-        /* --- MODIFICATION ICI : TITRE COLLANT --- */
         .task-label {
-            position: sticky; /* Reste fixé au scroll */
-            left: 0;         /* Se colle à gauche du container */
-            width: 160px;    /* Un peu plus large pour la lisibilité */
-            min-width: 160px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #475569;
-            z-index: 30;     /* Passe au dessus de la grille et de la ligne rouge */
-            background: white; /* Fond opaque pour ne pas voir la grille derrière */
-            padding-left: 10px;
-            padding-right: 15px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            border-right: 1px solid #e2e8f0;
-            box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05); /* Ombre légère pour séparer */
+            position: sticky; left: 0; width: 160px; min-width: 160px;
+            font-size: 11px; font-weight: 700; color: #475569; z-index: 30;
+            background: white; padding-left: 10px; padding-right: 15px;
+            height: 100%; display: flex; align-items: center;
+            border-right: 1px solid #e2e8f0; box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .task-bar { 
-            height: 28px; 
-            position: absolute; 
-            border-radius: 6px; 
-            display: flex; 
-            align-items: center; 
-            padding: 0 12px; 
-            font-size: 11px; 
-            font-weight: bold; 
-            color: white; 
-            cursor: pointer; 
-            transition: all 0.2s;
-            white-space: nowrap;
+            height: 28px; position: absolute; border-radius: 6px; 
+            display: flex; align-items: center; padding: 0 12px; 
+            font-size: 11px; font-weight: bold; color: white; 
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
         .task-bar:hover { transform: scale(1.02); z-index: 40; }
         
-        .today-line {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background-color: #ef4444;
-            z-index: 20;
-            pointer-events: none;
-        }
-        .today-label {
-            position: absolute;
-            top: -25px;
-            left: -50%;
-            background: #ef4444;
-            color: white;
-            font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-        /* Style du bouton retour personnalisé */
-.btn-retour {
-    background-color: #f1f5f9;
-    color: #475569;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    border-radius: 12px; /* Arrondi moderne */
-    font-weight: 800;
-    font-size: 13px;
-    transition: all 0.2s;
-    text-decoration: none;
-}
+        /* Couleurs Priorités */
+        .prio-haute { border-left: 5px solid #ef4444 !important; }
+        .prio-moyenne { border-left: 5px solid #f59e0b !important; }
+        .prio-basse { border-left: 5px solid #10b981 !important; }
 
-.btn-retour:hover {
-    background-color: #e2e8f0;
-    transform: translateY(-1px);
-}
+        .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: #ef4444; z-index: 20; pointer-events: none; }
+        .today-label { position: absolute; top: -25px; left: -50%; background: #ef4444; color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+
+        .btn-retour { background-color: #f1f5f9; color: #475569; display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 12px; font-weight: 800; font-size: 13px; transition: all 0.2s; text-decoration: none; }
+        .btn-retour:hover { background-color: #e2e8f0; transform: translateY(-1px); }
     </style>
 
     <script type="module">
@@ -161,21 +102,6 @@
             if (user) {
                 if (loginScreen) loginScreen.classList.add('hidden');
                 loadData();
-                const statusId = btoa(user.email).replace(/[/+=]/g, "");
-                const userStatusRef = ref(db, 'status/' + statusId);
-                const connectedRef = ref(db, '.info/connected');
-                onValue(connectedRef, (snap) => {
-                    if (snap.val() === true) {
-                        onDisconnect(userStatusRef).set({ 
-                            state: 'offline', 
-                            last_changed: Date.now() 
-                        });
-                        set(userStatusRef, { 
-                            state: 'online', 
-                            last_changed: Date.now() 
-                        });
-                    }
-                });
             } else {
                 if (loginScreen) loginScreen.classList.remove('hidden');
             }
@@ -200,7 +126,6 @@
     </div>
 
     <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-        
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-800">Détails de la tâche</h3>
@@ -209,12 +134,33 @@
                 </button>
             </div>
             <div class="space-y-4">
-                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none font-bold">
+                
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="edit-task-time" class="p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
-                    <input type="date" id="edit-task-date" class="p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Priorité</label>
+                        <select id="edit-task-prio" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                            <option value="basse">Basse</option>
+                            <option value="moyenne">Moyenne</option>
+                            <option value="haute">Haute</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Responsable</label>
+                        <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
+                    </div>
                 </div>
-                <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none"></select>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Temps (Hrs)</label>
+                        <input type="number" id="edit-task-time" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Échéance</label>
+                        <input type="date" id="edit-task-date" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                    </div>
+                </div>
                 
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes / Instructions</label>
@@ -226,9 +172,11 @@
                     <label for="edit-task-done" class="font-bold text-slate-700">Marquer comme terminé</label>
                 </div>
             </div>
+            
             <div id="task-edit-info" class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 italic hidden">
                 Dernière modif : <span id="task-last-edit-text">-</span>
             </div>
+
             <div class="flex gap-3 mt-8">
                 <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">Annuler</button>
                 <button onclick="saveTaskEdit()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md">Enregistrer</button>
@@ -237,47 +185,41 @@
     </div>
 
     <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-xs w-full p-6 modal-animate text-center border border-slate-200">
-        <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-        </div>
-        <h3 class="text-lg font-bold text-slate-800 mb-2">Supprimer ?</h3>
-        <p class="text-slate-500 text-sm mb-6">Cette action est définitive. Voulez-vous continuer ?</p>
-        <div class="flex gap-3">
-            <button onclick="closeConfirm()" class="flex-1 py-2 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition">Annuler</button>
-            <button onclick="confirmDeletion()" class="flex-1 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl shadow-lg shadow-red-200 hover:bg-red-600 transition">Supprimer</button>
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xs w-full p-6 modal-animate text-center border border-slate-200">
+            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Supprimer ?</h3>
+            <p class="text-slate-500 text-sm mb-6">Cette action est définitive.</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirm()" class="flex-1 py-2 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition">Annuler</button>
+                <button onclick="confirmDeletion()" class="flex-1 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl shadow-lg">Supprimer</button>
+            </div>
         </div>
     </div>
-</div>
 
     <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-    <h1 class="text-xl font-bold flex items-center gap-3">
-        <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
-        <span class="text-slate-800">Gestion des tâches</span>
-    </h1>
-    <div class="flex items-center gap-4">
-        <div id="delay-container" class="hidden relative group">
-            <div class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer hover:bg-red-100 transition">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-                <span id="delay-count">0</span> RETARD(S)
+        <h1 class="text-xl font-bold flex items-center gap-3">
+            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
+            <span class="text-slate-800">Gestion des tâches</span>
+        </h1>
+        <div class="flex items-center gap-4">
+            <div id="delay-container" class="hidden relative group">
+                <div class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer hover:bg-red-100 transition">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <span id="delay-count">0</span> RETARD(S)
+                </div>
+                <div class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
+                    <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
+                </div>
             </div>
-            <div class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
-                <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
-                <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
-            </div>
+            <a href="index.html" class="btn-retour">RETOUR</a>
         </div>
-
-        <a href="index.html" class="btn-retour">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5M5 12L12 19M5 12L12 5"/>
-            </svg>
-            RETOUR
-        </a>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-full mx-auto mt-6 px-4">
         <div class="flex flex-col gap-4 items-start mb-8">
@@ -287,31 +229,37 @@
             </header>
 
             <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-3 w-fit">
-                <div class="flex gap-2 items-center">
+                <div class="flex gap-2 items-center flex-wrap">
                     <input type="text" id="task-desc" placeholder="Nouvelle tâche..." class="w-64 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                     <input type="number" id="task-time" placeholder="Hrs" class="w-14 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                     <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
+                    
+                    <select id="task-prio" class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold text-slate-600">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne" selected>Moyenne</option>
+                        <option value="haute">Haute</option>
+                    </select>
+
                     <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
                     <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">+</button>
-                        <div class="flex gap-2 items-center mt-3 pt-3 border-t border-slate-100">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtrer par :</label>
-                                <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
-                                    <option value="all">Tous les responsables</option>
-                                </select>
-                        </div>
+                    
+                    <div class="w-full flex gap-2 items-center mt-3 pt-3 border-t border-slate-100">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtrer par :</label>
+                        <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
+                            <option value="all">Tous les responsables</option>
+                        </select>
+                    </div>
                 </div>
             </section>
         </div>
 
         <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic"></h2>
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning Projet</h2>
                 <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
             </div>
-            
             <div id="gantt-scroll-container" class="overflow-x-auto relative">
-                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10">
-                    </div>
+                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
             </div>
         </section>
     </main>
@@ -325,219 +273,161 @@
 
         const dec = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch(e) { return str; } };
 
-function loadData() {
-    if (!window.fbMethods) return setTimeout(loadData, 100);
-    const { onValue, ref } = window.fbMethods;
+        function loadData() {
+            if (!window.fbMethods) return setTimeout(loadData, 100);
+            const { onValue, ref } = window.fbMethods;
 
-    // Chargement des responsables et remplissage des listes déroulantes
-    onValue(ref(window.fbDB, 'responsables'), (snap) => {
-        responsables = snap.val() ? Object.values(snap.val()) : [];
-        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-        
-        // Liste dans le formulaire d'ajout
-        document.getElementById('task-who').innerHTML = options;
-        // Liste dans la modale d'édition
-        document.getElementById('edit-task-who').innerHTML = options;
-        
-        // --- NOUVEAU : Liste pour le filtre de recherche ---
-        const filterEl = document.getElementById('filter-who');
-        if (filterEl) {
-            filterEl.innerHTML = '<option value="all">👥 Tous les responsables</option>' + options;
+            onValue(ref(window.fbDB, 'responsables'), (snap) => {
+                responsables = snap.val() ? Object.values(snap.val()) : [];
+                const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                document.getElementById('task-who').innerHTML = options;
+                document.getElementById('edit-task-who').innerHTML = options;
+                document.getElementById('filter-who').innerHTML = '<option value="all">👥 Tous les responsables</option>' + options;
+            });
+
+            onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+                currentProject = snap.val();
+                if (currentProject) {
+                    document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+                    renderTasks();
+                }
+            });
+
+            onValue(ref(window.fbDB, 'taches'), (snap) => {
+                allTasks = snap.val() ? Object.values(snap.val()) : [];
+                renderTasks();
+            });
         }
-    });
 
-    // Chargement du projet actuel
-    onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
-        currentProject = snap.val();
-        if (currentProject) {
-            document.getElementById('project-title').innerText = "📝 " + currentProject.name;
-            const respo = responsables.find(r => r.id === currentProject.owner);
-            const ownerName = respo ? respo.name : currentProject.owner;
-            document.getElementById('project-info').innerText = "Responsable : " + ownerName;
-            renderTasks();
+        function renderTasks() {
+            if (!currentProject) return;
+            const filterValue = document.getElementById('filter-who')?.value || 'all';
+            const container = document.getElementById('gantt-container');
+            const scrollContainer = document.getElementById('gantt-scroll-container');
+
+            const pStart = new Date(currentProject.start);
+            const pEnd = new Date(currentProject.end);
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            const projectDurationDays = Math.ceil(Math.abs(pEnd - pStart) / (1000 * 60 * 60 * 24)) + 1;
+            const dayWidth = Math.max(45, (scrollContainer.offsetWidth - 200) / projectDurationDays);
+
+            container.style.width = `${(projectDurationDays * dayWidth) + 160}px`;
+            container.style.backgroundSize = `${dayWidth}px 100%`;
+            container.style.backgroundPosition = `160px 0`;
+
+            let timelineHTML = '';
+            if (today >= pStart && today <= pEnd) {
+                const daysToday = (today - pStart) / (24 * 60 * 60 * 1000);
+                timelineHTML = `<div class="today-line" style="left: calc(160px + ${daysToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
+            }
+
+            let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
+            if (filterValue !== 'all') filteredTasks = filteredTasks.filter(t => t.who === filterValue);
+            filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Gestion retards
+            const delayed = filteredTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+            document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
+            document.getElementById('delay-count').innerText = delayed.length;
+            document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
+
+            let totalHrs = 0;
+            const tasksHTML = filteredTasks.map((t) => {
+                totalHrs += parseFloat(t.time || 0);
+                const tDate = t.date ? new Date(t.date) : pStart;
+                const leftPosPx = Math.max(0, ((tDate - pStart) / (24 * 60 * 60 * 1000)) * dayWidth);
+                const respo = responsables.find(r => r.id === t.who)?.name || t.who;
+                
+                // Style priorité
+                const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
+                const isLate = !t.done && t.date && new Date(t.date) < today;
+
+                return `
+                <div class="gantt-row ${t.done ? 'done' : ''}">
+                    <div class="task-label">${t.desc}</div>
+                    <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
+                         style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
+                         onclick="openEditModal('${t.id}')">
+                         <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${respo}</span>
+                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                    </div>
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(300px + ${leftPosPx}px);">${t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--'}</div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = timelineHTML + tasksHTML;
+            document.getElementById('total-hours').innerText = `${totalHrs} h total`;
         }
-    });
 
-    // Chargement de toutes les tâches
-    onValue(ref(window.fbDB, 'taches'), (snap) => {
-        allTasks = snap.val() ? Object.values(snap.val()) : [];
-        renderTasks();
-    });
-}
+        async function addTask() {
+            const desc = document.getElementById('task-desc').value.trim();
+            const time = document.getElementById('task-time').value || 0;
+            const who = document.getElementById('task-who').value;
+            const priority = document.getElementById('task-prio').value;
+            const date = document.getElementById('task-date').value || currentProject.start;
+            
+            if(!desc) return;
+            const user = window.auth?.currentUser;
+            const editorName = user ? user.email.split('@')[0] : "Anonyme";
+            const taskId = "TASK-" + Date.now();
 
-function renderTasks() {
-    if (!currentProject) return;
-    
-    // 1. RÉCUPÉRATION DU FILTRE ACTIF
-    const filterValue = document.getElementById('filter-who')?.value || 'all';
-    
-    const container = document.getElementById('gantt-container');
-    const scrollContainer = document.getElementById('gantt-scroll-container');
+            await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), { 
+                id: taskId, projectId: currentProjectId, desc, time, who, date, priority, done: false,
+                lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+            });
+            document.getElementById('task-desc').value = '';
+        }
 
-    const pStart = new Date(currentProject.start);
-    const pEnd = new Date(currentProject.end);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+        function openEditModal(id) {
+            const t = allTasks.find(x => x.id === id);
+            currentEditingId = id;
+            document.getElementById('edit-task-desc').value = t.desc;
+            document.getElementById('edit-task-time').value = t.time;
+            document.getElementById('edit-task-date').value = t.date || '';
+            document.getElementById('edit-task-who').value = t.who;
+            document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
+            document.getElementById('edit-task-done').checked = t.done || false;
+            document.getElementById('edit-task-note').value = t.note || '';
 
-    const diffTime = Math.abs(pEnd - pStart);
-    const projectDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const infoBox = document.getElementById('task-edit-info');
+            if (t.lastEditedBy) {
+                infoBox.classList.remove('hidden');
+                document.getElementById('task-last-edit-text').innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
+            } else infoBox.classList.add('hidden');
 
-    const availableWidth = scrollContainer.offsetWidth - 200;
-    const dayWidth = Math.max(45, availableWidth / projectDurationDays);
-
-    const timelineTotalWidth = (projectDurationDays * dayWidth) + 160;
-    container.style.width = `${timelineTotalWidth}px`;
-    container.style.backgroundSize = `${dayWidth}px 100%`;
-    container.style.backgroundPosition = `160px 0`;
-
-    let todayLineHTML = '';
-    if (today >= pStart && today <= pEnd) {
-        const daysFromStartToday = (today - pStart) / (24 * 60 * 60 * 1000);
-        todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
-    }
-
-    // 2. FILTRAGE ET TRI DES TÂCHES
-    let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
-    
-    if (filterValue !== 'all') {
-        filteredTasks = filteredTasks.filter(t => t.who === filterValue);
-    }
-    
-    filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Gestion Retards (basée sur les tâches filtrées)
-    const delayedTasks = filteredTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-    const delayContainer = document.getElementById('delay-container');
-    if (delayedTasks.length > 0) {
-        delayContainer.classList.remove('hidden');
-        document.getElementById('delay-count').innerText = delayedTasks.length;
-        document.getElementById('delay-list').innerHTML = delayedTasks.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100"><div class="font-bold text-red-700">${t.desc}</div><div class="flex justify-between text-red-400 italic"><span>${dec(t.who)}</span><span>${new Date(t.date).toLocaleDateString('fr-FR')}</span></div></div>`).join('');
-    } else { delayContainer.classList.add('hidden'); }
-
-    let totalHrs = 0;
-    const tasksHTML = filteredTasks.map((t) => {
-        totalHrs += parseFloat(t.time || 0);
-        const tDate = t.date ? new Date(t.date) : pStart;
-        const daysFromStart = (tDate - pStart) / (24 * 60 * 60 * 1000);
-        const leftPosPx = Math.max(0, daysFromStart * dayWidth);
-        const dateFr = t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--';
-        const isLate = !t.done && t.date && new Date(t.date) < today;
-
-        const respoTask = responsables.find(r => r.id === t.who);
-        const whoName = respoTask ? respoTask.name : t.who;
-
-        // INFOBULLE (Description + Note)
-        const tooltipText = t.note ? `${t.desc}\nNote : ${t.note}` : t.desc;
-
-        return `
-<div class="gantt-row ${t.done ? 'done' : ''}">
-    <div class="task-label" title="${tooltipText}">${t.desc}</div>
-    <div class="task-bar ${isLate ? 'bg-red-500 ring-2 ring-red-200' : 'bg-indigo-600'}" 
-         style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
-         onclick="openEditModal('${t.id}')"
-         title="${tooltipText}">
-         <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${whoName}</span>
-         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
-    </div>
-    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
-         style="left: calc(300px + ${leftPosPx}px);">${dateFr}</div>
-</div>`;
-    }).join('');
-
-    container.innerHTML = todayLineHTML + tasksHTML;
-    document.getElementById('total-hours').innerText = `${totalHrs} h total`;
-}
-
-        window.addEventListener('resize', renderTasks);
-async function addTask() {
-    const desc = document.getElementById('task-desc').value.trim();
-    const time = document.getElementById('task-time').value || 0;
-    const who = document.getElementById('task-who').value;
-    const date = document.getElementById('task-date').value || currentProject.start;
-    
-    if(!desc) return;
-
-    // Récupération de l'utilisateur
-    const user = window.auth ? window.auth.currentUser : null;
-    const editorName = user ? (user.email.split('@')[0]) : "Anonyme";
-    const dateString = new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-
-    const taskId = "TASK-" + Date.now();
-    await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), { 
-        id: taskId, 
-        projectId: currentProjectId, 
-        desc, 
-        time, 
-        who, 
-        date, 
-        done: false,
-        // Suivi initial
-        lastEditedBy: editorName,
-        lastEditedAt: dateString
-    });
-    document.getElementById('task-desc').value = '';
-}
-
-function openEditModal(id) {
-    const t = allTasks.find(x => x.id === id);
-    currentEditingId = id;
-    document.getElementById('edit-task-desc').value = t.desc;
-    document.getElementById('edit-task-time').value = t.time;
-    document.getElementById('edit-task-date').value = t.date || '';
-    document.getElementById('edit-task-who').value = t.who;
-    document.getElementById('edit-task-done').checked = t.done || false;
-    document.getElementById('edit-task-note').value = t.note || '';
-
-    // --- AFFICHAGE DU SUIVI ---
-    const infoBox = document.getElementById('task-edit-info');
-    const infoText = document.getElementById('task-last-edit-text');
-    if (t.lastEditedBy && t.lastEditedAt) {
-        infoBox.classList.remove('hidden');
-        infoText.innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
-    } else {
-        infoBox.classList.add('hidden');
-    }
-    // --------------------------
-
-    document.getElementById('edit-modal').classList.remove('hidden');
-}
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
 
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-async function saveTaskEdit() {
-    const user = window.auth ? window.auth.currentUser : null;
-    const editorName = user ? (user.email.split('@')[0]) : "Anonyme";
-    const dateString = new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+        async function saveTaskEdit() {
+            const user = window.auth?.currentUser;
+            const editorName = user ? user.email.split('@')[0] : "Anonyme";
 
-    await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
-        desc: document.getElementById('edit-task-desc').value, 
-        time: document.getElementById('edit-task-time').value,
-        date: document.getElementById('edit-task-date').value, 
-        who: document.getElementById('edit-task-who').value,
-        done: document.getElementById('edit-task-done').checked,
-        note: document.getElementById('edit-task-note').value,
-        // Mise à jour du suivi
-        lastEditedBy: editorName,
-        lastEditedAt: dateString
-    });
-    closeEditModal();
-}
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
+                desc: document.getElementById('edit-task-desc').value, 
+                time: document.getElementById('edit-task-time').value,
+                date: document.getElementById('edit-task-date').value, 
+                who: document.getElementById('edit-task-who').value,
+                priority: document.getElementById('edit-task-prio').value,
+                done: document.getElementById('edit-task-done').checked,
+                note: document.getElementById('edit-task-note').value,
+                lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+            });
+            closeEditModal();
+        }
 
-       function deleteTask() {
-    // Au lieu de confirm(), on affiche notre modale personnalisée
-    document.getElementById('confirm-modal').classList.remove('hidden');
-}
+        function deleteTask() { document.getElementById('confirm-modal').classList.remove('hidden'); }
+        function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
 
-function closeConfirm() {
-    document.getElementById('confirm-modal').classList.add('hidden');
-}
-
-async function confirmDeletion() {
-    if (currentEditingId) {
-        await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
-        closeConfirm();
-        closeEditModal();
-    }
-}
+        async function confirmDeletion() {
+            if (currentEditingId) {
+                await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
+                closeConfirm(); closeEditModal();
+            }
+        }
+        window.addEventListener('resize', renderTasks);
     </script>
 </body>
 </html>
