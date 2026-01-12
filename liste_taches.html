@@ -281,9 +281,17 @@ function loadData() {
     onValue(ref(window.fbDB, 'responsables'), (snap) => {
         responsables = snap.val() ? Object.values(snap.val()) : [];
         
-        // Options pour les menus d'ajout et d'édition (tous les responsables)
+        // Liste standard des responsables
         const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-        document.getElementById('task-who').innerHTML = options;
+        
+        // --- MODIFICATION : CHAMP VIDE AU CHARGEMENT ---
+        // On crée un placeholder uniquement pour le champ de création de tâche
+        const placeholder = '<option value="" disabled selected>Choisir un responsable...</option>';
+        
+        // Le champ de création de tâche aura le "Choisir..." par défaut au chargement
+        document.getElementById('task-who').innerHTML = placeholder + options;
+        
+        // La modale d'édition reçoit la liste normale (pas de champ vide)
         document.getElementById('edit-task-who').innerHTML = options;
 
         // Appel de la mise à jour du filtre de recherche
