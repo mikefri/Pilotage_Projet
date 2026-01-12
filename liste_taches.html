@@ -322,21 +322,57 @@
 
 function loadData() {
     if (!window.fbMethods) return setTimeout(loadData, 100);
-    const { onValue, ref } = window.fbMethods;
+    const { onValue, ref, set, onDisconnect } = window.fbMethods;
 
-    // 1. Gestion des responsables (remplissage de la datalist pour saisie libre)
+    // --- GESTION DES RESPONSABLES (Datalist pour noms libres) ---
     onValue(ref(window.fbDB, 'responsables'), (snap) => {
         responsables = snap.val() ? Object.values(snap.val()) : [];
-        
-        // On crée les options pour la datalist (on utilise le nom comme valeur)
+        // On remplit la datalist pour permettre la saisie libre
         const options = responsables.map(r => `<option value="${r.name}"></option>`).join('');
-        
-        // On cherche la datalist (assurez-vous qu'elle existe dans votre HTML)
         const dl = document.getElementById('list-responsables');
-        if (dl) {
-            dl.innerHTML = options;
+        if (dl) dl.innerHTML = options;
+    });
+
+    // --- GESTION DU PROJET ---
+    onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+        currentProject = snap.val();
+        if(currentProject) {
+            document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+            // On cherche par ID ou par Nom pour le propriétaire
+            const respo = responsables.find(r => r.id === currentProject.owner || r.name === currentProject.owner);
+            const ownerName = respo ? respo.name : currentProject.owner;
+            document.getElementById('project-info').innerText = "Responsable : " + ownerName;
+            renderTasks();
         }
     });
+
+    // --- GESTION DES TÂCHES ---
+    onValue(ref(window.fbDB, 'taches'), (snap) => {
+        allTasks = snap.val() ? Object.values(snap.val()) : [];
+        renderTasks();
+    });
+
+    // --- GESTION DU STATUT DE PRÉSENCE (Ton code d'origine) ---
+    const user = window.auth.currentUser;
+    if (user) {
+        const statusId = btoa(user.email).replace(/[/+=]/g, "");
+        const userStatusRef = ref(window.fbDB, 'status/' + statusId);
+        const connectedRef = ref(window.fbDB, '.info/connected');
+        
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                onDisconnect(userStatusRef).set({ 
+                    state: 'offline', 
+                    last_changed: Date.now() 
+                });
+                set(userStatusRef, { 
+                    state: 'online', 
+                    last_changed: Date.now() 
+                });
+            }
+        });
+    }
+}
 
     // 2. Gestion du projet actuel
     onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
@@ -360,72 +396,83 @@ function loadData() {
     });
 }
 
-        function renderTasks() {
-            if(!currentProject) return;
-            const container = document.getElementById('gantt-container');
-            const scrollContainer = document.getElementById('gantt-scroll-container');
-            
-            const pStart = new Date(currentProject.start);
-            const pEnd = new Date(currentProject.end);
-            const today = new Date(); today.setHours(0,0,0,0);
-            
-            const diffTime = Math.abs(pEnd - pStart);
-            const projectDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+function renderTasks() {
+    if(!currentProject) return;
+    const container = document.getElementById('gantt-container');
+    const scrollContainer = document.getElementById('gantt-scroll-container');
+    
+    const pStart = new Date(currentProject.start);
+    const pEnd = new Date(currentProject.end);
+    const today = new Date(); today.setHours(0,0,0,0);
+    
+    const diffTime = Math.abs(pEnd - pStart);
+    const projectDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-            const availableWidth = scrollContainer.offsetWidth - 200;
-            const dayWidth = Math.max(45, availableWidth / projectDurationDays);
-            
-            const timelineTotalWidth = (projectDurationDays * dayWidth) + 160; 
-            container.style.width = `${timelineTotalWidth}px`; 
-            container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `160px 0`;
+    const availableWidth = scrollContainer.offsetWidth - 200;
+    const dayWidth = Math.max(45, availableWidth / projectDurationDays);
+    
+    const timelineTotalWidth = (projectDurationDays * dayWidth) + 160; 
+    container.style.width = `${timelineTotalWidth}px`; 
+    container.style.backgroundSize = `${dayWidth}px 100%`;
+    container.style.backgroundPosition = `160px 0`;
 
-            let todayLineHTML = '';
-            if (today >= pStart && today <= pEnd) {
-                const daysFromStartToday = (today - pStart) / (24*60*60*1000);
-                todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
-            }
+    // --- Ligne "Aujourd'hui" ---
+    let todayLineHTML = '';
+    if (today >= pStart && today <= pEnd) {
+        const daysFromStartToday = (today - pStart) / (24*60*60*1000);
+        todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
+    }
 
-            const projectTasks = allTasks.filter(t => t.projectId === currentProjectId).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const projectTasks = allTasks.filter(t => t.projectId === currentProjectId).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Gestion Retards
-            const delayedTasks = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-            const delayContainer = document.getElementById('delay-container');
-            if(delayedTasks.length > 0) {
-                delayContainer.classList.remove('hidden');
-                document.getElementById('delay-count').innerText = delayedTasks.length;
-                document.getElementById('delay-list').innerHTML = delayedTasks.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100"><div class="font-bold text-red-700">${t.desc}</div><div class="flex justify-between text-red-400 italic"><span>${dec(t.who)}</span><span>${new Date(t.date).toLocaleDateString('fr-FR')}</span></div></div>`).join('');
-            } else { delayContainer.classList.add('hidden'); }
+    // --- Gestion Retards ---
+    const delayedTasks = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+    const delayContainer = document.getElementById('delay-container');
+    if(delayedTasks.length > 0) {
+        delayContainer.classList.remove('hidden');
+        document.getElementById('delay-count').innerText = delayedTasks.length;
+        document.getElementById('delay-list').innerHTML = delayedTasks.map(t => {
+            // Support nom libre aussi dans la liste des retards
+            const respoRetard = responsables.find(r => r.id === t.who || r.name === t.who);
+            const nameRetard = respoRetard ? respoRetard.name : t.who;
+            return `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100">
+                <div class="font-bold text-red-700">${t.desc}</div>
+                <div class="flex justify-between text-red-400 italic"><span>${nameRetard}</span><span>${new Date(t.date).toLocaleDateString('fr-FR')}</span></div>
+            </div>`;
+        }).join('');
+    } else { delayContainer.classList.add('hidden'); }
 
-            let totalHrs = 0;
-            const tasksHTML = projectTasks.map((t) => {
-                totalHrs += parseFloat(t.time || 0);
-                const tDate = t.date ? new Date(t.date) : pStart;
-                const daysFromStart = (tDate - pStart) / (24*60*60*1000);
-                const leftPosPx = Math.max(0, daysFromStart * dayWidth);
-                const dateFr = t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--';
-                const isLate = !t.done && t.date && new Date(t.date) < today;
+    // --- Rendu des barres ---
+    let totalHrs = 0;
+    const tasksHTML = projectTasks.map((t) => {
+        totalHrs += parseFloat(t.time || 0);
+        const tDate = t.date ? new Date(t.date) : pStart;
+        const daysFromStart = (tDate - pStart) / (24*60*60*1000);
+        const leftPosPx = Math.max(0, daysFromStart * dayWidth);
+        const dateFr = t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--';
+        const isLate = !t.done && t.date && new Date(t.date) < today;
 
-                const respoTask = responsables.find(r => r.id === t.who || r.name === t.who);
-                const whoName = respoTask ? respoTask.name : (t.who || "Inconnu");
+        // --- MODIFICATION ICI : Support ID ou Nom libre ---
+        const respoTask = responsables.find(r => r.id === t.who || r.name === t.who);
+        const whoName = respoTask ? respoTask.name : (t.who || "Inconnu");
 
-                return `
-<div class="gantt-row ${t.done ? 'done' : ''}">
-    <div class="task-label" title="${t.desc}">${t.desc}</div>
-    <div class="task-bar ${isLate ? 'bg-red-500 ring-2 ring-red-200' : 'bg-indigo-600'}" 
-         style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
-         onclick="openEditModal('${t.id}')">
-         <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${whoName}</span>
-         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
-    </div>
-    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
-         style="left: calc(300px + ${leftPosPx}px);">${dateFr}</div>
-</div>`;
-            }).join('');
+        return `
+        <div class="gantt-row ${t.done ? 'done' : ''}">
+            <div class="task-label" title="${t.desc}">${t.desc}</div>
+            <div class="task-bar ${isLate ? 'bg-red-500 ring-2 ring-red-200' : 'bg-indigo-600'}" 
+                 style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
+                 onclick="openEditModal('${t.id}')">
+                 <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${whoName}</span>
+                 ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+            </div>
+            <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
+                 style="left: calc(300px + ${leftPosPx}px);">${dateFr}</div>
+        </div>`;
+    }).join('');
 
-            container.innerHTML = todayLineHTML + tasksHTML;
-            document.getElementById('total-hours').innerText = `${totalHrs} h total`;
-        }
+    container.innerHTML = todayLineHTML + tasksHTML;
+    document.getElementById('total-hours').innerText = `${totalHrs} h total`;
+}
 
         window.addEventListener('resize', renderTasks);
 async function addTask() {
