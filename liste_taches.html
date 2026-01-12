@@ -362,7 +362,10 @@ function renderTasks() {
 
     const pStart = new Date(currentProject.start);
     const pEnd = new Date(currentProject.end);
-    const today = new Date(); today.setHours(0,0,0,0);
+    
+    // Correction de la date d'aujourd'hui pour le calcul
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
     const projectDurationDays = Math.ceil(Math.abs(pEnd - pStart) / (1000 * 60 * 60 * 24)) + 1;
     const dayWidth = Math.max(45, (scrollContainer.offsetWidth - 200) / projectDurationDays);
@@ -371,10 +374,14 @@ function renderTasks() {
     container.style.backgroundSize = `${dayWidth}px 100%`;
     container.style.backgroundPosition = `160px 0`;
 
+    // --- LOGIQUE DE LA BARRE ROUGE REPLACÉE ET CORRIGÉE ---
     let timelineHTML = '';
+    // On vérifie si aujourd'hui est bien dans la plage du projet
     if (today >= pStart && today <= pEnd) {
-        const daysToday = (today - pStart) / (24 * 60 * 60 * 1000);
-        timelineHTML = `<div class="today-line" style="left: calc(160px + ${daysToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
+        const diffTime = today.getTime() - pStart.getTime();
+        const daysToday = diffTime / (24 * 60 * 60 * 1000);
+        const leftPosition = 160 + (daysToday * dayWidth);
+        timelineHTML = `<div class="today-line" style="left: ${leftPosition}px;"><div class="today-label">Aujourd'hui</div></div>`;
     }
 
     let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
@@ -394,9 +401,7 @@ function renderTasks() {
         const leftPosPx = Math.max(0, ((tDate - pStart) / (24 * 60 * 60 * 1000)) * dayWidth);
         const respo = responsables.find(r => r.id === t.who)?.name || t.who;
         
-        // RE-AJOUT DE TON INFOBULLE (Description + Note)
         const tooltipText = t.note ? `${t.desc}\nNote : ${t.note}` : t.desc;
-
         const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
         const isLate = !t.done && t.date && new Date(t.date) < today;
 
@@ -414,6 +419,7 @@ function renderTasks() {
         </div>`;
     }).join('');
 
+    // On injecte la barre rouge AVANT les tâches pour qu'elle soit en fond ou APRES pour qu'elle soit par dessus
     container.innerHTML = timelineHTML + tasksHTML;
     document.getElementById('total-hours').innerText = `${totalHrs} h total`;
 }
