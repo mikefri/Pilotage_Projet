@@ -299,66 +299,69 @@
             });
         }
 
-        function renderTasks() {
-            if (!currentProject) return;
-            const filterValue = document.getElementById('filter-who')?.value || 'all';
-            const container = document.getElementById('gantt-container');
-            const scrollContainer = document.getElementById('gantt-scroll-container');
+function renderTasks() {
+    if (!currentProject) return;
+    const filterValue = document.getElementById('filter-who')?.value || 'all';
+    const container = document.getElementById('gantt-container');
+    const scrollContainer = document.getElementById('gantt-scroll-container');
 
-            const pStart = new Date(currentProject.start);
-            const pEnd = new Date(currentProject.end);
-            const today = new Date(); today.setHours(0,0,0,0);
+    const pStart = new Date(currentProject.start);
+    const pEnd = new Date(currentProject.end);
+    const today = new Date(); today.setHours(0,0,0,0);
 
-            const projectDurationDays = Math.ceil(Math.abs(pEnd - pStart) / (1000 * 60 * 60 * 24)) + 1;
-            const dayWidth = Math.max(45, (scrollContainer.offsetWidth - 200) / projectDurationDays);
+    const projectDurationDays = Math.ceil(Math.abs(pEnd - pStart) / (1000 * 60 * 60 * 24)) + 1;
+    const dayWidth = Math.max(45, (scrollContainer.offsetWidth - 200) / projectDurationDays);
 
-            container.style.width = `${(projectDurationDays * dayWidth) + 160}px`;
-            container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `160px 0`;
+    container.style.width = `${(projectDurationDays * dayWidth) + 160}px`;
+    container.style.backgroundSize = `${dayWidth}px 100%`;
+    container.style.backgroundPosition = `160px 0`;
 
-            let timelineHTML = '';
-            if (today >= pStart && today <= pEnd) {
-                const daysToday = (today - pStart) / (24 * 60 * 60 * 1000);
-                timelineHTML = `<div class="today-line" style="left: calc(160px + ${daysToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
-            }
+    let timelineHTML = '';
+    if (today >= pStart && today <= pEnd) {
+        const daysToday = (today - pStart) / (24 * 60 * 60 * 1000);
+        timelineHTML = `<div class="today-line" style="left: calc(160px + ${daysToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
+    }
 
-            let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
-            if (filterValue !== 'all') filteredTasks = filteredTasks.filter(t => t.who === filterValue);
-            filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+    let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
+    if (filterValue !== 'all') filteredTasks = filteredTasks.filter(t => t.who === filterValue);
+    filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Gestion retards
-            const delayed = filteredTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-            document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
-            document.getElementById('delay-count').innerText = delayed.length;
-            document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
+    // Gestion retards
+    const delayed = filteredTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+    document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
+    document.getElementById('delay-count').innerText = delayed.length;
+    document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
 
-            let totalHrs = 0;
-            const tasksHTML = filteredTasks.map((t) => {
-                totalHrs += parseFloat(t.time || 0);
-                const tDate = t.date ? new Date(t.date) : pStart;
-                const leftPosPx = Math.max(0, ((tDate - pStart) / (24 * 60 * 60 * 1000)) * dayWidth);
-                const respo = responsables.find(r => r.id === t.who)?.name || t.who;
-                
-                // Style priorité
-                const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
-                const isLate = !t.done && t.date && new Date(t.date) < today;
+    let totalHrs = 0;
+    const tasksHTML = filteredTasks.map((t) => {
+        totalHrs += parseFloat(t.time || 0);
+        const tDate = t.date ? new Date(t.date) : pStart;
+        const leftPosPx = Math.max(0, ((tDate - pStart) / (24 * 60 * 60 * 1000)) * dayWidth);
+        const respo = responsables.find(r => r.id === t.who)?.name || t.who;
+        
+        // RE-AJOUT DE TON INFOBULLE (Description + Note)
+        const tooltipText = t.note ? `${t.desc}\nNote : ${t.note}` : t.desc;
 
-                return `
-                <div class="gantt-row ${t.done ? 'done' : ''}">
-                    <div class="task-label">${t.desc}</div>
-                    <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                         style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
-                         onclick="openEditModal('${t.id}')">
-                         <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${respo}</span>
-                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
-                    </div>
-                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(300px + ${leftPosPx}px);">${t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--'}</div>
-                </div>`;
-            }).join('');
+        const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
+        const isLate = !t.done && t.date && new Date(t.date) < today;
 
-            container.innerHTML = timelineHTML + tasksHTML;
-            document.getElementById('total-hours').innerText = `${totalHrs} h total`;
-        }
+        return `
+        <div class="gantt-row ${t.done ? 'done' : ''}">
+            <div class="task-label" title="${tooltipText}">${t.desc}</div>
+            <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
+                 style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
+                 onclick="openEditModal('${t.id}')"
+                 title="${tooltipText}">
+                 <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${respo}</span>
+                 ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+            </div>
+            <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(300px + ${leftPosPx}px);">${t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--'}</div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = timelineHTML + tasksHTML;
+    document.getElementById('total-hours').innerText = `${totalHrs} h total`;
+}
 
         async function addTask() {
             const desc = document.getElementById('task-desc').value.trim();
