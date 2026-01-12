@@ -293,6 +293,12 @@
                     <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
                     <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
                     <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">+</button>
+                        <div class="flex gap-2 items-center mt-3 pt-3 border-t border-slate-100">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtrer par :</label>
+                                <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
+                                    <option value="all">Tous les responsables</option>
+                                </select>
+                        </div>
                 </div>
             </section>
         </div>
@@ -319,36 +325,52 @@
 
         const dec = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch(e) { return str; } };
 
-        function loadData() {
-            if (!window.fbMethods) return setTimeout(loadData, 100);
-            const { onValue, ref } = window.fbMethods;
+function loadData() {
+    if (!window.fbMethods) return setTimeout(loadData, 100);
+    const { onValue, ref } = window.fbMethods;
 
-onValue(ref(window.fbDB, 'responsables'), (snap) => {
-    responsables = snap.val() ? Object.values(snap.val()) : [];
-    const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-    document.getElementById('task-who').innerHTML = options;
-    document.getElementById('edit-task-who').innerHTML = options;
-});
-
-onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
-    currentProject = snap.val();
-    if(currentProject) {
-        document.getElementById('project-title').innerText = "📝 " + currentProject.name;
-        const respo = responsables.find(r => r.id === currentProject.owner);
-        const ownerName = respo ? respo.name : currentProject.owner;
-        document.getElementById('project-info').innerText = "Responsable : " + ownerName;
-        renderTasks();
-    }
-});
-
-            onValue(ref(window.fbDB, 'taches'), (snap) => {
-                allTasks = snap.val() ? Object.values(snap.val()) : [];
-                renderTasks();
-            });
+    // Chargement des responsables et remplissage des listes déroulantes
+    onValue(ref(window.fbDB, 'responsables'), (snap) => {
+        responsables = snap.val() ? Object.values(snap.val()) : [];
+        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        
+        // Liste dans le formulaire d'ajout
+        document.getElementById('task-who').innerHTML = options;
+        // Liste dans la modale d'édition
+        document.getElementById('edit-task-who').innerHTML = options;
+        
+        // --- NOUVEAU : Liste pour le filtre de recherche ---
+        const filterEl = document.getElementById('filter-who');
+        if (filterEl) {
+            filterEl.innerHTML = '<option value="all">👥 Tous les responsables</option>' + options;
         }
+    });
+
+    // Chargement du projet actuel
+    onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+        currentProject = snap.val();
+        if (currentProject) {
+            document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+            const respo = responsables.find(r => r.id === currentProject.owner);
+            const ownerName = respo ? respo.name : currentProject.owner;
+            document.getElementById('project-info').innerText = "Responsable : " + ownerName;
+            renderTasks();
+        }
+    });
+
+    // Chargement de toutes les tâches
+    onValue(ref(window.fbDB, 'taches'), (snap) => {
+        allTasks = snap.val() ? Object.values(snap.val()) : [];
+        renderTasks();
+    });
+}
 
 function renderTasks() {
     if (!currentProject) return;
+    
+    // 1. RÉCUPÉRATION DU FILTRE ACTIF
+    const filterValue = document.getElementById('filter-who')?.value || 'all';
+    
     const container = document.getElementById('gantt-container');
     const scrollContainer = document.getElementById('gantt-scroll-container');
 
@@ -373,10 +395,17 @@ function renderTasks() {
         todayLineHTML = `<div class="today-line" style="left: calc(160px + ${daysFromStartToday * dayWidth}px);"><div class="today-label">Aujourd'hui</div></div>`;
     }
 
-    const projectTasks = allTasks.filter(t => t.projectId === currentProjectId).sort((a, b) => new Date(a.date) - new Date(b.date));
+    // 2. FILTRAGE ET TRI DES TÂCHES
+    let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
+    
+    if (filterValue !== 'all') {
+        filteredTasks = filteredTasks.filter(t => t.who === filterValue);
+    }
+    
+    filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Gestion Retards
-    const delayedTasks = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+    // Gestion Retards (basée sur les tâches filtrées)
+    const delayedTasks = filteredTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
     const delayContainer = document.getElementById('delay-container');
     if (delayedTasks.length > 0) {
         delayContainer.classList.remove('hidden');
@@ -385,7 +414,7 @@ function renderTasks() {
     } else { delayContainer.classList.add('hidden'); }
 
     let totalHrs = 0;
-    const tasksHTML = projectTasks.map((t) => {
+    const tasksHTML = filteredTasks.map((t) => {
         totalHrs += parseFloat(t.time || 0);
         const tDate = t.date ? new Date(t.date) : pStart;
         const daysFromStart = (tDate - pStart) / (24 * 60 * 60 * 1000);
@@ -396,8 +425,7 @@ function renderTasks() {
         const respoTask = responsables.find(r => r.id === t.who);
         const whoName = respoTask ? respoTask.name : t.who;
 
-        // --- PRÉPARATION DE L'INFOBULLE ---
-        // On combine la description et la note (avec un saut de ligne si la note existe)
+        // INFOBULLE (Description + Note)
         const tooltipText = t.note ? `${t.desc}\nNote : ${t.note}` : t.desc;
 
         return `
