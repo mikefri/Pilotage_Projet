@@ -222,47 +222,53 @@
     </nav>
 
     <main class="max-w-full mx-auto mt-6 px-4">
-        <div class="flex flex-col gap-4 items-start mb-8">
-            <header class="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-3 w-fit min-w-[300px]">
-                <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
-                <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
-            </header>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+        
+        <header class="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-3 min-w-[300px]">
+            <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
+            <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
+        </header>
 
-            <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-3 w-fit">
-                <div class="flex gap-2 items-center flex-wrap">
-                    <input type="text" id="task-desc" placeholder="Nouvelle tâche..." class="w-64 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-                    <input type="number" id="task-time" placeholder="Hrs" class="w-14 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-                    <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
-                    
-                    <select id="task-prio" class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold text-slate-600">
-                        <option value="basse">Basse</option>
-                        <option value="moyenne" selected>Moyenne</option>
-                        <option value="haute">Haute</option>
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+            <div class="flex gap-2 items-center flex-wrap">
+                <input type="text" id="task-desc" placeholder="Nouvelle tâche..." class="w-48 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="number" id="task-time" placeholder="Hrs" class="w-14 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                
+                <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                     </select>
+                
+                <select id="task-prio" class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold text-slate-600">
+                    <option value="basse">Basse</option>
+                    <option value="moyenne" selected>Moyenne</option>
+                    <option value="haute">Haute</option>
+                </select>
 
-                    <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
-                    <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">+</button>
-                    
-                    <div class="w-full flex gap-2 items-center mt-3 pt-3 border-t border-slate-100">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtrer par :</label>
-                        <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
-                            <option value="all">Tous les responsables</option>
-                        </select>
-                    </div>
+                <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
+                
+                <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">
+                    +
+                </button>
+                
+                <div class="flex gap-2 items-center ml-2 pl-2 border-l border-slate-100">
+                    <label class="hidden xl:block text-[9px] font-black text-slate-400 uppercase tracking-widest">Filtrer :</label>
+                    <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
+                        <option value="all">Tous les responsables</option>
+                    </select>
                 </div>
-            </section>
-        </div>
-
-        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning</h2>
-                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
-            </div>
-            <div id="gantt-scroll-container" class="overflow-x-auto relative">
-                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
             </div>
         </section>
-    </main>
+    </div>
+
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning</h2>
+            <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
+        </div>
+        <div id="gantt-scroll-container" class="overflow-x-auto relative">
+            <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
+        </div>
+    </section>
+</main>
 
     <script>
         let allTasks = [];
