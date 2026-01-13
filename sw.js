@@ -1,9 +1,11 @@
-const CACHE_NAME = 'pilotage-v3.1'; // Change le nom à v2, v3... quand tu fais une grosse mise à jour
+const CACHE_NAME = 'pilotage-v3.1.1'; // Change le nom à v2, v3... quand tu fais une grosse mise à jour
 const ASSETS = [
   './',
   './index.html',
   './liste_taches.html',
   './responsables.html',
+  './liste_taches_hors_projet.html',
+  './profil.html',
   './manifest.json',
   './icon.png',
   'https://cdn.tailwindcss.com' // Optionnel : pour que le style marche aussi sans internet
