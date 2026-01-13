@@ -5,6 +5,7 @@ const ASSETS = [
   './liste_taches.html',
   './responsables.html',
   './liste_taches_hors_projet.html',
+  './profil.html',
   './manifest.json',
   './icon.png',
   'https://cdn.tailwindcss.com' // Optionnel : pour que le style marche aussi sans internet
