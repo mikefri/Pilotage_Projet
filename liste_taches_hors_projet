@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tâches Hors-Projet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .done { opacity: 0.5; text-decoration: line-through; }
+        .prio-haute { border-left: 6px solid #ef4444; }
+        .prio-moyenne { border-left: 6px solid #f59e0b; }
+        .prio-basse { border-left: 6px solid #10b981; }
+        .task-card { transition: all 0.2s; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Mêmes configurations que votre projet
+        const firebaseConfig = {
+            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+            authDomain: "pilotage-gantt.firebaseapp.com",
+            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "pilotage-gantt",
+            storageBucket: "pilotage-gantt.firebasestorage.app",
+            messagingSenderId: "1064606456262",
+            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        
+        window.auth = auth;
+        window.fbDB = db;
+        window.fbMethods = { ref, set, onValue, update, remove };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) loadData();
+            else document.getElementById('login-screen').classList.remove('hidden');
+        });
+    </script>
+</head>
+<body class="bg-[#F1F5F9] text-slate-900 font-sans">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
+            <h1 class="text-2xl font-bold mb-6 text-center text-slate-800">Tâches Générales</h1>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email" class="w-full p-3 rounded-xl border border-slate-200 outline-none">
+                <input type="password" id="login-password" placeholder="Mot de passe" class="w-full p-3 rounded-xl border border-slate-200 outline-none">
+                <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">Se connecter</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold">GT</div>
+            <h1 class="text-xl font-bold text-slate-800">Liste Hors-Projet</h1>
+        </div>
+        <a href="index.html" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-200 transition">RETOUR</a>
+    </nav>
+
+    <main class="max-w-4xl mx-auto mt-8 px-4">
+        
+        <section class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <input type="text" id="task-desc" placeholder="Quoi faire ?" class="md:col-span-2 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
+                <select id="task-who" class="p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
+                    <option value="">Chargement...</option>
+                </select>
+                <button onclick="addTask()" class="bg-indigo-600 text-white p-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition">
+                    + Ajouter la tâche
+                </button>
+            </div>
+        </section>
+
+        <div class="flex justify-between items-center mb-4 px-2">
+            <h2 id="count-label" class="text-sm font-bold text-slate-500 uppercase tracking-wider">Tâches en cours</h2>
+            <select id="filter-who" onchange="renderTasks()" class="text-sm font-bold text-indigo-600 bg-transparent outline-none cursor-pointer">
+                <option value="all">Tout le monde</option>
+            </select>
+        </div>
+
+        <div id="tasks-list" class="space-y-3 pb-20">
+            </div>
+    </main>
+
+    <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Modifier la tâche</h3>
+            <div class="space-y-4">
+                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="edit-task-prio" class="p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne">Moyenne</option>
+                        <option value="haute">Haute</option>
+                    </select>
+                    <select id="edit-task-who" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        </select>
+                </div>
+                <textarea id="edit-task-note" rows="3" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm" placeholder="Notes..."></textarea>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
+                    <label for="edit-task-done" class="font-bold text-slate-700">Tâche terminée</label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="deleteTask()" class="p-3 rounded-xl border border-red-100 text-red-500 hover:bg-red-50">Supprimer</button>
+                <button onclick="closeEditModal()" class="flex-1 p-3 rounded-xl border border-slate-200 text-slate-600">Annuler</button>
+                <button onclick="saveTaskEdit()" class="flex-1 p-3 rounded-xl bg-indigo-600 text-white font-bold">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allTasks = [];
+        let responsables = [];
+        let currentEditingId = null;
+        const HORS_PROJET_ID = "hors-projet"; // ID fixe pour cette page
+
+        function loadData() {
+            const { onValue, ref } = window.fbMethods;
+
+            // 1. Responsables
+            onValue(ref(window.fbDB, 'responsables'), (snap) => {
+                responsables = snap.val() ? Object.values(snap.val()) : [];
+                const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                document.getElementById('task-who').innerHTML = '<option value="">Responsable...</option>' + options;
+                document.getElementById('edit-task-who').innerHTML = options;
+                document.getElementById('filter-who').innerHTML = '<option value="all">Tout le monde</option>' + options;
+            });
+
+            // 2. Tâches
+            onValue(ref(window.fbDB, 'taches'), (snap) => {
+                const data = snap.val() ? Object.values(snap.val()) : [];
+                // On filtre pour ne garder que les tâches liées à "hors-projet"
+                allTasks = data.filter(t => t.projectId === HORS_PROJET_ID);
+                renderTasks();
+            });
+        }
+
+        function renderTasks() {
+            const listEl = document.getElementById('tasks-list');
+            const filter = document.getElementById('filter-who').value;
+            
+            let filtered = allTasks;
+            if (filter !== 'all') filtered = allTasks.filter(t => t.who === filter);
+            
+            // Trier : non terminées en haut
+            filtered.sort((a,b) => a.done - b.done);
+
+            document.getElementById('count-label').innerText = `${filtered.length} tâche(s) au total`;
+
+            listEl.innerHTML = filtered.map(t => {
+                const respo = responsables.find(r => r.id === t.who)?.name || "Inconnu";
+                const prioClass = `prio-${t.priority || 'moyenne'}`;
+                
+                return `
+                <div class="task-card bg-white p-4 rounded-2xl border border-slate-200 flex items-center gap-4 ${prioClass} ${t.done ? 'done' : ''}" 
+                     onclick="openEditModal('${t.id}')">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-slate-800">${t.desc}</h3>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded uppercase font-black text-slate-500">${respo}</span>
+                            ${t.note ? '<span class="text-xs">📝</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        ${t.done ? 
+                            '<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[10px] font-bold">TERMINÉ</span>' : 
+                            '<span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">'+(t.priority || 'moyenne')+'</span>'
+                        }
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function addTask() {
+            const desc = document.getElementById('task-desc').value.trim();
+            const who = document.getElementById('task-who').value;
+            if(!desc || !who) return alert("Complétez la description et le responsable");
+
+            const taskId = "TASK-" + Date.now();
+            await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), { 
+                id: taskId, 
+                projectId: HORS_PROJET_ID, 
+                desc, who, 
+                priority: "moyenne", 
+                done: false,
+                lastEditedAt: new Date().toLocaleString('fr-FR')
+            });
+            document.getElementById('task-desc').value = '';
+        }
+
+        function openEditModal(id) {
+            const t = allTasks.find(x => x.id === id);
+            currentEditingId = id;
+            document.getElementById('edit-task-desc').value = t.desc;
+            document.getElementById('edit-task-who').value = t.who;
+            document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
+            document.getElementById('edit-task-done').checked = t.done || false;
+            document.getElementById('edit-task-note').value = t.note || '';
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+        async function saveTaskEdit() {
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
+                desc: document.getElementById('edit-task-desc').value, 
+                who: document.getElementById('edit-task-who').value,
+                priority: document.getElementById('edit-task-prio').value,
+                done: document.getElementById('edit-task-done').checked,
+                note: document.getElementById('edit-task-note').value,
+            });
+            closeEditModal();
+        }
+
+        async function deleteTask() {
+            if(confirm("Supprimer cette tâche ?")) {
+                await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
+                closeEditModal();
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            try {
+                await signInWithEmailAndPassword(window.auth, email, pass);
+                document.getElementById('login-screen').classList.add('hidden');
+            } catch (e) { alert("Erreur d'authentification"); }
+        }
+    </script>
+</body>
+</html>
