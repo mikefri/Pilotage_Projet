@@ -14,16 +14,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('PWA Tasks: Connecté'))
-            .catch(err => console.log('PWA Tasks: Erreur', err));
-        });
-      }
-    </script>
-
     <style>
         .done { opacity: 0.4; filter: grayscale(1); }
         .modal-animate { animation: fadeIn 0.2s ease-out; }
@@ -38,7 +28,7 @@
             background: white; padding-left: 10px; padding-right: 15px;
             height: 100%; display: flex; align-items: center;
             border-right: 1px solid #e2e8f0; box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
-            cursor: help;
+            cursor: help; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         .task-bar { 
@@ -46,7 +36,7 @@
             display: flex; align-items: center; padding: 0 12px; 
             font-size: 11px; font-weight: bold; color: white; 
             cursor: pointer; transition: all 0.2s; white-space: nowrap;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10;
         }
         .task-bar:hover { transform: scale(1.02); z-index: 40; }
         
@@ -125,76 +115,9 @@
         </div>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Détails de la tâche libre</h3>
-                <button onclick="deleteTask()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-                </button>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none font-bold">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Priorité</label>
-                        <select id="edit-task-prio" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-                            <option value="basse">Basse</option>
-                            <option value="moyenne">Moyenne</option>
-                            <option value="haute">Haute</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Responsable</label>
-                        <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Temps (Hrs)</label>
-                        <input type="number" id="edit-task-time" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Échéance</label>
-                        <input type="date" id="edit-task-date" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes / Instructions</label>
-                    <textarea id="edit-task-note" rows="3" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm text-slate-600" placeholder="Précisions..."></textarea>
-                </div>
-                <div class="flex items-center gap-2 py-2">
-                    <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
-                    <label for="edit-task-done" class="font-bold text-slate-700">Marquer comme terminé</label>
-                </div>
-            </div>
-            <div id="task-edit-info" class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 italic hidden">
-                Dernière modif : <span id="task-last-edit-text">-</span>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">Annuler</button>
-                <button onclick="saveTaskEdit()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md">Enregistrer</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-xs w-full p-6 modal-animate text-center border border-slate-200">
-            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-            </div>
-            <h3 class="text-lg font-bold text-slate-800 mb-2">Supprimer ?</h3>
-            <p class="text-slate-500 text-sm mb-6">Cette action est définitive.</p>
-            <div class="flex gap-3">
-                <button onclick="closeConfirm()" class="flex-1 py-2 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition">Annuler</button>
-                <button onclick="confirmDeletion()" class="flex-1 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl shadow-lg">Supprimer</button>
-            </div>
-        </div>
-    </div>
-
     <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold flex items-center gap-3">
-            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
+            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm" onerror="this.src='https://via.placeholder.com/40'">
             <span class="text-slate-800">Tâches Libres</span>
         </h1>
         <div class="flex items-center gap-4">
@@ -207,7 +130,6 @@
                     <span id="delay-count">0</span> RETARD(S)
                 </div>
                 <div class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
-                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
                     <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
                 </div>
             </div>
@@ -216,66 +138,97 @@
     </nav>
 
     <main class="max-w-full mx-auto mt-6 px-4">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-        <header class="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-3 min-w-[300px]">
-            <h1 class="text-lg font-bold text-slate-800 tracking-tight">📝 Dossier : taches_libres</h1>
-            <p class="text-slate-500 text-[11px] italic">Base de données séparée des projets</p>
-        </header>
-
-        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
             <div class="flex gap-2 items-center flex-wrap">
-                <input type="text" id="task-desc" placeholder="Nouvelle tâche libre..." class="w-48 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-                <input type="number" id="task-time" placeholder="Hrs" class="w-14 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="text" id="task-desc" placeholder="Nouvelle tâche libre..." class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="number" id="task-time" placeholder="Hrs" class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
-                <select id="task-prio" class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold text-slate-600">
+                <select id="task-prio" class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold">
                     <option value="basse">Basse</option>
                     <option value="moyenne" selected>Moyenne</option>
                     <option value="haute">Haute</option>
                 </select>
-                <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
-                <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">+</button>
-                <div class="flex gap-2 items-center ml-2 pl-2 border-l border-slate-100">
-                    <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
-                        <option value="all">Tous</option>
-                    </select>
-                </div>
+                <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-xs">
+                <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 shadow-sm">+</button>
+                <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600 ml-2">
+                    <option value="all">Tous</option>
+                </select>
             </div>
         </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest">Planning Libre</h2>
+                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
+            </div>
+            <div id="gantt-scroll-container" class="overflow-x-auto relative">
+                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Détails tâche libre</h3>
+                <button onclick="deleteTask()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none font-bold">
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="edit-task-prio" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne">Moyenne</option>
+                        <option value="haute">Haute</option>
+                    </select>
+                    <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="edit-task-time" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <input type="date" id="edit-task-date" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                </div>
+                <textarea id="edit-task-note" rows="3" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm" placeholder="Notes..."></textarea>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
+                    <label for="edit-task-done" class="font-bold text-slate-700">Terminé</label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeEditModal()" class="flex-1 py-2 rounded-xl border border-slate-200">Annuler</button>
+                <button onclick="saveTaskEdit()" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold">Enregistrer</button>
+            </div>
+        </div>
     </div>
 
-    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-            <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning Libre</h2>
-            <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h</div>
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Supprimer cette tâche ?</h3>
+            <div class="flex gap-3">
+                <button onclick="closeConfirm()" class="flex-1 py-2 bg-slate-100 rounded-xl">Non</button>
+                <button onclick="confirmDeletion()" class="flex-1 py-2 bg-red-500 text-white rounded-xl">Oui, supprimer</button>
+            </div>
         </div>
-        <div id="gantt-scroll-container" class="overflow-x-auto relative">
-            <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
-        </div>
-    </section>
-</main>
+    </div>
 
     <script>
         let allTasks = [];
         let responsables = [];
         let currentEditingId = null;
-        
-        // --- NOM DU DOSSIER DANS FIREBASE ---
         const DB_FOLDER = 'taches_libres';
 
         function loadData() {
             if (!window.fbMethods) return setTimeout(loadData, 100);
             const { onValue, ref } = window.fbMethods;
 
-            // Chargement des responsables (toujours partagés)
             onValue(ref(window.fbDB, 'responsables'), (snap) => {
                 responsables = snap.val() ? Object.values(snap.val()) : [];
                 const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
                 document.getElementById('task-who').innerHTML = '<option value="" disabled selected>Qui ?</option>' + options;
                 document.getElementById('edit-task-who').innerHTML = options;
-                updateFilterDropdown();
             });
 
-            // Chargement depuis le nouveau dossier 'taches_libres'
             onValue(ref(window.fbDB, DB_FOLDER), (snap) => {
                 allTasks = snap.val() ? Object.values(snap.val()) : [];
                 updateFilterDropdown();
@@ -285,7 +238,6 @@
 
         function updateFilterDropdown() {
             const filterEl = document.getElementById('filter-who');
-            if (!filterEl) return;
             const currentSelection = filterEl.value;
             const idsActifs = [...new Set(allTasks.map(t => t.who))];
             const actives = responsables.filter(r => idsActifs.includes(r.id));
@@ -297,66 +249,52 @@
         function renderTasks() {
             const filterValue = document.getElementById('filter-who')?.value || 'all';
             const container = document.getElementById('gantt-container');
-            const scrollContainer = document.getElementById('gantt-scroll-container');
+            
+            const dayWidth = 40; // COLONNES FINES
+            const labelWidth = 160;
+            const nbDaysTotal = 31;
 
             const today = new Date();
             today.setHours(0,0,0,0);
             const viewStart = new Date(today);
             viewStart.setDate(today.getDate() - 15);
-            const viewEnd = new Date(today);
-            viewEnd.setDate(today.getDate() + 15);
 
-            const durationDays = 31;
-            const dayWidth = Math.max(50, (sconst dayWidth = 40; // Largeur fixe plus fine pour une meilleure lecturecrollContainer.offsetWidth - 160) / 10);
-
-            container.style.width = `${(durationDays * dayWidth) + 160}px`;
+            container.style.width = `${(nbDaysTotal * dayWidth) + labelWidth}px`;
             container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `160px 0`;
+            container.style.backgroundPosition = `${labelWidth}px 0`;
 
             const diffToday = (today - viewStart) / (1000 * 60 * 60 * 24);
-            const todayLeft = 160 + (diffToday * dayWidth);
+            const todayLeft = labelWidth + (diffToday * dayWidth);
             let timelineHTML = `<div class="today-line" style="left: ${todayLeft}px;"><div class="today-label">Aujourd'hui</div></div>`;
 
             let filteredTasks = [...allTasks];
             if (filterValue !== 'all') filteredTasks = filteredTasks.filter(t => t.who === filterValue);
-            
-            filteredTasks.sort((a, b) => {
-                if (!a.date) return 1;
-                if (!b.date) return -1;
-                return new Date(a.date) - new Date(b.date);
-            });
+            filteredTasks.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
 
             const delayed = allTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-            const delayContainer = document.getElementById('delay-container');
-            if (delayContainer) {
-                delayContainer.classList.toggle('hidden', delayed.length === 0);
-                document.getElementById('delay-count').innerText = delayed.length;
-                document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
-            }
+            document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
+            document.getElementById('delay-count').innerText = delayed.length;
+            document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
 
             let totalHrs = 0;
             const tasksHTML = filteredTasks.map((t) => {
                 totalHrs += parseFloat(t.time || 0);
                 const tDate = t.date ? new Date(t.date) : today;
                 let leftPosPx = ((tDate - viewStart) / (1000 * 60 * 60 * 24)) * dayWidth;
-                if (leftPosPx < 0) leftPosPx = 0;
-
-                const respo = responsables.find(r => r.id === t.who)?.name || "Non assigné";
-                const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
-                const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
+                
+                const respo = responsables.find(r => r.id === t.who)?.name || "??";
                 const isLate = !t.done && t.date && new Date(t.date) < today;
+                const prioClass = `prio-${t.priority || 'moyenne'}`;
 
                 return `
                 <div class="gantt-row ${t.done ? 'done' : ''}">
-                    <div class="task-label" title="${tooltip}">${t.desc}</div>
+                    <div class="task-label" title="${t.desc}">${t.desc}</div>
                     <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                         style="left: calc(160px + ${leftPosPx}px); width: 140px;" 
-                         onclick="openEditModal('${t.id}')"
-                         title="${tooltip}">
-                         <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${respo}</span>
-                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                         style="left: calc(${labelWidth}px + ${leftPosPx}px); width: 120px;" 
+                         onclick="openEditModal('${t.id}')">
+                         <span class="truncate text-[9px] uppercase">${respo}</span>
                     </div>
-                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(310px + ${leftPosPx}px);">
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${labelWidth + 125}px + ${leftPosPx}px);">
                         ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--'}
                     </div>
                 </div>`;
@@ -369,19 +307,15 @@
         async function addTask() {
             const desc = document.getElementById('task-desc').value.trim();
             if(!desc) return;
-            
-            const time = document.getElementById('task-time').value || 0;
-            const who = document.getElementById('task-who').value;
-            const priority = document.getElementById('task-prio').value;
-            const date = document.getElementById('task-date').value || new Date().toISOString().split('T')[0];
-            
-            const user = window.auth?.currentUser;
-            const editorName = user ? user.email.split('@')[0] : "Anonyme";
-            const taskId = "FREE-" + Date.now(); // Préfixe FREE pour différencier
-
+            const taskId = "FREE-" + Date.now();
             await window.fbMethods.set(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + taskId), { 
-                id: taskId, desc, time, who, date, priority, done: false,
-                lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+                id: taskId, 
+                desc, 
+                time: document.getElementById('task-time').value || 0,
+                who: document.getElementById('task-who').value,
+                priority: document.getElementById('task-prio').value,
+                date: document.getElementById('task-date').value || new Date().toISOString().split('T')[0],
+                done: false
             });
             document.getElementById('task-desc').value = '';
         }
@@ -396,22 +330,12 @@
             document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
             document.getElementById('edit-task-done').checked = t.done || false;
             document.getElementById('edit-task-note').value = t.note || '';
-
-            const infoBox = document.getElementById('task-edit-info');
-            if (t.lastEditedBy) {
-                infoBox.classList.remove('hidden');
-                document.getElementById('task-last-edit-text').innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
-            } else infoBox.classList.add('hidden');
-
             document.getElementById('edit-modal').classList.remove('hidden');
         }
 
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
         async function saveTaskEdit() {
-            const user = window.auth?.currentUser;
-            const editorName = user ? user.email.split('@')[0] : "Anonyme";
-
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + currentEditingId), {
                 desc: document.getElementById('edit-task-desc').value, 
                 time: document.getElementById('edit-task-time').value,
@@ -419,8 +343,7 @@
                 who: document.getElementById('edit-task-who').value,
                 priority: document.getElementById('edit-task-prio').value,
                 done: document.getElementById('edit-task-done').checked,
-                note: document.getElementById('edit-task-note').value,
-                lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+                note: document.getElementById('edit-task-note').value
             });
             closeEditModal();
         }
@@ -429,12 +352,9 @@
         function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
 
         async function confirmDeletion() {
-            if (currentEditingId) {
-                await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + currentEditingId));
-                closeConfirm(); closeEditModal();
-            }
+            await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + currentEditingId));
+            closeConfirm(); closeEditModal();
         }
-        window.addEventListener('resize', renderTasks);
     </script>
 </body>
 </html>
