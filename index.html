@@ -232,10 +232,13 @@ window.logout = async () => {
     
 
     <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-    <div class="flex items-center gap-5">
+<div class="flex items-center gap-5">
         <div class="flex items-center gap-3">
             <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
-            <span class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Gestion de projet</span>
+			<div class="flex flex-col leading-none hidden md:flex">
+					<span class="text-xl font-black text-slate-800 tracking-tight">Gestion de projet</span>
+					<span id="app-version" class="text-[10px] text-slate-400 font-medium mt-0.5">Chargement...</span>
+			</div>
         </div>
         <div id="workflow-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
             <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
@@ -670,6 +673,29 @@ async function confirmDeleteProject() {
         }
     }
 }
+async function updateVersionDisplay() {
+    try {
+        // 1. Lire le contenu du fichier sw.js
+        const response = await fetch('./sw.js');
+        const text = await response.text();
+        
+        // 2. Utiliser une expression régulière pour trouver 'pilotage-v3.1.2'
+        const match = text.match(/const\s+CACHE_NAME\s*=\s*['"]pilotage-v([^'"]+)['"]/);
+        
+        if (match && match[1]) {
+            const versionNumber = match[1]; // Récupère "3.1.2"
+            document.getElementById('app-version').innerText = `v${versionNumber}`;
+        } else {
+            document.getElementById('app-version').innerText = 'v1.0.0';
+        }
+    } catch (e) {
+        console.error("Erreur de récupération de la version:", e);
+        document.getElementById('app-version').innerText = 'v--';
+    }
+}
+
+// Appeler la fonction au chargement de la page
+updateVersionDisplay();
         
     </script>
 
