@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestion des tâches Libres</title>
+    <title>Tâches Libres - Retard inclus</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -40,7 +40,6 @@
         .today-label { position: absolute; top: -25px; left: -50%; background: #ef4444; color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
 
         .btn-retour { background-color: #f1f5f9; color: #475569; display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 12px; font-weight: 800; font-size: 13px; transition: all 0.2s; text-decoration: none; }
-        .btn-retour:hover { background-color: #e2e8f0; transform: translateY(-1px); }
     </style>
 
     <script type="module">
@@ -67,12 +66,11 @@
         window.fbMethods = { ref, set, onValue, update, remove };
 
         onAuthStateChanged(auth, (user) => {
-            const loginScreen = document.getElementById('login-screen');
             if (user) {
-                if (loginScreen) loginScreen.classList.add('hidden');
+                document.getElementById('login-screen')?.classList.add('hidden');
                 loadData();
             } else {
-                if (loginScreen) loginScreen.classList.remove('hidden');
+                document.getElementById('login-screen')?.classList.remove('hidden');
             }
         });
 
@@ -85,62 +83,39 @@
 </head>
 <body class="bg-[#F8FAFC] text-slate-900 font-sans">
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
-        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200 text-center">
-            <h1 class="text-2xl font-bold mb-6">Tâches Hors-Projet</h1>
-            <input type="email" id="login-email" placeholder="Email" class="w-full p-3 mb-4 rounded-xl border">
-            <input type="password" id="login-password" placeholder="Pass" class="w-full p-3 mb-4 rounded-xl border">
-            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">Connexion</button>
-        </div>
-    </div>
-
-    <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Détails de la tâche</h3>
-                <button onclick="deleteTask()" class="text-red-500 p-2 hover:bg-red-50 rounded-lg">🗑️</button>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border outline-none font-bold">
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="edit-task-prio" class="w-full p-3 rounded-lg bg-slate-50 border outline-none text-sm">
-                        <option value="basse">Basse</option>
-                        <option value="moyenne">Moyenne</option>
-                        <option value="haute">Haute</option>
-                    </select>
-                    <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border outline-none text-sm"></select>
-                </div>
-                <input type="date" id="edit-task-date" class="w-full p-3 rounded-lg bg-slate-50 border outline-none">
-                <textarea id="edit-task-note" rows="3" class="w-full p-3 rounded-lg bg-slate-50 border text-sm" placeholder="Notes..."></textarea>
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
-                    <label for="edit-task-done" class="font-bold">Terminé</label>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border text-slate-600 font-semibold">Annuler</button>
-                <button onclick="saveTaskEdit()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">Enregistrer</button>
-            </div>
-        </div>
-    </div>
-
     <nav class="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold flex items-center gap-3">
-            <span class="text-slate-800">📋 Liste des tâches Libres</span>
+            <span class="text-slate-800 text-lg">📝 Tâches Libres</span>
         </h1>
-        <a href="index.html" class="btn-retour">RETOUR</a>
+        
+        <div class="flex items-center gap-4">
+            <div id="delay-container" class="hidden relative group">
+                <div class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer hover:bg-red-100 transition">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <span id="delay-count">0</span> RETARD(S)
+                </div>
+                <div class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">À faire d'urgence</p>
+                    <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
+                </div>
+            </div>
+            <a href="index.html" class="btn-retour uppercase">Retour</a>
+        </div>
     </nav>
 
     <main class="max-w-full mx-auto mt-6 px-4">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
             <header class="bg-white rounded-xl border shadow-sm px-5 py-3">
-                <h1 class="text-lg font-bold text-slate-800">Tâches Hors-Projet</h1>
-                <p class="text-slate-500 text-[11px] italic">Tâches générales non liées à un planning fixe</p>
+                <h1 class="text-lg font-bold text-slate-800">Global Backlog</h1>
+                <p class="text-slate-500 text-[11px] italic">Tâches indépendantes des projets</p>
             </header>
 
             <section class="bg-white rounded-xl border shadow-sm p-3">
                 <div class="flex gap-2 items-center flex-wrap">
-                    <input type="text" id="task-desc" placeholder="Nouvelle tâche..." class="w-48 p-2 rounded-lg bg-slate-50 border text-sm outline-none">
+                    <input type="text" id="task-desc" placeholder="Action..." class="w-48 p-2 rounded-lg bg-slate-50 border text-sm outline-none">
                     <select id="task-who" class="w-32 p-2 rounded-lg bg-slate-50 border text-sm"></select>
                     <select id="task-prio" class="w-28 p-2 rounded-lg bg-slate-50 border text-sm font-bold">
                         <option value="basse">Basse</option>
@@ -149,9 +124,9 @@
                     </select>
                     <input type="date" id="task-date" class="p-2 rounded-lg bg-slate-50 border text-[11px]">
                     <button onclick="addTask()" class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold shadow-sm">+</button>
-                    <div class="ml-2 pl-2 border-l border-slate-100">
+                    <div class="ml-2 pl-2 border-l">
                         <select id="filter-who" onchange="renderTasks()" class="p-2 rounded-lg bg-slate-100 text-sm font-bold text-indigo-600 outline-none">
-                            <option value="all">Tous les responsables</option>
+                            <option value="all">Tous</option>
                         </select>
                     </div>
                 </div>
@@ -159,14 +134,41 @@
         </div>
 
         <section class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            <div class="p-4 border-b bg-slate-50/50 flex justify-between">
-                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest">Planning Libre (30 jours)</h2>
-            </div>
             <div id="gantt-scroll-container" class="overflow-x-auto relative">
                 <div id="gantt-container" class="p-0 min-h-[500px] relative gantt-grid pt-10"></div>
             </div>
         </section>
     </main>
+
+    <div id="edit-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Modifier l'action</h3>
+                <button onclick="deleteTask()" class="text-red-500 p-2 hover:bg-red-50 rounded-lg">🗑️</button>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="edit-task-desc" class="w-full p-3 rounded-lg bg-slate-50 border outline-none font-bold">
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="edit-task-prio" class="w-full p-3 rounded-lg bg-slate-50 border text-sm">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne">Moyenne</option>
+                        <option value="haute">Haute</option>
+                    </select>
+                    <select id="edit-task-who" class="w-full p-3 rounded-lg bg-slate-50 border text-sm"></select>
+                </div>
+                <input type="date" id="edit-task-date" class="w-full p-3 rounded-lg bg-slate-50 border">
+                <textarea id="edit-task-note" rows="3" class="w-full p-3 rounded-lg bg-slate-50 border text-sm" placeholder="Notes..."></textarea>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
+                    <label for="edit-task-done" class="font-bold">Marquer comme fait</label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeEditModal()" class="flex-1 px-4 py-2.5 rounded-xl border text-slate-600 font-semibold">Annuler</button>
+                <button onclick="saveTaskEdit()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         let allTasks = [];
@@ -174,9 +176,8 @@
         let currentEditingId = null;
         const GLOBAL_ID = "hors-projet";
 
-        // Pour le planning libre, on définit une plage de -10 à +20 jours par rapport à aujourd'hui
-        const pStart = new Date(); pStart.setDate(pStart.getDate() - 10);
-        const pEnd = new Date(); pEnd.setDate(pEnd.getDate() + 20);
+        const pStart = new Date(); pStart.setDate(pStart.getDate() - 7); // Fenêtre de temps
+        const pEnd = new Date(); pEnd.setDate(pEnd.getDate() + 23);
 
         function loadData() {
             if (!window.fbMethods) return setTimeout(loadData, 100);
@@ -187,7 +188,7 @@
                 const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
                 document.getElementById('task-who').innerHTML = options;
                 document.getElementById('edit-task-who').innerHTML = options;
-                document.getElementById('filter-who').innerHTML = '<option value="all">Tous les responsables</option>' + options;
+                document.getElementById('filter-who').innerHTML = '<option value="all">Tous</option>' + options;
             });
 
             onValue(ref(window.fbDB, 'taches'), (snap) => {
@@ -199,40 +200,51 @@
 
         function renderTasks() {
             const container = document.getElementById('gantt-container');
-            const filterValue = document.getElementById('filter-who').value;
             const scrollContainer = document.getElementById('gantt-scroll-container');
-            
             const today = new Date(); today.setHours(0,0,0,0);
+            
             const projectDurationDays = 31; 
             const dayWidth = Math.max(50, (scrollContainer.offsetWidth - 200) / projectDurationDays);
-
             container.style.width = `${(projectDurationDays * dayWidth) + 160}px`;
             container.style.backgroundSize = `${dayWidth}px 100%`;
             container.style.backgroundPosition = `160px 0`;
 
-            // Ligne d'aujourd'hui
+            // Ligne Aujourd'hui
             const diffToday = (today - pStart) / (24 * 60 * 60 * 1000);
             const leftToday = 160 + (diffToday * dayWidth);
             let timelineHTML = `<div class="today-line" style="left: ${leftToday}px;"><div class="today-label">Aujourd'hui</div></div>`;
 
             let filtered = allTasks;
+            const filterValue = document.getElementById('filter-who').value;
             if (filterValue !== 'all') filtered = allTasks.filter(t => t.who === filterValue);
             filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Gestion des Retards (Indicateur Nav)
+            const delayed = filtered.filter(t => !t.done && t.date && new Date(t.date) < today);
+            const delayCont = document.getElementById('delay-container');
+            if (delayed.length > 0) {
+                delayCont.classList.remove('hidden');
+                document.getElementById('delay-count').innerText = delayed.length;
+                document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
+            } else {
+                delayCont.classList.add('hidden');
+            }
 
             const tasksHTML = filtered.map((t) => {
                 const tDate = t.date ? new Date(t.date) : today;
                 const leftPosPx = ((tDate - pStart) / (24 * 60 * 60 * 1000)) * dayWidth;
                 const respo = responsables.find(r => r.id === t.who)?.name || t.who;
-                const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
+                const prioClass = `prio-${t.priority || 'moyenne'}`;
                 const isLate = !t.done && t.date && new Date(t.date) < today;
 
                 return `
                 <div class="gantt-row ${t.done ? 'done' : ''}">
-                    <div class="task-label">${t.desc}</div>
+                    <div class="task-label truncate" title="${t.desc}">${t.desc}</div>
                     <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
                          style="left: calc(160px + ${leftPosPx}px); width: 140px;" 
                          onclick="openEditModal('${t.id}')">
                          <span class="truncate uppercase text-[9px] opacity-90">${respo}</span>
+                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -258,9 +270,9 @@
             currentEditingId = id;
             document.getElementById('edit-task-desc').value = t.desc;
             document.getElementById('edit-task-who').value = t.who;
-            document.getElementById('edit-task-prio').value = t.priority;
+            document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
             document.getElementById('edit-task-date').value = t.date || '';
-            document.getElementById('edit-task-done').checked = t.done;
+            document.getElementById('edit-task-done').checked = t.done || false;
             document.getElementById('edit-task-note').value = t.note || '';
             document.getElementById('edit-modal').classList.remove('hidden');
         }
@@ -280,7 +292,7 @@
         }
 
         async function deleteTask() {
-            if(confirm("Supprimer ?")) {
+            if(confirm("Supprimer cette tâche libre ?")) {
                 await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
                 closeEditModal();
             }
