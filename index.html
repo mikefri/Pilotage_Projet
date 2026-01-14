@@ -312,45 +312,55 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="flex bg-slate-100 p-1 rounded-xl mr-2">
+        <div
+            class="flex items-center gap-8 bg-white/80 backdrop-blur-md p-2 rounded-3xl border border-slate-200 shadow-xl shadow-slate-100/50">
+
+            <nav class="flex items-center gap-1">
                 <a href="stats.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
+                    class="group relative px-4 py-2.5 flex items-center gap-3 transition-all duration-300">
+                    <div class="absolute inset-0 bg-indigo-50 rounded-2xl scale-100 transition-transform"></div>
+                    <svg class="relative w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path d="M18 20V10M12 20V4M6 20v-6"></path>
                     </svg>
-                    Stats
+                    <span class="relative text-sm font-bold text-indigo-700">Stats</span>
                 </a>
-                <a href="liste_taches_hors_projet.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <span>📝</span> Libres
+
+                <a href="#"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+                    <span class="text-xl group-hover:scale-125 transition-transform duration-200">📝</span>
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900">Libres</span>
                 </a>
-                <a href="responsables.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <span>👥</span> Équipe
+
+                <a href="#"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+                    <span class="text-xl group-hover:scale-125 transition-transform duration-200">👥</span>
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900">Équipe</span>
                 </a>
-                <a href="profil.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <span>👤</span> Profil
-                </a>
+            </nav>
+
+            <div class="h-8 w-[1px] bg-slate-200"></div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="openForm()"
+                    class="group relative flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm tracking-wide overflow-hidden transition-all hover:pr-8 active:scale-95">
+                    <span class="relative z-10">+ PROJET</span>
+                    <span
+                        class="absolute right-2 opacity-0 group-hover:opacity-100 group-hover:right-3 transition-all">→</span>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500">
+                    </div>
+                </button>
+
+                <button onclick="logout()"
+                    class="group flex items-center justify-center w-11 h-11 rounded-2xl border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:rotate-12 transition-transform"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </div>
-
-            <button onclick="openForm()"
-                class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm uppercase">
-                + Projet
-            </button>
-
-            <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                title="Déconnexion">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-            </button>
         </div>
     </nav>
 
