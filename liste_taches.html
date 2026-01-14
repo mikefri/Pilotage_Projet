@@ -49,6 +49,11 @@
             align-items: center;
         }
 
+        /* Zone de drop sur toute la ligne */
+        .gantt-row.drag-over {
+            background-color: #f0f4ff;
+        }
+
         .task-label {
             position: sticky;
             left: 0;
@@ -79,11 +84,15 @@
             font-size: 11px;
             font-weight: bold;
             color: white;
-            cursor: pointer;
-            transition: all 0.2s;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 10;
+        }
+
+        .task-bar:active {
+            cursor: grabbing;
         }
 
         .task-bar:hover {
@@ -425,6 +434,63 @@
             filterEl.value = currentSelection;
         }
 
+        // --- Fonctions Drag & Drop ---
+        function onDragStart(event, taskId) {
+            event.dataTransfer.setData("taskId", taskId);
+            // Petit délai pour l'effet visuel de transparence pendant le drag
+            setTimeout(() => {
+                event.target.style.opacity = "0.5";
+            }, 0);
+        }
+
+        function onDragEnd(event) {
+            event.target.style.opacity = "1";
+        }
+
+        function onDragOver(event) {
+            event.preventDefault();
+            const row = event.currentTarget;
+            row.classList.add('drag-over');
+        }
+
+        function onDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        async function onDrop(event) {
+            event.preventDefault();
+            const row = event.currentTarget;
+            row.classList.remove('drag-over');
+
+            const taskId = event.dataTransfer.getData("taskId");
+            const rect = row.getBoundingClientRect();
+
+            // Calculer la position X relative à la grille de planning
+            const labelWidth = 160;
+            const dayWidth = 45;
+            const x = event.clientX - rect.left - labelWidth;
+
+            if (x < 0) return; // Drop sur le label, on ignore
+
+            // Calculer le nombre de jours à partir du début du projet
+            const dayOffset = Math.floor(x / dayWidth);
+            const pStart = new Date(currentProject.start);
+            const newDate = new Date(pStart);
+            newDate.setDate(pStart.getDate() + dayOffset);
+
+            const dateStr = newDate.toISOString().split('T')[0];
+
+            // Mise à jour Firebase
+            const user = window.auth?.currentUser;
+            const editorName = user ? user.email.split('@')[0] : "Anonyme";
+
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), {
+                date: dateStr,
+                lastEditedBy: editorName,
+                lastEditedAt: new Date().toLocaleString('fr-FR')
+            });
+        }
+
         function renderTasks() {
             if (!currentProject) return;
             const container = document.getElementById('gantt-container');
@@ -440,8 +506,6 @@
             const duration = Math.ceil(Math.abs(pEnd - pStart) / 86400000) + 1;
             const dayWidth = 45;
             const labelWidth = 160;
-
-
 
             let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; width: ${duration * dayWidth}px; overflow: visible;">`;
 
@@ -462,14 +526,12 @@
             }
             headerHTML += `</div>`;
 
-            // Ligne Today
             let timelineHTML = '';
             if (today >= pStart && today <= pEnd) {
                 const leftPos = labelWidth + ((today - pStart) / 86400000) * dayWidth;
                 timelineHTML = `<div class="today-line" style="left: ${leftPos}px;"><div class="today-label">Aujourd'hui</div></div>`;
             }
 
-            // Filtrage
             let filtered = allTasks.filter(t => t.projectId === currentProjectId);
             if (fWho !== 'all') filtered = filtered.filter(t => t.who === fWho);
             if (fPrio !== 'all') filtered = filtered.filter(t => t.priority === fPrio);
@@ -478,7 +540,6 @@
             if (fSearch) filtered = filtered.filter(t => t.desc.toLowerCase().includes(fSearch));
             filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Retards
             const delayed = filtered.filter(t => !t.done && t.date && new Date(t.date) < today);
             document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
             document.getElementById('delay-count').innerText = delayed.length;
@@ -494,10 +555,18 @@
                 const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
 
                 return `
-                <div class="gantt-row ${t.done ? 'done' : ''}">
+                <div class="gantt-row ${t.done ? 'done' : ''}" 
+                     ondragover="onDragOver(event)" 
+                     ondragleave="onDragLeave(event)" 
+                     ondrop="onDrop(event)">
                     <div class="task-label" title="${tooltip}">${t.desc}</div>
                     <div class="task-bar prio-${t.priority || 'moyenne'} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                         style="left: calc(${labelWidth}px + ${leftPx}px); width: 130px;" onclick="openEditModal('${t.id}')" title="${tooltip}">
+                         style="left: calc(${labelWidth}px + ${leftPx}px); width: 130px;" 
+                         onclick="openEditModal('${t.id}')" 
+                         title="${tooltip}"
+                         draggable="true"
+                         ondragstart="onDragStart(event, '${t.id}')"
+                         ondragend="onDragEnd(event)">
                         <span class="truncate text-[9px] uppercase opacity-90">${respo}</span>
                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
                     </div>
