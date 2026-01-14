@@ -387,7 +387,7 @@ function renderTasks() {
                  onclick="openEditModal('${t.id}')"
                  title="${tooltipWithNote}">
                  <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${respo}</span>
-                 ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                 ${(t.note && t.note.trim() !== "") ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
             </div>
             <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(300px + ${leftPosPx}px);">${t.date ? new Date(t.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '--/--'}</div>
         </div>`;
