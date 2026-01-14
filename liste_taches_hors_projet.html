@@ -543,6 +543,49 @@
                 if (delayListEl) delayListEl.innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
             }
 
+
+            // --- SYSTÈME D'ALERTE PERSONNALISÉ ---
+            const currentUser = window.auth.currentUser;
+            if (currentUser && currentUser.email) {
+                // 1. On identifie quel responsable correspond à l'email de session
+                const monProfil = responsables.find(r => r.email.toLowerCase() === currentUser.email.toLowerCase());
+
+                if (monProfil) {
+                    // 2. On filtre les retards qui appartiennent uniquement à cette personne
+                    const mesRetards = delayed.filter(t => t.who === monProfil.id);
+
+                    let banner = document.getElementById('alerte-retard-perso');
+
+                    if (mesRetards.length > 0) {
+                        // 3. Création ou mise à jour du bandeau clignotant
+                        if (!banner) {
+                            banner = document.createElement('div');
+                            banner.id = 'alerte-retard-perso';
+                            // Style : Rouge SNCF, texte gras, clignotant, reste en haut au scroll
+                            banner.className = "bg-[#E2001A] text-white text-center p-3 font-black animate-pulse sticky top-0 z-[100] cursor-pointer shadow-2xl border-b-2 border-white";
+                            document.body.prepend(banner);
+                        }
+                        banner.innerHTML = `⚠️ ATTENTION ${monProfil.name.toUpperCase()} : VOUS AVEZ ${mesRetards.length} TÂCHE(S) EN RETARD !`;
+
+                        // 4. Action au clic : filtre automatiquement sur "Mes tâches"
+                        banner.onclick = () => {
+                            const selectWho = document.getElementById('filter-who');
+                            const selectStatus = document.getElementById('filter-status');
+                            if (selectWho) selectWho.value = monProfil.id;
+                            if (selectStatus) selectStatus.value = 'active';
+                            renderTasks(); // Relance le rendu avec les filtres
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        };
+                    } else if (banner) {
+                        banner.remove(); // Plus de retard ? On enlève l'alerte
+                    }
+                }
+            }
+
+
+
+
+
             // Génération lignes
             let totalHrs = 0;
             const tasksHTML = filteredTasks.map((t) => {
@@ -583,6 +626,10 @@
 
             const totalHoursEl = document.getElementById('total-hours');
             if (totalHoursEl) totalHoursEl.innerText = `${totalHrs} h total`;
+
+
+
+
         }
 
         async function addTask() {
