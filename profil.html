@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,19 +10,25 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <style>
-        body { background-color: #F8FAFC !important; font-family: sans-serif; }
+        body {
+            background-color: #F8FAFC !important;
+            font-family: sans-serif;
+        }
+
         .profile-card {
             background: white;
             border-radius: 3rem;
             border: 1px solid rgba(255, 255, 255, 0.7);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
         }
+
         .input-pill {
             background-color: #F1F5F9;
             border: 1px solid #F1F5F9;
             border-radius: 1.25rem;
             transition: all 0.3s ease;
         }
+
         .input-pill:focus {
             background-color: white;
             border-color: #6366f1;
@@ -32,15 +39,18 @@
             transform: translateY(-150%);
             transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+
         #custom-alert.show {
             transform: translateY(20px);
         }
     </style>
 </head>
+
 <body class="text-slate-900">
 
     <div id="custom-alert" class="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none">
-        <div id="alert-bg" class="bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/10 pointer-events-auto max-w-sm mx-4">
+        <div id="alert-bg"
+            class="bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/10 pointer-events-auto max-w-sm mx-4">
             <div id="alert-icon" class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"></div>
             <div class="flex flex-col">
                 <p id="alert-title" class="font-black text-[10px] uppercase tracking-widest opacity-50"></p>
@@ -49,13 +59,16 @@
         </div>
     </div>
 
-    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+    <nav
+        class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
         <div class="flex items-center gap-3">
             <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
             <span class="text-xl font-black text-slate-800 tracking-tight">Mon Profil</span>
         </div>
-        <a href="index.html" class="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-black hover:bg-slate-200 transition-all flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <a href="index.html"
+            class="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-xl text-sm font-black hover:bg-slate-200 transition-all flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             RETOUR
@@ -64,9 +77,10 @@
 
     <main class="min-h-[calc(100vh-80px)] flex items-center justify-center p-6">
         <div class="profile-card p-10 w-full max-w-md text-center">
-            
+
             <div class="relative inline-block mb-6">
-                <div class="w-24 h-24 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto text-4xl font-black shadow-xl shadow-indigo-100" id="user-initials">
+                <div class="w-24 h-24 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center mx-auto text-4xl font-black shadow-xl shadow-indigo-100"
+                    id="user-initials">
                     ?
                 </div>
                 <div class="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full shadow-sm">
@@ -79,12 +93,13 @@
 
             <div class="text-left space-y-6 pt-6 border-t border-slate-100">
                 <div>
-                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nouveau mot de passe</label>
-                    <input type="password" id="new-password" placeholder="Minimum 6 caractères" 
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nouveau
+                        mot de passe</label>
+                    <input type="password" id="new-password" placeholder="Minimum 6 caractères"
                         class="input-pill w-full p-4 outline-none font-bold text-slate-700">
                 </div>
 
-                <button onclick="updateUserPassword()" 
+                <button onclick="updateUserPassword()"
                     class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:scale-95">
                     METTRE À JOUR
                 </button>
@@ -125,7 +140,7 @@
                 document.getElementById('user-email').textContent = user.email;
                 document.getElementById('user-initials').textContent = user.email.charAt(0).toUpperCase();
             } else {
-                setTimeout(() => { if (!auth.currentUser) window.location.href = 'index.html'; }, 1000); 
+                setTimeout(() => { if (!auth.currentUser) window.location.href = 'index.html'; }, 1000);
             }
         });
 
@@ -150,4 +165,5 @@
         };
     </script>
 </body>
+
 </html>

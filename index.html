@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#4f46e5"> 
+    <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="./icon.png">
     <link rel="icon" type="image/png" href="./icon.png">
     <title>Pilotage Projet</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
     <link rel="manifest" href="./manifest.json">
@@ -33,7 +34,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        
+
         window.auth = auth;
         window.fbDB = db;
         window.fbMethods = { ref, set, onValue, update, remove };
@@ -51,42 +52,42 @@
             }
         };
 
-window.logout = async () => {
-    const logoutScreen = document.getElementById('logout-screen');
-    
-    // 1. Vider immédiatement les champs de texte
-    document.getElementById('login-email').value = "";
-    document.getElementById('login-password').value = "";
-    
-    try {
-        logoutScreen.classList.remove('hidden');
-        setTimeout(() => {
-            logoutScreen.classList.remove('opacity-0');
-            logoutScreen.classList.add('opacity-100');
-        }, 10);
+        window.logout = async () => {
+            const logoutScreen = document.getElementById('logout-screen');
 
-        await signOut(auth);
-        
-        // 2. On attend la fin du message d'au revoir
-        setTimeout(() => {
-            // Le reload réinitialise tout le contexte JavaScript
-            window.location.reload();
-        }, 2500);
+            // 1. Videsss immédiatement les champs de texte.
+            document.getElementById('login-email').value = "";
+            document.getElementById('login-password').value = "";
 
-    } catch (e) {
-        window.location.reload();
-    }
-};
+            try {
+                logoutScreen.classList.remove('hidden');
+                setTimeout(() => {
+                    logoutScreen.classList.remove('opacity-0');
+                    logoutScreen.classList.add('opacity-100');
+                }, 10);
+
+                await signOut(auth);
+
+                // 2. On attend la fin du message d'au revoir
+                setTimeout(() => {
+                    // Le reload réinitialise tout le contexte JavaScript
+                    window.location.reload();
+                }, 2500);
+
+            } catch (e) {
+                window.location.reload();
+            }
+        };
 
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
             if (user) {
                 if (loginScreen) loginScreen.classList.add('hidden');
-                
+
                 // Déclenchement du chargement et du statut
-                loadAllData(); 
+                loadAllData();
                 setupConnectionStatus();
-                
+
                 const statusId = btoa(user.email).replace(/[/+=]/g, "");
                 const userStatusRef = ref(db, 'status/' + statusId);
                 onValue(ref(db, '.info/connected'), (snap) => {
@@ -113,199 +114,292 @@ window.logout = async () => {
     </script>
 
     <style>
-        body { background-color: #F8FAFC !important; }
-        .resizable-gantt { 
-            resize: vertical; overflow: auto; min-height: 500px; max-height: 80vh; width: 100%; 
-            border: 1px solid #e2e8f0; background: white; border-radius: 1.5rem; 
+        body {
+            background-color: #F8FAFC !important;
+        }
+
+        .resizable-gantt {
+            resize: vertical;
+            overflow: auto;
+            min-height: 500px;
+            max-height: 80vh;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
-        .modal-active { display: flex !important; animation: modalIn 0.3s ease-out; }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        
-        .gantt .grid-row text { cursor: pointer; fill: #6366f1; font-weight: 800; font-size: 12px; }
-        .gantt .grid-row text:hover { fill: #4338ca; text-decoration: underline; }
-        .gantt .bar-label { font-weight: 700; font-size: 11px; fill: #1e293b; }
-        .gantt .bar-progress { stroke-width: 0; }
 
-.btn-stats {
-    background-color: #e0e7ff; /* Bleu très léger */
-    color: #4338ca; /* Indigo */
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 13px;
-    transition: all 0.2s;
-    text-decoration: none;
-}
-.btn-stats:hover {
-    background-color: #c7d2fe;
-    transform: translateY(-1px);
-}
+        .modal-active {
+            display: flex !important;
+            animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .gantt .grid-row text {
+            cursor: pointer;
+            fill: #6366f1;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .gantt .grid-row text:hover {
+            fill: #4338ca;
+            text-decoration: underline;
+        }
+
+        .gantt .bar-label {
+            font-weight: 700;
+            font-size: 11px;
+            fill: #1e293b;
+        }
+
+        .gantt .bar-progress {
+            stroke-width: 0;
+        }
+
+        .btn-stats {
+            background-color: #e0e7ff;
+            /* Bleu très léger */
+            color: #4338ca;
+            /* Indigo */
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-stats:hover {
+            background-color: #c7d2fe;
+            transform: translateY(-1px);
+        }
 
         /* Animation d'entrée pour la modale */
-    .animate-in { animation: modalScale 0.2s ease-out forwards; }
-    @keyframes modalScale {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-    }
+        .animate-in {
+            animation: modalScale 0.2s ease-out forwards;
+        }
+
+        @keyframes modalScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
 
 
-.resizable-gantt { 
-    overflow: auto; 
-    width: 100%; 
-    background: white; 
-    border-radius: 1.5rem; 
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    /* On retire le min-height fixe pour éviter l'espace blanc */
-}
+        .resizable-gantt {
+            overflow: auto;
+            width: 100%;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            /* On retire le min-height fixe pour éviter l'espace blanc */
+        }
 
-/* Force le SVG à ne pas prendre plus de place que nécessaire */
-#gantt-chart svg {
-    vertical-align: top;
-    display: block;
-}
+        /* Force le SVG à ne pas prendre plus de place que nécessaire */
+        #gantt-chart svg {
+            vertical-align: top;
+            display: block;
+        }
 
-/* Pour que le scroll soit collé au contenu du Gantt */
-#gantt-container {
-    overflow-x: auto;
-    overflow-y: hidden; /* Évite le double scroll */
-}
-
-
-
-        
-        
+        /* Pour que le scroll soit collé au contenu du Gantt */
+        #gantt-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            /* Évite le double scroll */
+        }
     </style>
 </head>
+
 <body class="text-slate-900 font-sans">
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
-    <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
-        
-        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-4 opacity-80">Méthode Logistique</p>
+    <div id="login-screen"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
 
-        <div class="w-20 h-20 rounded-3xl mx-auto shadow-xl shadow-indigo-100 mb-6 overflow-hidden">
-            <img src="icon.png" class="w-full h-full object-cover block scale-105" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
-        </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-4 opacity-80">Méthode
+                Logistique</p>
 
-        <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
-        <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
+            <div class="w-20 h-20 rounded-3xl mx-auto shadow-xl shadow-indigo-100 mb-6 overflow-hidden">
+                <img src="icon.png" class="w-full h-full object-cover block scale-105" alt="Logo"
+                    onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
+            </div>
 
-        <div class="space-y-4">
-            <input type="email" id="login-email" placeholder="Email professionnel" autocomplete="off"
-                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
-            
-            <div class="relative">
-                <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password"
-                    class="w-full p-4 pr-12 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
-                
-                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">
-                    <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
+            <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
+
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email professionnel" autocomplete="off"
+                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+
+                <div class="relative">
+                    <input type="password" id="login-password" placeholder="Mot de passe"
+                        autocomplete="current-password"
+                        class="w-full p-4 pr-12 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+
+                    <button type="button" onclick="togglePasswordVisibility()"
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">
+                        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <button onclick="login()"
+                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                    SE CONNECTER
                 </button>
-            </div> 
 
-            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
-                SE CONNECTER
+                <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="logout-screen"
+        class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-500">
+        <div class="text-center">
+            <div
+                class="bg-indigo-500/20 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/20">
+                <span class="text-5xl animate-bounce">👋</span>
+            </div>
+            <h2 class="text-3xl font-black text-white tracking-tight">Au revoir !</h2>
+            <p class="text-indigo-300/60 font-bold uppercase text-[10px] tracking-[0.3em] mt-4">Déconnexion sécurisée en
+                cours</p>
+        </div>
+    </div>
+
+
+    <nav
+        class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+        <div class="flex items-center gap-5">
+            <div class="flex items-center gap-3">
+                <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
+                <div class="flex flex-col leading-none hidden md:flex">
+                    <span class="text-xl font-black text-slate-800 tracking-tight">Gestion de projet</span>
+                    <span id="app-version" class="text-[10px] text-slate-400 font-medium mt-0.5">Chargement...</span>
+                </div>
+            </div>
+            <div id="workflow-status"
+                class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                <span id="workflow-text">Sync...</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="flex bg-slate-100 p-1 rounded-xl mr-2">
+                <a href="stats.html"
+                    class="px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                    Stats
+                </a>
+                <a href="liste_taches_hors_projet.html"
+                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                    <span>📝</span> Libres
+                </a>
+                <a href="responsables.html"
+                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                    <span>👥</span> Équipe
+                </a>
+                <a href="profil.html"
+                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
+                    <span>👤</span> Profil
+                </a>
+            </div>
+
+            <button onclick="openForm()"
+                class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm uppercase">
+                + Projet
             </button>
-            
-            <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
+
+            <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                title="Déconnexion">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </button>
         </div>
-    </div>
-</div>
-
-    <div id="logout-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-500">
-    <div class="text-center">
-        <div class="bg-indigo-500/20 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/20">
-            <span class="text-5xl animate-bounce">👋</span>
-        </div>
-        <h2 class="text-3xl font-black text-white tracking-tight">Au revoir !</h2>
-        <p class="text-indigo-300/60 font-bold uppercase text-[10px] tracking-[0.3em] mt-4">Déconnexion sécurisée en cours</p>
-    </div>
-</div>
-    
-
-    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-    <div class="flex items-center gap-5">
-        <div class="flex items-center gap-3">
-            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
-            <span class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Gestion de projet</span>
-        </div>
-        <div id="workflow-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-            <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
-            <span id="workflow-text">Sync...</span>
-        </div>
-    </div>
-
-    <div class="flex items-center gap-4">
-			<div class="flex bg-slate-100 p-1 rounded-xl mr-2">
-				<a href="stats.html" class="px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-					Stats
-				</a>
-				<a href="liste_taches_hors_projet.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-					<span>📝</span> Libres
-				</a>
-				<a href="responsables.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-					<span>👥</span> Équipe
-				</a>
-				<a href="profil.html" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-					<span>👤</span> Profil
-				</a>
-</div>
-
-        <button onclick="openForm()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm uppercase">
-            + Projet
-        </button>
-
-        <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Déconnexion">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-        </button>
-    </div>
-</nav>
+    </nav>
 
     <main class="w-full px-4 md:px-6 py-4 mx-auto">
-    <div class="px-6 py-8">
-        <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-            <div>
-                <h2 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Performance Méthodes Logistique Industrielle</h2>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Planning</h1>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div id="save-status" class="text-[10px] font-black text-emerald-500 opacity-0 transition-opacity bg-emerald-50 px-3 py-1 rounded-lg">SYNCHRONISÉ</div>
-                <div class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm font-black text-[10px] uppercase tracking-wider text-slate-400">
-                    <button onclick="changeView('Day')" class="px-5 py-2 hover:text-indigo-600 rounded-xl transition">Jour</button>
-                    <button onclick="changeView('Week')" class="px-5 py-2 hover:text-indigo-600 border-x border-slate-100 rounded-xl transition">Semaine</button>
-                    <button onclick="changeView('Month')" class="px-5 py-2 hover:text-indigo-600 rounded-xl transition">Mois</button>
+        <div class="px-6 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                <div>
+                    <h2 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Performance
+                        Méthodes Logistique Industrielle</h2>
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">Planning</h1>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div id="save-status"
+                        class="text-[10px] font-black text-emerald-500 opacity-0 transition-opacity bg-emerald-50 px-3 py-1 rounded-lg">
+                        SYNCHRONISÉ</div>
+                    <div
+                        class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm font-black text-[10px] uppercase tracking-wider text-slate-400">
+                        <button onclick="changeView('Day')"
+                            class="px-5 py-2 hover:text-indigo-600 rounded-xl transition">Jour</button>
+                        <button onclick="changeView('Week')"
+                            class="px-5 py-2 hover:text-indigo-600 border-x border-slate-100 rounded-xl transition">Semaine</button>
+                        <button onclick="changeView('Month')"
+                            class="px-5 py-2 hover:text-indigo-600 rounded-xl transition">Mois</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="gantt-container" class="resizable-gantt border-x-0">
-        <div id="gantt-chart"></div>
-    </div>
-</main>
+        <div id="gantt-container" class="resizable-gantt border-x-0">
+            <div id="gantt-chart"></div>
+        </div>
+    </main>
 
-    <div id="form-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
-        <aside class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-white animate-in zoom-in duration-300">
+    <div id="form-overlay"
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
+        <aside
+            class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-white animate-in zoom-in duration-300">
             <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
                 <h2 class="font-black text-2xl text-slate-800 tracking-tight">Édition Projet</h2>
-                <button onclick="closeForm()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">&times;</button>
+                <button onclick="closeForm()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">&times;</button>
             </div>
 
             <div class="mb-8 p-5 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100">
-                <label class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 ml-1">Sélection Rapide</label>
-                <select id="project-selector" onchange="loadProjectInForm(this.value)" 
+                <label
+                    class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 ml-1">Sélection
+                    Rapide</label>
+                <select id="project-selector" onchange="loadProjectInForm(this.value)"
                     class="w-full p-3 rounded-xl bg-white border border-indigo-200 outline-none text-sm font-bold text-slate-700 shadow-sm">
                     <option value="">-- Nouveau Projet --</option>
                 </select>
@@ -314,18 +408,24 @@ window.logout = async () => {
             <input type="hidden" id="p-id">
             <div class="space-y-6">
                 <div>
-                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom du projet</label>
-                    <input type="text" id="p-name" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold">
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom du
+                        projet</label>
+                    <input type="text" id="p-name"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold">
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Responsable</label>
-                        <select id="p-owner" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none"></select>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Responsable</label>
+                        <select id="p-owner"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none"></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Statut</label>
-                        <select id="p-status" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none">
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Statut</label>
+                        <select id="p-status"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none">
                             <option value="À faire">À faire</option>
                             <option value="En cours" selected>En cours</option>
                             <option value="Terminé">Terminé</option>
@@ -335,35 +435,44 @@ window.logout = async () => {
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Début</label>
-                        <input type="date" id="p-start" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Début</label>
+                        <input type="date" id="p-start"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fin</label>
-                        <input type="date" id="p-end" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fin</label>
+                        <input type="date" id="p-end"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
                     </div>
                 </div>
 
                 <div>
                     <div class="flex justify-between mb-2">
-                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Avancement</label>
+                        <label
+                            class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Avancement</label>
                         <span class="text-indigo-600 font-black text-sm" id="prog-val">0%</span>
                     </div>
-                    <input type="range" id="p-progress" min="0" max="100" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    <input type="range" id="p-progress" min="0" max="100"
+                        class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                 </div>
 
                 <div class="flex flex-col gap-3 pt-6">
-                    <button onclick="addOrUpdateProject()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">ENREGISTRER</button>
-                    <button id="btn-delete" onclick="showDeleteConfirm()" class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER LE PROJET</button>
+                    <button onclick="addOrUpdateProject()"
+                        class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">ENREGISTRER</button>
+                    <button id="btn-delete" onclick="showDeleteConfirm()"
+                        class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER
+                        LE PROJET</button>
                 </div>
             </div>
 
 
             <div id="edit-info" class="mt-6 pt-4 border-t border-slate-50 text-[10px] text-slate-400 italic hidden">
-                    Dernière modif : <span id="last-edit-text">-</span>
+                Dernière modif : <span id="last-edit-text">-</span>
             </div>
 
-            
+
         </aside>
     </div>
 
@@ -387,7 +496,7 @@ window.logout = async () => {
             onValue(ref(window.fbDB, 'responsables'), (snap) => {
                 const data = snap.val();
                 responsables = data ? Object.values(data) : [];
-                document.getElementById('p-owner').innerHTML = responsables.map(r => 
+                document.getElementById('p-owner').innerHTML = responsables.map(r =>
                     `<option value="${r.id}">${r.name}</option>`
                 ).join('') || '<option value="">Aucun membre</option>';
             });
@@ -409,13 +518,13 @@ window.logout = async () => {
         }
 
         function loadProjectInForm(id) {
-            if (!id) { 
+            if (!id) {
                 document.getElementById('p-id').value = '';
                 document.getElementById('p-name').value = '';
                 document.getElementById('p-progress').value = 0;
                 document.getElementById('prog-val').innerText = "0%";
                 document.getElementById('btn-delete').classList.add('hidden');
-                return; 
+                return;
             }
             editProject(id);
         }
@@ -423,7 +532,7 @@ window.logout = async () => {
         function renderGantt(view = currentView) {
             currentView = view;
             const chartEl = document.getElementById('gantt-chart');
-            
+
             if (!projects || projects.length === 0) {
                 chartEl.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold italic">Aucun projet actif.</div>`;
                 return;
@@ -443,7 +552,7 @@ window.logout = async () => {
             });
 
             chartEl.innerHTML = '';
-            
+
             gantt = new Gantt("#gantt-chart", tasks, {
                 language: 'fr',
                 view_mode: view,
@@ -464,77 +573,77 @@ window.logout = async () => {
                         bar.style.setProperty('fill', color, 'important');
                     }
                 });
-                
+
                 document.querySelectorAll('.gantt .grid-row text').forEach((el, idx) => {
                     el.onclick = (e) => {
                         e.stopPropagation();
-                        if(projects[idx]) editProject(projects[idx].id);
+                        if (projects[idx]) editProject(projects[idx].id);
                     };
                 });
             }, 150);
         }
 
-async function updateQuick(id, data) {
-    const user = auth.currentUser;
-    const editorName = user ? (user.displayName || user.email) : "Système";
+        async function updateQuick(id, data) {
+            const user = auth.currentUser;
+            const editorName = user ? (user.displayName || user.email) : "Système";
 
-    const extendedData = {
-        ...data,
-        lastEditedBy: editorName,
-        lastEditedAt: new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
-    };
+            const extendedData = {
+                ...data,
+                lastEditedBy: editorName,
+                lastEditedAt: new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+            };
 
-    await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'projects/' + id), extendedData);
-    showStatus("SYNCHRO OK");
-}
-
-async function addOrUpdateProject() {
-    try {
-        const startVal = document.getElementById('p-start').value;
-        const endVal = document.getElementById('p-end').value;
-
-        // 1. Vérification des dates
-        if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
-            alert("Erreur de dates !"); 
-            return;
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'projects/' + id), extendedData);
+            showStatus("SYNCHRO OK");
         }
 
-        // 2. Récupération de l'utilisateur (via window.auth rendu global)
-        const user = window.auth ? window.auth.currentUser : null;
-        const editorName = user ? (user.displayName || user.email.split('@')[0]) : "Anonyme";
-        
-        const now = new Date();
-        const dateString = now.toLocaleDateString('fr-FR') + " à " + 
-                           now.getHours() + "h" + 
-                           now.getMinutes().toString().padStart(2, '0');
+        async function addOrUpdateProject() {
+            try {
+                const startVal = document.getElementById('p-start').value;
+                const endVal = document.getElementById('p-end').value;
 
-        // 3. Préparation des données
-        const id = document.getElementById('p-id').value || "ID-" + Date.now();
-        const pData = {
-            id: id,
-            name: document.getElementById('p-name').value || "Projet sans nom",
-            owner: document.getElementById('p-owner').value,
-            status: document.getElementById('p-status').value,
-            start: startVal,
-            end: endVal,
-            progress: parseInt(document.getElementById('p-progress').value) || 0,
-            lastEditedBy: editorName,
-            lastEditedAt: dateString
-        };
+                // 1. Vérification des dates
+                if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
+                    alert("Erreur de dates !");
+                    return;
+                }
 
-        // 4. Envoi à Firebase en utilisant window.fbMethods
-        const fb = window.fbMethods;
-        await fb.set(fb.ref(window.fbDB, 'projects/' + id), pData);
+                // 2. Récupération de l'utilisateur (via window.auth rendu global)
+                const user = window.auth ? window.auth.currentUser : null;
+                const editorName = user ? (user.displayName || user.email.split('@')[0]) : "Anonyme";
 
-        // 5. Fermeture et succès
-        closeForm();
-        showStatus("ENREGISTRÉ");
+                const now = new Date();
+                const dateString = now.toLocaleDateString('fr-FR') + " à " +
+                    now.getHours() + "h" +
+                    now.getMinutes().toString().padStart(2, '0');
 
-    } catch (error) {
-        console.error("Erreur détaillée :", error);
-        alert("Erreur technique : " + error.message);
-    }
-}
+                // 3. Préparation des données
+                const id = document.getElementById('p-id').value || "ID-" + Date.now();
+                const pData = {
+                    id: id,
+                    name: document.getElementById('p-name').value || "Projet sans nom",
+                    owner: document.getElementById('p-owner').value,
+                    status: document.getElementById('p-status').value,
+                    start: startVal,
+                    end: endVal,
+                    progress: parseInt(document.getElementById('p-progress').value) || 0,
+                    lastEditedBy: editorName,
+                    lastEditedAt: dateString
+                };
+
+                // 4. Envoi à Firebase en utilisant window.fbMethods
+                const fb = window.fbMethods;
+                await fb.set(fb.ref(window.fbDB, 'projects/' + id), pData);
+
+                // 5. Fermeture et succès
+                closeForm();
+                showStatus("ENREGISTRÉ");
+
+            } catch (error) {
+                console.error("Erreur détaillée :", error);
+                alert("Erreur technique : " + error.message);
+            }
+        }
 
         async function deleteProject() {
             const id = document.getElementById('p-id').value;
@@ -545,42 +654,42 @@ async function addOrUpdateProject() {
             }
         }
 
-function editProject(id) {
-    const p = projects.find(i => i.id === id);
-    if(!p) return;
+        function editProject(id) {
+            const p = projects.find(i => i.id === id);
+            if (!p) return;
 
-    // Remplissage des champs classiques
-    document.getElementById('p-id').value = p.id;
-    document.getElementById('p-name').value = p.name;
-    document.getElementById('p-owner').value = p.owner;
-    document.getElementById('p-status').value = p.status;
-    document.getElementById('p-start').value = p.start;
-    document.getElementById('p-end').value = p.end;
-    document.getElementById('p-progress').value = p.progress;
-    document.getElementById('prog-val').innerText = p.progress + "%";
-    
-    // Gestion du sélecteur de projet et du bouton supprimer
-    document.getElementById('btn-delete').classList.remove('hidden');
-    document.getElementById('project-selector').value = p.id;
+            // Remplissage des champs classiques
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-name').value = p.name;
+            document.getElementById('p-owner').value = p.owner;
+            document.getElementById('p-status').value = p.status;
+            document.getElementById('p-start').value = p.start;
+            document.getElementById('p-end').value = p.end;
+            document.getElementById('p-progress').value = p.progress;
+            document.getElementById('prog-val').innerText = p.progress + "%";
 
-    // --- LOGIQUE DE SUIVI DES MODIFICATIONS ---
-    const infoBox = document.getElementById('edit-info');
-    const infoText = document.getElementById('last-edit-text');
+            // Gestion du sélecteur de projet et du bouton supprimer
+            document.getElementById('btn-delete').classList.remove('hidden');
+            document.getElementById('project-selector').value = p.id;
 
-    if (p.lastEditedBy && p.lastEditedAt) {
-        // Si les données de suivi existent, on les affiche
-        if (infoBox) infoBox.classList.remove('hidden');
-        if (infoText) infoText.innerText = `${p.lastEditedBy} le ${p.lastEditedAt}`;
-    } else {
-        // Sinon, on cache la zone pour les anciens projets
-        if (infoBox) infoBox.classList.add('hidden');
-    }
-    // ------------------------------------------
+            // --- LOGIQUE DE SUIVI DES MODIFICATIONS ---
+            const infoBox = document.getElementById('edit-info');
+            const infoText = document.getElementById('last-edit-text');
 
-    openForm(true);
-}
+            if (p.lastEditedBy && p.lastEditedAt) {
+                // Si les données de suivi existent, on les affiche
+                if (infoBox) infoBox.classList.remove('hidden');
+                if (infoText) infoText.innerText = `${p.lastEditedBy} le ${p.lastEditedAt}`;
+            } else {
+                // Sinon, on cache la zone pour les anciens projets
+                if (infoBox) infoBox.classList.add('hidden');
+            }
+            // ------------------------------------------
 
-        function openForm(isEdit = false) { 
+            openForm(true);
+        }
+
+        function openForm(isEdit = false) {
             if (isEdit !== true) {
                 document.getElementById('p-id').value = '';
                 document.getElementById('p-name').value = '';
@@ -589,7 +698,7 @@ function editProject(id) {
                 document.getElementById('btn-delete').classList.add('hidden');
                 document.getElementById('project-selector').value = '';
             }
-            document.getElementById('form-overlay').classList.add('modal-active'); 
+            document.getElementById('form-overlay').classList.add('modal-active');
         }
 
         function closeForm() {
@@ -604,87 +713,118 @@ function editProject(id) {
             setTimeout(() => s.style.opacity = "0", 3000);
         }
 
-        document.getElementById('p-progress').oninput = function() {
+        document.getElementById('p-progress').oninput = function () {
             document.getElementById('prog-val').innerText = this.value + "%";
         };
 
 
-        window.togglePasswordVisibility = function() {
-    const passwordInput = document.getElementById('login-password');
-    const eyeIcon = document.getElementById('eye-icon');
-    
-    if (passwordInput.type === 'password') {
-        // Afficher le mot de passe
-        passwordInput.type = 'text';
-        // Changer l'icône (œil barré)
-        eyeIcon.innerHTML = `
+        window.togglePasswordVisibility = function () {
+            const passwordInput = document.getElementById('login-password');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (passwordInput.type === 'password') {
+                // Afficher le mot de passe
+                passwordInput.type = 'text';
+                // Changer l'icône (œil barré)
+                eyeIcon.innerHTML = `
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.059 10.059 0 014.473-4.474M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 3.359a10.014 10.014 0 01-1.125 1.125m-1.513-1.513l-3.374-3.374m0 0l-1.125-1.125m1.125 1.125l3.374 3.374M9 4.612A9.965 9.965 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
         `;
-    } else {
-        // Cacher le mot de passe
-        passwordInput.type = 'password';
-        // Remettre l'icône normale
-        eyeIcon.innerHTML = `
+            } else {
+                // Cacher le mot de passe
+                passwordInput.type = 'password';
+                // Remettre l'icône normale
+                eyeIcon.innerHTML = `
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         `;
-    }
-};
+            }
+        };
 
 
         // Affiche la nouvelle modale au lieu du "confirm" par défaut
-function showDeleteConfirm() {
-    document.getElementById('confirm-modal').classList.remove('hidden');
-    document.getElementById('confirm-modal').classList.add('flex');
-}
-
-// Ferme la modale si on annule
-function closeDeleteConfirm() {
-    document.getElementById('confirm-modal').classList.add('hidden');
-    document.getElementById('confirm-modal').classList.remove('flex');
-}
-
-// Fonction qui exécute la suppression après clic sur le bouton rouge
-async function confirmDeleteProject() {
-    const id = document.getElementById('p-id').value; // C'est l'ID du projet
-    
-    if (id) {
-        try {
-            const { ref, remove } = window.fbMethods;
-            
-            // 1. Supprimer le projet lui-même
-            await remove(ref(window.fbDB, 'projects/' + id));
-            
-            // 2. Supprimer TOUTES les tâches liées à ce projet
-            // On cible le dossier 'tasks' qui porte le même ID que le projet
-            await remove(ref(window.fbDB, 'tasks/' + id));
-            
-            // 3. Interface et retours
-            closeDeleteConfirm(); 
-            closeForm();          
-            showStatus("PROJET & TÂCHES EFFACÉS"); 
-            
-        } catch (error) {
-            console.error("Erreur lors de la suppression :", error);
-            alert("Une erreur est survenue pendant la suppression.");
+        function showDeleteConfirm() {
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('confirm-modal').classList.add('flex');
         }
-    }
-}
-        
+
+        // Ferme la modale si on annule
+        function closeDeleteConfirm() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            document.getElementById('confirm-modal').classList.remove('flex');
+        }
+
+        // Fonction qui exécute la suppression après clic sur le bouton rouge
+        async function confirmDeleteProject() {
+            const id = document.getElementById('p-id').value; // C'est l'ID du projet
+
+            if (id) {
+                try {
+                    const { ref, remove } = window.fbMethods;
+
+                    // 1. Supprimer le projet lui-même
+                    await remove(ref(window.fbDB, 'projects/' + id));
+
+                    // 2. Supprimer TOUTES les tâches liées à ce projet
+                    // On cible le dossier 'tasks' qui porte le même ID que le projet
+                    await remove(ref(window.fbDB, 'tasks/' + id));
+
+                    // 3. Interface et retours
+                    closeDeleteConfirm();
+                    closeForm();
+                    showStatus("PROJET & TÂCHES EFFACÉS");
+
+                } catch (error) {
+                    console.error("Erreur lors de la suppression :", error);
+                    alert("Une erreur est survenue pendant la suppression.");
+                }
+            }
+        }
+        async function updateVersionDisplay() {
+            try {
+                // 1. Lire le contenu du fichier sw.js
+                const response = await fetch('./sw.js');
+                const text = await response.text();
+
+                // 2. Utiliser une expression régulière pour trouver 'pilotage-v3.1.2'
+                const match = text.match(/const\s+CACHE_NAME\s*=\s*['"]pilotage-v([^'"]+)['"]/);
+
+                if (match && match[1]) {
+                    const versionNumber = match[1]; // Récupère "3.1.2"
+                    document.getElementById('app-version').innerText = `v${versionNumber}`;
+                } else {
+                    document.getElementById('app-version').innerText = 'v1.0.0';
+                }
+            } catch (e) {
+                console.error("Erreur de récupération de la version:", e);
+                document.getElementById('app-version').innerText = 'v--';
+            }
+        }
+
+        // Appeler la fonction au chargement de la page
+        updateVersionDisplay();
+
     </script>
 
-<div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
-    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-white text-center animate-in zoom-in duration-200">
-        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
-        <h3 class="text-xl font-black text-slate-800 mb-2 tracking-tight">Supprimer ce projet ?</h3>
-        <p class="text-slate-500 text-sm mb-8 leading-relaxed">Action Irréversible : Vous allez supprimer ce projet et toutes les tâches qui lui sont liées.</p>
-        <div class="flex gap-3">
-            <button onclick="closeDeleteConfirm()" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
-            <button onclick="confirmDeleteProject()" class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Supprimer</button>
+    <div id="confirm-modal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
+        <div
+            class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-white text-center animate-in zoom-in duration-200">
+            <div
+                class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                ⚠️</div>
+            <h3 class="text-xl font-black text-slate-800 mb-2 tracking-tight">Supprimer ce projet ?</h3>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Action Irréversible : Vous allez supprimer ce projet
+                et toutes les tâches qui lui sont liées.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteConfirm()"
+                    class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+                <button onclick="confirmDeleteProject()"
+                    class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Supprimer</button>
+            </div>
         </div>
     </div>
-</div>
 
-    
+
 </body>
+
 </html>

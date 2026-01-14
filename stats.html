@@ -193,7 +193,7 @@
             let totalDone = tasks.filter(t => t.done).length;
             let today = new Date().setHours(0, 0, 0, 0);
 
-            // On ne compte les retard que pour les projets ACTIFS
+            // On ne compte les retards que pour les projets ACTIFS
             let activeIds = activeProjs.map(p => p.id);
             let totalDelays = tasks.filter(t =>
                 activeIds.includes(t.projectId) && !t.done && t.date && new Date(t.date) < today
