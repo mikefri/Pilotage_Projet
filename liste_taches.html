@@ -15,16 +15,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA Gantt: Connecté'))
-                    .catch(err => console.log('PWA Gantt: Erreur', err));
-            });
-        }
-    </script>
-
     <style>
         .done {
             opacity: 0.4;
@@ -67,17 +57,16 @@
             font-size: 11px;
             font-weight: 700;
             color: #475569;
-            z-index: 30;
+            z-index: 40;
             background: white;
             padding-left: 10px;
             padding-right: 15px;
             height: 100%;
             display: flex;
             align-items: center;
-            border-right: 1px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
             box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
             cursor: help;
-            /* Indique qu'il y a une info-bulle */
         }
 
         .task-bar {
@@ -94,14 +83,14 @@
             transition: all 0.2s;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
         }
 
         .task-bar:hover {
             transform: scale(1.02);
-            z-index: 40;
+            z-index: 41;
         }
 
-        /* Couleurs Priorités */
         .prio-haute {
             border-left: 5px solid #ef4444 !important;
         }
@@ -136,6 +125,27 @@
             white-space: nowrap;
         }
 
+        .gantt-header {
+            display: flex;
+            position: sticky;
+            top: 0;
+            z-index: 45;
+            background: white;
+            border-bottom: 2px solid #e2e8f0;
+            height: 40px;
+        }
+
+        .header-day {
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
         .btn-retour {
             background-color: #f1f5f9;
             color: #475569;
@@ -149,16 +159,11 @@
             transition: all 0.2s;
             text-decoration: none;
         }
-
-        .btn-retour:hover {
-            background-color: #e2e8f0;
-            transform: translateY(-1px);
-        }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -179,19 +184,6 @@
         window.fbDB = db;
         window.fbMethods = { ref, set, onValue, update, remove };
 
-        window.login = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                errorEl.classList.add('hidden');
-            } catch (e) {
-                errorEl.innerText = "Identifiants incorrects";
-                errorEl.classList.remove('hidden');
-            }
-        };
-
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
             if (user) {
@@ -201,53 +193,141 @@
                 if (loginScreen) loginScreen.classList.remove('hidden');
             }
         });
+
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                if (errorEl) errorEl.classList.add('hidden');
+            } catch (e) {
+                if (errorEl) { errorEl.innerText = "Identifiants incorrects"; errorEl.classList.remove('hidden'); }
+            }
+        };
     </script>
 </head>
 
 <body class="bg-[#F8FAFC] text-slate-900 font-sans">
 
     <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
-        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
-            <div class="text-center mb-8">
-                <span class="bg-indigo-600 text-white p-3 rounded-2xl text-xl font-bold">GP</span>
-                <h1 class="text-2xl font-bold mt-4 text-slate-800">Accès Restreint</h1>
-            </div>
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email"
-                    class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
-                <input type="password" id="login-password" placeholder="Mot de passe"
-                    class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
-                <button onclick="login()"
-                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Se
-                    connecter</button>
-                <p id="login-error" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
-            </div>
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200 text-center">
+            <span class="bg-indigo-600 text-white p-3 rounded-2xl text-xl font-bold">GP</span>
+            <h1 class="text-2xl font-bold mt-4 mb-6 text-slate-800">Accès Restreint</h1>
+            <input type="email" id="login-email" placeholder="Email"
+                class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 mb-4 outline-none">
+            <input type="password" id="login-password" placeholder="Mot de passe"
+                class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 mb-6 outline-none">
+            <button onclick="login()"
+                class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Se
+                connecter</button>
+            <p id="login-error" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
         </div>
     </div>
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold flex items-center gap-3">
+            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
+            <span class="text-slate-800">Gestion des tâches</span>
+        </h1>
+        <div class="flex items-center gap-4">
+            <div id="delay-container" class="hidden relative group">
+                <div
+                    class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer">
+                    <span id="delay-count">0</span> RETARD(S)
+                </div>
+                <div
+                    class="absolute right-0 top-full mt-2 w-64 bg-white border shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées
+                    </p>
+                    <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
+                </div>
+            </div>
+            <a href="index.html" class="btn-retour">RETOUR</a>
+        </div>
+    </nav>
+
+    <main class="max-w-full mx-auto mt-6 px-4">
+        <div
+            class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+            <header>
+                <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
+                <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
+            </header>
+
+            <div class="flex gap-2 items-center flex-wrap bg-slate-50 p-2 rounded-xl border border-slate-200">
+                <input type="text" id="search-task" oninput="renderTasks()" placeholder="🔍 Chercher une tâche..."
+                    class="p-2 rounded-lg border text-sm w-40 outline-none">
+                <select id="filter-status" onchange="renderTasks()"
+                    class="p-2 rounded-lg border text-sm font-bold text-indigo-600 outline-none">
+                    <option value="all">👁️ Tout voir</option>
+                    <option value="active" selected>⏳ En cours</option>
+                    <option value="done">✅ Terminées</option>
+                </select>
+                <select id="filter-prio-global" onchange="renderTasks()"
+                    class="p-2 rounded-lg border text-sm font-bold text-indigo-600 outline-none">
+                    <option value="all">🚩 Priorités</option>
+                    <option value="haute">🔴 Haute</option>
+                    <option value="moyenne">🟠 Moyenne</option>
+                    <option value="basse">🟢 Basse</option>
+                </select>
+                <select id="filter-who" onchange="renderTasks()"
+                    class="p-2 rounded-lg border text-sm font-bold text-indigo-600 outline-none">
+                    <option value="all">👥 Tous les responsables</option>
+                </select>
+            </div>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
+            <div class="flex gap-2 items-center flex-wrap">
+                <input type="text" id="task-desc" placeholder="Nouvelle tâche..."
+                    class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="number" id="task-time" placeholder="Hrs"
+                    class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <select id="task-who"
+                    class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
+                <select id="task-prio"
+                    class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold text-slate-600">
+                    <option value="basse">Basse</option>
+                    <option value="moyenne" selected>Moyenne</option>
+                    <option value="haute">Haute</option>
+                </select>
+                <input type="date" id="task-date"
+                    class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
+                <button onclick="addTask()"
+                    class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 shadow-sm transition">+</button>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning Projet</h2>
+                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h
+                    total</div>
+            </div>
+            <div id="gantt-scroll-container" class="overflow-auto max-h-[70vh]">
+                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid"></div>
+            </div>
+        </section>
+    </main>
 
     <div id="edit-modal"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-800">Détails de la tâche</h3>
-                <button onclick="deleteTask()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                </button>
+                <button onclick="deleteTask()"
+                    class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">🗑️</button>
             </div>
             <div class="space-y-4">
                 <input type="text" id="edit-task-desc"
                     class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none font-bold">
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label
                             class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Priorité</label>
                         <select id="edit-task-prio"
-                            class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                            class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none">
                             <option value="basse">Basse</option>
                             <option value="moyenne">Moyenne</option>
                             <option value="haute">Haute</option>
@@ -257,10 +337,9 @@
                         <label
                             class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Responsable</label>
                         <select id="edit-task-who"
-                            class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
+                            class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none"></select>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Temps
@@ -275,7 +354,6 @@
                             class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes /
                         Instructions</label>
@@ -283,131 +361,23 @@
                         class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm text-slate-600"
                         placeholder="Précisions sur la tâche..."></textarea>
                 </div>
-
                 <div class="flex items-center gap-2 py-2">
                     <input type="checkbox" id="edit-task-done" class="w-5 h-5 accent-indigo-600">
                     <label for="edit-task-done" class="font-bold text-slate-700">Marquer comme terminé</label>
                 </div>
             </div>
-
             <div id="task-edit-info"
                 class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 italic hidden">
                 Dernière modif : <span id="task-last-edit-text">-</span>
             </div>
-
             <div class="flex gap-3 mt-8">
                 <button onclick="closeEditModal()"
-                    class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">Annuler</button>
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition">Annuler</button>
                 <button onclick="saveTaskEdit()"
-                    class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md">Enregistrer</button>
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 transition">Enregistrer</button>
             </div>
         </div>
     </div>
-
-    <div id="confirm-modal"
-        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div
-            class="bg-white rounded-2xl shadow-2xl max-w-xs w-full p-6 modal-animate text-center border border-slate-200">
-            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-slate-800 mb-2">Supprimer ?</h3>
-            <p class="text-slate-500 text-sm mb-6">Cette action est définitive.</p>
-            <div class="flex gap-3">
-                <button onclick="closeConfirm()"
-                    class="flex-1 py-2 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition">Annuler</button>
-                <button onclick="confirmDeletion()"
-                    class="flex-1 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl shadow-lg">Supprimer</button>
-            </div>
-        </div>
-    </div>
-
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-bold flex items-center gap-3">
-            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
-            <span class="text-slate-800">Gestion des tâches</span>
-        </h1>
-        <div class="flex items-center gap-4">
-            <div id="delay-container" class="hidden relative group">
-                <div
-                    class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer hover:bg-red-100 transition">
-                    <span class="relative flex h-2 w-2">
-                        <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                    <span id="delay-count">0</span> RETARD(S)
-                </div>
-                <div
-                    class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
-                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées
-                    </p>
-                    <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
-                </div>
-            </div>
-            <a href="index.html" class="btn-retour">RETOUR</a>
-        </div>
-    </nav>
-
-    <main class="max-w-full mx-auto mt-6 px-4">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-
-            <header class="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-3 min-w-[300px]">
-                <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
-                <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
-            </header>
-
-            <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
-                <div class="flex gap-2 items-center flex-wrap">
-                    <input type="text" id="task-desc" placeholder="Nouvelle tâche..."
-                        class="w-48 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-                    <input type="number" id="task-time" placeholder="Hrs"
-                        class="w-14 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-
-                    <select id="task-who"
-                        class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
-                    </select>
-
-                    <select id="task-prio"
-                        class="w-28 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm font-bold text-slate-600">
-                        <option value="basse">Basse</option>
-                        <option value="moyenne" selected>Moyenne</option>
-                        <option value="haute">Haute</option>
-                    </select>
-
-                    <input type="date" id="task-date"
-                        class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px]">
-
-                    <button onclick="addTask()"
-                        class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 flex items-center justify-center shadow-sm">
-                        +
-                    </button>
-
-                    <div class="flex gap-2 items-center ml-2 pl-2 border-l border-slate-100">
-                        <select id="filter-who" onchange="renderTasks()"
-                            class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600">
-                            <option value="all">Tous les responsables</option>
-                        </select>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning</h2>
-                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h
-                </div>
-            </div>
-            <div id="gantt-scroll-container" class="overflow-x-auto relative">
-                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
-            </div>
-        </section>
-    </main>
 
     <script>
         let allTasks = [];
@@ -416,8 +386,6 @@
         let currentProjectId = new URLSearchParams(window.location.search).get('id');
         let currentEditingId = null;
 
-        const dec = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch (e) { return str; } };
-
         function loadData() {
             if (!window.fbMethods) return setTimeout(loadData, 100);
             const { onValue, ref } = window.fbMethods;
@@ -425,8 +393,7 @@
             onValue(ref(window.fbDB, 'responsables'), (snap) => {
                 responsables = snap.val() ? Object.values(snap.val()) : [];
                 const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                const placeholder = '<option value="" disabled selected>Choisir un responsable...</option>';
-                document.getElementById('task-who').innerHTML = placeholder + options;
+                document.getElementById('task-who').innerHTML = '<option value="" disabled selected>Choisir un responsable...</option>' + options;
                 document.getElementById('edit-task-who').innerHTML = options;
                 updateFilterDropdown();
             });
@@ -436,9 +403,7 @@
                 if (currentProject) {
                     document.getElementById('project-title').innerText = "📝 " + currentProject.name;
                     const respo = responsables.find(r => r.id === currentProject.owner);
-                    const ownerName = respo ? respo.name : currentProject.owner;
-                    const infoEl = document.getElementById('project-info');
-                    if (infoEl) infoEl.innerText = "Responsable : " + ownerName;
+                    document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
                     renderTasks();
                 }
             });
@@ -448,110 +413,108 @@
                 updateFilterDropdown();
                 renderTasks();
             });
+        }
 
-            function updateFilterDropdown() {
-                const filterEl = document.getElementById('filter-who');
-                if (!filterEl || responsables.length === 0) return;
-                const idsActifs = [...new Set(allTasks
-                    .filter(t => t.projectId === currentProjectId)
-                    .map(t => t.who)
-                )];
-                const responsablesActifs = responsables.filter(r => idsActifs.includes(r.id));
-                const filterOptions = responsablesActifs
-                    .map(r => `<option value="${r.id}">👤 ${r.name}</option>`)
-                    .join('');
-                const currentSelection = filterEl.value;
-                filterEl.innerHTML = '<option value="all">👥 Tous les responsables du projet</option>' + filterOptions;
-                filterEl.value = currentSelection;
-            }
+        function updateFilterDropdown() {
+            const filterEl = document.getElementById('filter-who');
+            if (!filterEl) return;
+            const idsActifs = [...new Set(allTasks.filter(t => t.projectId === currentProjectId).map(t => t.who))];
+            const responsablesActifs = responsables.filter(r => idsActifs.includes(r.id));
+            const currentSelection = filterEl.value;
+            filterEl.innerHTML = '<option value="all">👥 Tous les responsables</option>' + responsablesActifs.map(r => `<option value="${r.id}">👤 ${r.name}</option>`).join('');
+            filterEl.value = currentSelection;
         }
 
         function renderTasks() {
             if (!currentProject) return;
-            const filterValue = document.getElementById('filter-who')?.value || 'all';
             const container = document.getElementById('gantt-container');
-            const scrollContainer = document.getElementById('gantt-scroll-container');
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
+            const fWho = document.getElementById('filter-who').value;
+            const fStatus = document.getElementById('filter-status').value;
+            const fPrio = document.getElementById('filter-prio-global').value;
+            const fSearch = document.getElementById('search-task').value.toLowerCase();
 
             const pStart = new Date(currentProject.start);
             const pEnd = new Date(currentProject.end);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const duration = Math.ceil(Math.abs(pEnd - pStart) / 86400000) + 1;
+            const dayWidth = 45;
+            const labelWidth = 160;
 
-            const projectDurationDays = Math.ceil(Math.abs(pEnd - pStart) / (1000 * 60 * 60 * 24)) + 1;
-            const dayWidth = Math.max(45, (scrollContainer.offsetWidth - 200) / projectDurationDays);
+            // Header Dates
+            let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; width: ${duration * dayWidth}px;">`;
+            for (let i = 0; i < duration; i++) {
+                const curr = new Date(pStart); curr.setDate(pStart.getDate() + i);
+                const isToday = curr.getTime() === today.getTime();
+                headerHTML += `<div class="header-day" style="width: ${dayWidth}px; ${isToday ? 'background: #fef2f2; color: #ef4444;' : 'color: #64748b;'}"><span>${curr.getDate()}</span><span style="font-size: 7px;">${curr.toLocaleDateString('fr-FR', { month: 'short' })}</span></div>`;
+            }
+            headerHTML += `</div>`;
 
-            container.style.width = `${(projectDurationDays * dayWidth) + 160}px`;
-            container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `160px 0`;
-
+            // Ligne Today
             let timelineHTML = '';
             if (today >= pStart && today <= pEnd) {
-                const diffTime = today.getTime() - pStart.getTime();
-                const daysToday = diffTime / (24 * 60 * 60 * 1000);
-                const leftPosition = 160 + (daysToday * dayWidth);
-                timelineHTML = `<div class="today-line" style="left: ${leftPosition}px;"><div class="today-label">Aujourd'hui</div></div>`;
+                const leftPos = labelWidth + ((today - pStart) / 86400000) * dayWidth;
+                timelineHTML = `<div class="today-line" style="left: ${leftPos}px;"><div class="today-label">Aujourd'hui</div></div>`;
             }
 
-            let filteredTasks = allTasks.filter(t => t.projectId === currentProjectId);
-            if (filterValue !== 'all') filteredTasks = filteredTasks.filter(t => t.who === filterValue);
-            filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Filtrage
+            let filtered = allTasks.filter(t => t.projectId === currentProjectId);
+            if (fWho !== 'all') filtered = filtered.filter(t => t.who === fWho);
+            if (fPrio !== 'all') filtered = filtered.filter(t => t.priority === fPrio);
+            if (fStatus === 'active') filtered = filtered.filter(t => !t.done);
+            else if (fStatus === 'done') filtered = filtered.filter(t => t.done);
+            if (fSearch) filtered = filtered.filter(t => t.desc.toLowerCase().includes(fSearch));
+            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            const delayed = filteredTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-            const delayContainer = document.getElementById('delay-container');
-            if (delayContainer) {
-                delayContainer.classList.toggle('hidden', delayed.length === 0);
-                document.getElementById('delay-count').innerText = delayed.length;
-                document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
-            }
+            // Retards
+            const delayed = filtered.filter(t => !t.done && t.date && new Date(t.date) < today);
+            document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
+            document.getElementById('delay-count').innerText = delayed.length;
+            document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
 
             let totalHrs = 0;
-            const tasksHTML = filteredTasks.map((t) => {
+            const tasksHTML = filtered.map(t => {
                 totalHrs += parseFloat(t.time || 0);
-                const tDate = t.date ? new Date(t.date) : pStart;
-                const leftPosPx = Math.max(0, ((tDate - pStart) / (24 * 60 * 60 * 1000)) * dayWidth);
+                const tDate = new Date(t.date || pStart);
+                const leftPx = ((tDate - pStart) / 86400000) * dayWidth;
                 const respo = responsables.find(r => r.id === t.who)?.name || t.who;
-
-                // --- MODIFICATION ICI : CONSTRUCTION DE L'INFO-BULLE ---
-                // On construit le texte : Nom de la tâche + Note (si elle existe)
-                const tooltipWithNote = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
-
-                const prioClass = t.priority ? `prio-${t.priority}` : 'prio-moyenne';
                 const isLate = !t.done && t.date && new Date(t.date) < today;
+                const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
 
                 return `
-        <div class="gantt-row ${t.done ? 'done' : ''}">
-            <div class="task-label" title="${tooltipWithNote}">${t.desc}</div>
-            <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                 style="left: calc(160px + ${leftPosPx}px); width: 130px;" 
-                 onclick="openEditModal('${t.id}')"
-                 title="${tooltipWithNote}">
-                 <span class="truncate mr-1 text-[9px] opacity-90 uppercase">${respo}</span>
-                 ${(t.note && t.note.trim() !== "") ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
-            </div>
-            <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(300px + ${leftPosPx}px);">${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}</div>
-        </div>`;
+                <div class="gantt-row ${t.done ? 'done' : ''}">
+                    <div class="task-label" title="${tooltip}">${t.desc}</div>
+                    <div class="task-bar prio-${t.priority || 'moyenne'} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
+                         style="left: calc(${labelWidth}px + ${leftPx}px); width: 130px;" onclick="openEditModal('${t.id}')" title="${tooltip}">
+                        <span class="truncate text-[9px] uppercase opacity-90">${respo}</span>
+                        ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                    </div>
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${labelWidth + 140}px + ${leftPx}px);">
+                        ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
+                    </div>
+                </div>`;
             }).join('');
 
-            container.innerHTML = timelineHTML + tasksHTML;
-            const totalHrsEl = document.getElementById('total-hours');
-            if (totalHrsEl) totalHrsEl.innerText = `${totalHrs} h total`;
+            container.style.width = `${(duration * dayWidth) + labelWidth}px`;
+            container.style.backgroundSize = `${dayWidth}px 100%`;
+            container.style.backgroundPosition = `${labelWidth}px 0`;
+            container.innerHTML = headerHTML + timelineHTML + tasksHTML;
+            document.getElementById('total-hours').innerText = totalHrs + " h total";
         }
 
         async function addTask() {
             const desc = document.getElementById('task-desc').value.trim();
-            const time = document.getElementById('task-time').value || 0;
-            const who = document.getElementById('task-who').value;
-            const priority = document.getElementById('task-prio').value;
-            const date = document.getElementById('task-date').value || currentProject.start;
-
             if (!desc) return;
             const user = window.auth?.currentUser;
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
             const taskId = "TASK-" + Date.now();
-
             await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), {
-                id: taskId, projectId: currentProjectId, desc, time, who, date, priority, done: false,
-                lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+                id: taskId, projectId: currentProjectId, desc,
+                time: document.getElementById('task-time').value || 0,
+                who: document.getElementById('task-who').value,
+                priority: document.getElementById('task-prio').value,
+                date: document.getElementById('task-date').value || currentProject.start,
+                done: false, lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             document.getElementById('task-desc').value = '';
         }
@@ -581,7 +544,6 @@
         async function saveTaskEdit() {
             const user = window.auth?.currentUser;
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
-
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
                 desc: document.getElementById('edit-task-desc').value,
                 time: document.getElementById('edit-task-time').value,
@@ -595,13 +557,10 @@
             closeEditModal();
         }
 
-        function deleteTask() { document.getElementById('confirm-modal').classList.remove('hidden'); }
-        function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
-
-        async function confirmDeletion() {
-            if (currentEditingId) {
+        async function deleteTask() {
+            if (confirm("Action définitive. Supprimer cette tâche ?")) {
                 await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
-                closeConfirm(); closeEditModal();
+                closeEditModal();
             }
         }
         window.addEventListener('resize', renderTasks);
