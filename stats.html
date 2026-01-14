@@ -1,28 +1,45 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Statistiques Globales</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .progress-bar { transition: width 1s ease-in-out; }
-        .archive-card { opacity: 0.75; filter: grayscale(0.4); }
-        .archive-card:hover { opacity: 1; filter: grayscale(0); }
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+
+        .archive-card {
+            opacity: 0.75;
+            filter: grayscale(0.4);
+        }
+
+        .archive-card:hover {
+            opacity: 1;
+            filter: grayscale(0);
+        }
     </style>
 </head>
+
 <body class="bg-[#F1F5F9] text-slate-900 font-sans">
 
     <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-black text-slate-800 tracking-tight">COCKPIT <span class="text-indigo-600">GANTT</span></h1>
-        <a href="index.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M5 12L12 19M5 12L12 5"/></svg>
+        <h1 class="text-xl font-black text-slate-800 tracking-tight">COCKPIT <span class="text-indigo-600">GANTT</span>
+        </h1>
+        <a href="index.html"
+            class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" />
+            </svg>
             RETOUR
         </a>
     </nav>
 
     <main class="max-w-7xl mx-auto p-6">
-        
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                 <p class="text-xs font-black uppercase text-slate-400 mb-1">Projets Actifs</p>
@@ -55,7 +72,7 @@
             Archives (Terminés)
         </h3>
         <div id="completed-projects-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-80">
-            </div>
+        </div>
 
     </main>
 
@@ -95,7 +112,7 @@
         function createCard(project, projectTasks, ownerName, isCompleted) {
             const doneTasks = projectTasks.filter(t => t.done).length;
             const progress = projectTasks.length > 0 ? Math.round((doneTasks / projectTasks.length) * 100) : 0;
-            const today = new Date().setHours(0,0,0,0);
+            const today = new Date().setHours(0, 0, 0, 0);
             const delays = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
             const totalHours = projectTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
 
@@ -150,66 +167,67 @@
             </div>`;
         }
 
-function renderDashboard(projects, tasks, responsables) {
-    const activeGrid = document.getElementById('active-projects-grid');
-    const completedGrid = document.getElementById('completed-projects-grid');
-    activeGrid.innerHTML = '';
-    completedGrid.innerHTML = '';
-    
-    const projectArray = Object.values(projects);
+        function renderDashboard(projects, tasks, responsables) {
+            const activeGrid = document.getElementById('active-projects-grid');
+            const completedGrid = document.getElementById('completed-projects-grid');
+            activeGrid.innerHTML = '';
+            completedGrid.innerHTML = '';
 
-    // FILTRAGE INTELLIGENT (Gère "Terminé", "termine", "Termine", etc.)
-    const activeProjs = projectArray.filter(p => {
-        const s = (p.status || "").toLowerCase();
-        // Un projet est actif s'il n'est pas "terminé" (avec ou sans accent)
-        return s !== 'terminé' && s !== 'termine';
-    });
+            const projectArray = Object.values(projects);
 
-    const completedProjs = projectArray.filter(p => {
-        const s = (p.status || "").toLowerCase();
-        // Un projet est complété s'il est marqué "terminé" (avec ou sans accent)
-        return s === 'terminé' || s === 'termine';
-    });
+            // FILTRAGE INTELLIGENT (Gère "Terminé", "termine", "Termine", etc.)
+            const activeProjs = projectArray.filter(p => {
+                const s = (p.status || "").toLowerCase();
+                // Un projet est actif s'il n'est pas "terminé" (avec ou sans accent)
+                return s !== 'terminé' && s !== 'termine';
+            });
 
-    // --- MISE À JOUR DES COMPTEURS DU HAUT ---
-    let totalTasks = tasks.length;
-    let totalDone = tasks.filter(t => t.done).length;
-    let today = new Date().setHours(0,0,0,0);
-    
-    // On ne compte les retards que pour les projets ACTIFS
-    let activeIds = activeProjs.map(p => p.id);
-    let totalDelays = tasks.filter(t => 
-        activeIds.includes(t.projectId) && !t.done && t.date && new Date(t.date) < today
-    ).length;
+            const completedProjs = projectArray.filter(p => {
+                const s = (p.status || "").toLowerCase();
+                // Un projet est complété s'il est marqué "terminé" (avec ou sans accent)
+                return s === 'terminé' || s === 'termine';
+            });
 
-    let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+            // --- MISE À JOUR DES COMPTEURS DU HAUT ---
+            let totalTasks = tasks.length;
+            let totalDone = tasks.filter(t => t.done).length;
+            let today = new Date().setHours(0, 0, 0, 0);
 
-    document.getElementById('stat-total-projects').innerText = activeProjs.length;
-    document.getElementById('stat-total-delays').innerText = totalDelays;
-    document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
-    document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+            // On ne compte les retard que pour les projets ACTIFS
+            let activeIds = activeProjs.map(p => p.id);
+            let totalDelays = tasks.filter(t =>
+                activeIds.includes(t.projectId) && !t.done && t.date && new Date(t.date) < today
+            ).length;
 
-    // --- RENDU DES PROJETS ACTIFS ---
-    if(activeProjs.length === 0) {
-        activeGrid.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet en cours.</p>";
-    } else {
-        activeProjs.forEach(p => {
-            const pTasks = tasks.filter(t => t.projectId === p.id);
-            const owner = responsables[p.owner]?.name || "Inconnu";
-            activeGrid.innerHTML += createCard(p, pTasks, owner, false);
-        });
-    }
+            let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
 
-    // --- RENDU DES ARCHIVES (TERMINÉS) ---
-    if(completedProjs.length > 0) {
-        completedProjs.forEach(p => {
-            const pTasks = tasks.filter(t => t.projectId === p.id);
-            completedGrid.innerHTML += createCard(p, pTasks, "", true);
-        });
-    } else {
-        completedGrid.innerHTML = "<p class='col-span-full text-sm text-slate-400'>Aucune archive pour le moment.</p>";
-    }
-}
+            document.getElementById('stat-total-projects').innerText = activeProjs.length;
+            document.getElementById('stat-total-delays').innerText = totalDelays;
+            document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
+            document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+
+            // --- RENDU DES PROJETS ACTIFS ---
+            if (activeProjs.length === 0) {
+                activeGrid.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet en cours.</p>";
+            } else {
+                activeProjs.forEach(p => {
+                    const pTasks = tasks.filter(t => t.projectId === p.id);
+                    const owner = responsables[p.owner]?.name || "Inconnu";
+                    activeGrid.innerHTML += createCard(p, pTasks, owner, false);
+                });
+            }
+
+            // --- RENDU DES ARCHIVES (TERMINÉS) ---
+            if (completedProjs.length > 0) {
+                completedProjs.forEach(p => {
+                    const pTasks = tasks.filter(t => t.projectId === p.id);
+                    completedGrid.innerHTML += createCard(p, pTasks, "", true);
+                });
+            } else {
+                completedGrid.innerHTML = "<p class='col-span-full text-sm text-slate-400'>Aucune archive pour le moment.</p>";
+            }
+        }
     </script>
 </body>
+
 </html>
