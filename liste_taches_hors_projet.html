@@ -58,14 +58,12 @@
             font-weight: 700;
             color: #475569;
             z-index: 40;
-            /* Augmenté pour rester devant les barres au scroll */
             background: white;
             padding: 8px 15px 8px 10px;
             min-height: 100%;
             display: flex;
             align-items: center;
             border-right: 2px solid #e2e8f0;
-            /* Un peu plus épais pour la séparation */
             box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
             cursor: help;
             white-space: normal;
@@ -84,11 +82,15 @@
             font-size: 11px;
             font-weight: bold;
             color: white;
-            cursor: pointer;
-            transition: all 0.2s;
+            cursor: grab;
+            transition: transform 0.2s;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 10;
+        }
+
+        .task-bar:active {
+            cursor: grabbing;
         }
 
         .task-bar:hover {
@@ -155,7 +157,6 @@
             top: 0;
             z-index: 45;
             background: white;
-            /* Changé de #f8fafc à blanc pour le sticky */
             border-bottom: 2px solid #e2e8f0;
             height: 40px;
         }
@@ -173,12 +174,6 @@
             background: white;
         }
 
-        .header-day.is-today {
-            background: #fef2f2;
-            color: #ef4444;
-        }
-
-        /* NOUVEAU : Limite la hauteur pour éviter les lignes infinies */
         #gantt-scroll-container {
             max-height: 70vh;
             overflow: auto;
@@ -335,7 +330,8 @@
                 </div>
             </div>
             <div id="gantt-scroll-container">
-                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
+                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"
+                    ondragover="handleDragOver(event)" ondrop="handleDrop(event)"></div>
             </div>
         </section>
     </main>
@@ -405,6 +401,43 @@
         let currentEditingId = null;
         const DB_FOLDER = 'taches_libres';
 
+        // --- NOUVELLES FONCTIONS DRAG & DROP ---
+        function handleDragStart(e, taskId) {
+            e.dataTransfer.setData("text/plain", taskId);
+            e.target.style.opacity = "0.5";
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData("text/plain");
+            const container = document.getElementById('gantt-container');
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+
+            const labelWidth = 160;
+            const dayWidth = 40;
+            const daysFromStart = Math.floor((x - labelWidth) / dayWidth);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const viewStart = new Date(today);
+            viewStart.setDate(today.getDate() - 15);
+
+            const newDate = new Date(viewStart);
+            newDate.setDate(viewStart.getDate() + daysFromStart);
+            const dateString = newDate.toISOString().split('T')[0];
+
+            await window.fbMethods.update(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + taskId), {
+                date: dateString
+            });
+        }
+
+        // --- FONCTIONS EXISTANTES ---
         function loadData() {
             if (!window.fbMethods) return setTimeout(loadData, 100);
             const { onValue, ref } = window.fbMethods;
@@ -441,23 +474,21 @@
 
             const container = document.getElementById('gantt-container');
 
-            const dayWidth = 40; // Largeur d'une colonne jour
-            const labelWidth = 160; // Largeur de la colonne de gauche (sticky)
-            const nbDaysTotal = 60; // Nombre de jours affichés
+            const dayWidth = 40;
+            const labelWidth = 160;
+            const nbDaysTotal = 60;
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // On commence la vue 15 jours avant aujourd'hui
             const viewStart = new Date(today);
             viewStart.setDate(today.getDate() - 15);
 
-            // Configuration de la grille de fond
             container.style.width = `${(nbDaysTotal * dayWidth) + labelWidth}px`;
             container.style.backgroundSize = `${dayWidth}px 100%`;
             container.style.backgroundPosition = `${labelWidth}px 0`;
 
-            // --- 1. GÉNÉRATION DE L'EN-TÊTE DES DATES ---
+            // En-tête des dates
             let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; display: flex; height: 40px; border-bottom: 1px solid #e2e8f0; background: white;">`;
 
             for (let i = 0; i < nbDaysTotal; i++) {
@@ -476,40 +507,32 @@
             }
             headerHTML += `</div>`;
 
-            // --- 2. LIGNE "AUJOURD'HUI" ---
+            // Ligne aujourd'hui
             const diffToday = (today - viewStart) / (1000 * 60 * 60 * 24);
             const todayLeft = labelWidth + (diffToday * dayWidth);
             let timelineHTML = `<div class="today-line" style="left: ${todayLeft}px; top: 40px;"><div class="today-label">Aujourd'hui</div></div>`;
 
-            // --- 3. FILTRAGE ET TRI ---
+            // Filtrage
             let filteredTasks = [...allTasks];
 
-            // Filtre Responsable
             if (filterValue !== 'all') {
                 filteredTasks = filteredTasks.filter(t => t.who === filterValue);
             }
-
-            // Filtre Priorité
             if (filterPrio !== 'all') {
                 filteredTasks = filteredTasks.filter(t => t.priority === filterPrio);
             }
-
-            // Filtre Statut (NOUVEAU)
             if (filterStatus === 'active') {
                 filteredTasks = filteredTasks.filter(t => !t.done);
             } else if (filterStatus === 'done') {
                 filteredTasks = filteredTasks.filter(t => t.done);
             }
-
-            // Filtre Recherche (NOUVEAU)
             if (searchQuery) {
                 filteredTasks = filteredTasks.filter(t => t.desc.toLowerCase().includes(searchQuery));
             }
 
-            // Tri par date
             filteredTasks.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
 
-            // Gestion des retards (alerte en haut de page)
+            // Retards
             const delayed = allTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
             const delayContainer = document.getElementById('delay-container');
             if (delayContainer) {
@@ -520,13 +543,12 @@
                 if (delayListEl) delayListEl.innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
             }
 
-            // --- 4. GÉNÉRATION DES LIGNES DE TÂCHES ---
+            // Génération lignes
             let totalHrs = 0;
             const tasksHTML = filteredTasks.map((t) => {
                 totalHrs += parseFloat(t.time || 0);
                 const tDate = t.date ? new Date(t.date) : today;
 
-                // Calcul de la position horizontale
                 let leftPosPx = ((tDate - viewStart) / (1000 * 60 * 60 * 24)) * dayWidth;
 
                 const respo = responsables.find(r => r.id === t.who)?.name || "??";
@@ -542,10 +564,12 @@
                 
                 <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
                      style="left: calc(${labelWidth}px + ${leftPosPx}px); width: 120px;" 
+                     draggable="true"
+                     ondragstart="handleDragStart(event, '${t.id}')"
                      onclick="openEditModal('${t.id}')"
                      title="${tooltipText}"> 
-                    <span class="truncate text-[9px] uppercase">${respo}</span>
-                    ${hasNote ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                    <span class="truncate text-[9px] uppercase pointer-events-none">${respo}</span>
+                    ${hasNote ? '<span class="ml-auto text-[10px] pointer-events-none">📝</span>' : ''}
                 </div>
                 
                 <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
@@ -555,7 +579,6 @@
             </div>`;
             }).join('');
 
-            // --- 5. INJECTION DANS LE DOM ---
             container.innerHTML = headerHTML + timelineHTML + tasksHTML;
 
             const totalHoursEl = document.getElementById('total-hours');
@@ -568,7 +591,7 @@
             const taskId = "FREE-" + Date.now();
             await window.fbMethods.set(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + taskId), {
                 id: taskId,
-                desc,
+                desc: desc,
                 time: document.getElementById('task-time').value || 0,
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
@@ -591,7 +614,9 @@
             document.getElementById('edit-modal').classList.remove('hidden');
         }
 
-        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
 
         async function saveTaskEdit() {
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + currentEditingId), {
@@ -606,12 +631,18 @@
             closeEditModal();
         }
 
-        function deleteTask() { document.getElementById('confirm-modal').classList.remove('hidden'); }
-        function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
+        function deleteTask() {
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
 
         async function confirmDeletion() {
             await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + currentEditingId));
-            closeConfirm(); closeEditModal();
+            closeConfirm();
+            closeEditModal();
         }
     </script>
 </body>
