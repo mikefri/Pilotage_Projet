@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,16 +9,26 @@
     <style>
         /* Animation pour l'apparition des membres */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .member-card {
             animation: fadeIn 0.4s ease-out forwards;
         }
+
         /* Scrollbar discrète pour la liste */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background-color: #e2e8f0;
             border-radius: 10px;
@@ -71,131 +82,159 @@
         });
     </script>
 </head>
+
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
-<div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
-    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md">
-        <h1 class="text-3xl font-black mb-6 text-center">Accès Privé</h1>
-        <div class="space-y-4">
-            <input type="email" id="login-email" placeholder="Email" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none">
-            <input type="password" id="login-password" placeholder="Mot de passe" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none">
-            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">Se connecter</button>
-            <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+    <div id="login-screen"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md">
+            <h1 class="text-3xl font-black mb-6 text-center">Accès Privé</h1>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email"
+                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none">
+                <input type="password" id="login-password" placeholder="Mot de passe"
+                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none">
+                <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">Se
+                    connecter</button>
+                <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+            </div>
         </div>
     </div>
-</div>
 
-<nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center shadow-sm sticky top-0 z-40">
-    <div class="flex items-center gap-4">
-        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg">P</div>
-        <h1 class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Pilotage Équipe</h1>
-    </div>
-    <div class="flex-1"></div>
-    <div class="flex items-center gap-6">
-        <div id="save-status" class="hidden md:block text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 opacity-0 transition-all duration-500"></div>
-        <a href="profil.html" class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-bold transition-colors">
-            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs">👤</div>
-            <span class="text-sm">Mon Profil</span>
-        </a>
-        <a href="index.html" class="bg-indigo-50 text-indigo-600 px-5 py-2 rounded-xl text-sm font-black hover:bg-indigo-100 transition-all">← RETOUR</a>
-    </div>
-</nav>
-
-<main class="max-w-7xl mx-auto p-6 lg:p-12">
-    <div class="mb-12 flex justify-between items-end">
-        <div>
-            <h1 class="text-4xl font-black text-slate-800 tracking-tight">L'Équipe</h1>
-            <p class="text-slate-500 mt-2 font-medium">Gérez les collaborateurs et leur visibilité.</p>
+    <nav
+        class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center shadow-sm sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <div
+                class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg">
+                P</div>
+            <h1 class="text-xl font-black text-slate-800 tracking-tight hidden md:block">Pilotage Équipe</h1>
         </div>
-        <div class="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm text-slate-500 text-sm font-bold" id="member-count">0 membre(s)</div>
-    </div>
+        <div class="flex-1"></div>
+        <div class="flex items-center gap-6">
+            <div id="save-status"
+                class="hidden md:block text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 opacity-0 transition-all duration-500">
+            </div>
+            <a href="profil.html"
+                class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-bold transition-colors">
+                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs">👤</div>
+                <span class="text-sm">Mon Profil</span>
+            </a>
+            <a href="index.html"
+                class="bg-indigo-50 text-indigo-600 px-5 py-2 rounded-xl text-sm font-black hover:bg-indigo-100 transition-all">←
+                RETOUR</a>
+        </div>
+    </nav>
 
-    <div class="flex flex-col lg:flex-row gap-10 items-start">
-        
-        <div class="w-full lg:w-[380px] lg:sticky lg:top-28">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
-                <h2 class="text-lg font-black mb-6 flex items-center gap-2">
-                    <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
-                    Nouveau membre
-                </h2>
-                <input type="hidden" id="edit-id">
-                <div class="space-y-5">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 ml-2 mb-1 block uppercase tracking-wider">Nom & Prénom</label>
-                        <input type="text" id="respo-name" placeholder="ex: Jean Dupont" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+    <main class="max-w-7xl mx-auto p-6 lg:p-12">
+        <div class="mb-12 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl font-black text-slate-800 tracking-tight">L'Équipe</h1>
+                <p class="text-slate-500 mt-2 font-medium">Gérez les collaborateurs et leur visibilité.</p>
+            </div>
+            <div class="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm text-slate-500 text-sm font-bold"
+                id="member-count">0 membre(s)</div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-10 items-start">
+
+            <div class="w-full lg:w-[380px] lg:sticky lg:top-28">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
+                    <h2 class="text-lg font-black mb-6 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
+                        Nouveau membre
+                    </h2>
+                    <input type="hidden" id="edit-id">
+                    <div class="space-y-5">
+                        <div>
+                            <label
+                                class="text-[10px] font-black text-slate-400 ml-2 mb-1 block uppercase tracking-wider">Nom
+                                & Prénom</label>
+                            <input type="text" id="respo-name" placeholder="ex: Jean Dupont"
+                                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        </div>
+                        <div>
+                            <label
+                                class="text-[10px] font-black text-slate-400 ml-2 mb-1 block uppercase tracking-wider">Email
+                                SNCF</label>
+                            <input type="email" id="respo-email" placeholder="prenom.nom@sncf.fr"
+                                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 ml-2 mb-1 block uppercase tracking-wider">Email SNCF</label>
-                        <input type="email" id="respo-email" placeholder="prenom.nom@sncf.fr" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <div class="mt-8 space-y-3">
+                        <button id="btn-save" onclick="saveResponsable()"
+                            class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:scale-95">Ajouter
+                            à l'équipe</button>
+                        <button id="btn-cancel" onclick="resetForm()"
+                            class="hidden w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black hover:bg-slate-200 transition-all">Annuler</button>
                     </div>
                 </div>
-                <div class="mt-8 space-y-3">
-                    <button id="btn-save" onclick="saveResponsable()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:scale-95">Ajouter à l'équipe</button>
-                    <button id="btn-cancel" onclick="resetForm()" class="hidden w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black hover:bg-slate-200 transition-all">Annuler</button>
+            </div>
+
+            <div class="flex-1 w-full">
+                <div id="respo-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 </div>
             </div>
         </div>
+    </main>
 
-        <div class="flex-1 w-full">
-            <div id="respo-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
+    <div id="custom-modal"
+        class="hidden fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 text-center">
+            <div
+                class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                ⚠️</div>
+            <h3 id="modal-title" class="text-xl font-black mb-2"></h3>
+            <p id="modal-text" class="text-slate-500 mb-8"></p>
+            <div class="flex gap-3">
+                <button id="modal-cancel"
+                    class="flex-1 px-6 py-4 bg-slate-100 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+                <button id="modal-confirm"
+                    class="flex-1 px-6 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all">Supprimer</button>
+            </div>
         </div>
     </div>
-</main>
 
-<div id="custom-modal" class="hidden fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 text-center">
-        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
-        <h3 id="modal-title" class="text-xl font-black mb-2"></h3>
-        <p id="modal-text" class="text-slate-500 mb-8"></p>
-        <div class="flex gap-3">
-            <button id="modal-cancel" class="flex-1 px-6 py-4 bg-slate-100 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
-            <button id="modal-confirm" class="flex-1 px-6 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-600 transition-all">Supprimer</button>
-        </div>
-    </div>
-</div>
+    <script>
+        let responsables = {};
+        let statusOnline = {};
 
-<script>
-    let responsables = {};
-    let statusOnline = {};
-
-    function listenToStatus() {
-        const { onValue, ref } = window.fbMethods;
-        onValue(ref(window.fbDB, 'status'), (snapshot) => {
-            statusOnline = snapshot.val() || {};
-            renderList();
-        });
-    }
-
-    function loadRespos() {
-        if (!window.fbMethods) return setTimeout(loadRespos, 100);
-        const { onValue, ref } = window.fbMethods;
-        listenToStatus(); 
-        onValue(ref(window.fbDB, 'responsables'), (snapshot) => {
-            responsables = snapshot.val() || {};
-            renderList();
-        });
-    }
-
-    function renderList() {
-        const list = document.getElementById('respo-list');
-        const keys = Object.keys(responsables);
-        document.getElementById('member-count').innerText = `${keys.length} membre(s)`;
-        
-        if (keys.length === 0) {
-            list.classList.remove('grid');
-            list.innerHTML = `<div class="w-full text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 text-slate-400 font-medium italic">Aucun membre dans l'équipe.</div>`;
-            return;
+        function listenToStatus() {
+            const { onValue, ref } = window.fbMethods;
+            onValue(ref(window.fbDB, 'status'), (snapshot) => {
+                statusOnline = snapshot.val() || {};
+                renderList();
+            });
         }
 
-        list.classList.add('grid');
-        list.innerHTML = keys.map(id => {
-            const respo = responsables[id];
-            const initial = respo.name ? respo.name.charAt(0).toUpperCase() : '?';
-            const sId = btoa(respo.email).replace(/[/+=]/g, "");
-            const isOnline = statusOnline[sId] && statusOnline[sId].state === 'online';
+        function loadRespos() {
+            if (!window.fbMethods) return setTimeout(loadRespos, 100);
+            const { onValue, ref } = window.fbMethods;
+            listenToStatus();
+            onValue(ref(window.fbDB, 'responsables'), (snapshot) => {
+                responsables = snapshot.val() || {};
+                renderList();
+            });
+        }
 
-            return `
+        function renderList() {
+            const list = document.getElementById('respo-list');
+            const keys = Object.keys(responsables);
+            document.getElementById('member-count').innerText = `${keys.length} membre(s)`;
+
+            if (keys.length === 0) {
+                list.classList.remove('grid');
+                list.innerHTML = `<div class="w-full text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 text-slate-400 font-medium italic">Aucun membre dans l'équipe.</div>`;
+                return;
+            }
+
+            list.classList.add('grid');
+            list.innerHTML = keys.map(id => {
+                const respo = responsables[id];
+                const initial = respo.name ? respo.name.charAt(0).toUpperCase() : '?';
+                const sId = btoa(respo.email).replace(/[/+=]/g, "");
+                const isOnline = statusOnline[sId] && statusOnline[sId].state === 'online';
+
+                return `
                 <div class="member-card group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-indigo-500">
                     <div class="flex items-center gap-4">
                         <div class="relative">
@@ -215,62 +254,63 @@
                     </div>
                 </div>
             `;
-        }).join('');
-    }
+            }).join('');
+        }
 
-    async function saveResponsable() {
-        const name = document.getElementById('respo-name').value.trim();
-        const email = document.getElementById('respo-email').value.trim();
-        const editId = document.getElementById('edit-id').value;
-        
-        if(!name || !email) return alert("Nom et Email obligatoires");
+        async function saveResponsable() {
+            const name = document.getElementById('respo-name').value.trim();
+            const email = document.getElementById('respo-email').value.trim();
+            const editId = document.getElementById('edit-id').value;
 
-        const { set, ref } = window.fbMethods;
-        const id = editId || btoa(unescape(encodeURIComponent(email))).replace(/[/+=]/g, "");
+            if (!name || !email) return alert("Nom et Email obligatoires");
 
-        await set(ref(window.fbDB, 'responsables/' + id), { id, name, email });
-        resetForm();
-        showStatus(editId ? "Modifié" : "Ajouté");
-    }
+            const { set, ref } = window.fbMethods;
+            const id = editId || btoa(unescape(encodeURIComponent(email))).replace(/[/+=]/g, "");
 
-    function editRespo(id) {
-        const respo = responsables[id];
-        document.getElementById('edit-id').value = id;
-        document.getElementById('respo-name').value = respo.name;
-        document.getElementById('respo-email').value = respo.email;
-        document.getElementById('btn-save').innerText = "Enregistrer";
-        document.getElementById('btn-cancel').classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+            await set(ref(window.fbDB, 'responsables/' + id), { id, name, email });
+            resetForm();
+            showStatus(editId ? "Modifié" : "Ajouté");
+        }
 
-    function resetForm() {
-        document.getElementById('edit-id').value = "";
-        document.getElementById('respo-name').value = "";
-        document.getElementById('respo-email').value = "";
-        document.getElementById('btn-save').innerText = "Ajouter à l'équipe";
-        document.getElementById('btn-cancel').classList.add('hidden');
-    }
+        function editRespo(id) {
+            const respo = responsables[id];
+            document.getElementById('edit-id').value = id;
+            document.getElementById('respo-name').value = respo.name;
+            document.getElementById('respo-email').value = respo.email;
+            document.getElementById('btn-save').innerText = "Enregistrer";
+            document.getElementById('btn-cancel').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-    function removeRespo(id) {
-        const modal = document.getElementById('custom-modal');
-        document.getElementById('modal-title').innerText = "Supprimer ?";
-        document.getElementById('modal-text').innerText = `Retirer ${responsables[id].name} de l'équipe ?`;
-        modal.classList.remove('hidden');
-        
-        document.getElementById('modal-confirm').onclick = async () => {
-            const { remove, ref } = window.fbMethods;
-            await remove(ref(window.fbDB, 'responsables/' + id));
-            modal.classList.add('hidden');
-            showStatus("Supprimé");
-        };
-        document.getElementById('modal-cancel').onclick = () => modal.classList.add('hidden');
-    }
+        function resetForm() {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('respo-name').value = "";
+            document.getElementById('respo-email').value = "";
+            document.getElementById('btn-save').innerText = "Ajouter à l'équipe";
+            document.getElementById('btn-cancel').classList.add('hidden');
+        }
 
-    function showStatus(txt) {
-        const s = document.getElementById('save-status');
-        s.innerText = `✅ ${txt}`; s.style.opacity = "1";
-        setTimeout(() => s.style.opacity = "0", 3000);
-    }
-</script>
+        function removeRespo(id) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = "Supprimer ?";
+            document.getElementById('modal-text').innerText = `Retirer ${responsables[id].name} de l'équipe ?`;
+            modal.classList.remove('hidden');
+
+            document.getElementById('modal-confirm').onclick = async () => {
+                const { remove, ref } = window.fbMethods;
+                await remove(ref(window.fbDB, 'responsables/' + id));
+                modal.classList.add('hidden');
+                showStatus("Supprimé");
+            };
+            document.getElementById('modal-cancel').onclick = () => modal.classList.add('hidden');
+        }
+
+        function showStatus(txt) {
+            const s = document.getElementById('save-status');
+            s.innerText = `✅ ${txt}`; s.style.opacity = "1";
+            setTimeout(() => s.style.opacity = "0", 3000);
+        }
+    </script>
 </body>
+
 </html>
