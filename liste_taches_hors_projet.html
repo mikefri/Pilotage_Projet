@@ -57,19 +57,21 @@
             font-size: 11px;
             font-weight: 700;
             color: #475569;
-            z-index: 30;
+            z-index: 40;
+            /* Augmenté pour rester devant les barres au scroll */
             background: white;
-            padding-left: 10px;
-            padding-right: 15px;
-            height: 100%;
+            padding: 8px 15px 8px 10px;
+            min-height: 100%;
             display: flex;
             align-items: center;
-            border-right: 1px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
+            /* Un peu plus épais pour la séparation */
             box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
             cursor: help;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            word-break: break-word;
+            overflow: visible;
+            line-height: 1.2;
         }
 
         .task-bar {
@@ -91,7 +93,7 @@
 
         .task-bar:hover {
             transform: scale(1.02);
-            z-index: 40;
+            z-index: 41;
         }
 
         .prio-haute {
@@ -145,6 +147,42 @@
         .btn-retour:hover {
             background-color: #e2e8f0;
             transform: translateY(-1px);
+        }
+
+        .gantt-header {
+            display: flex;
+            position: sticky;
+            top: 0;
+            z-index: 45;
+            background: white;
+            /* Changé de #f8fafc à blanc pour le sticky */
+            border-bottom: 2px solid #e2e8f0;
+            height: 40px;
+        }
+
+        .header-day {
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 800;
+            color: #64748b;
+            background: white;
+        }
+
+        .header-day.is-today {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        /* NOUVEAU : Limite la hauteur pour éviter les lignes infinies */
+        #gantt-scroll-container {
+            max-height: 70vh;
+            overflow: auto;
+            position: relative;
         }
     </style>
 
@@ -245,7 +283,7 @@
 
     <main class="max-w-full mx-auto mt-6 px-4">
         <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
-            <div class="flex gap-2 items-center flex-wrap">
+            <div class="flex gap-2 items-center flex-wrap mb-4 border-b pb-4">
                 <input type="text" id="task-desc" placeholder="Nouvelle tâche libre..."
                     class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-time" placeholder="Hrs"
@@ -262,9 +300,30 @@
                     class="p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-xs">
                 <button onclick="addTask()"
                     class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 shadow-sm">+</button>
+            </div>
+
+            <div class="flex gap-2 items-center flex-wrap">
+                <input type="text" id="search-task" oninput="renderTasks()" placeholder="🔍 Chercher une tâche..."
+                    class="p-2 rounded-lg bg-white border border-slate-200 outline-none text-sm w-64">
+
                 <select id="filter-who" onchange="renderTasks()"
                     class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600 ml-2">
                     <option value="all">Tous</option>
+                </select>
+
+                <select id="filter-prio" onchange="renderTasks()"
+                    class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600 ml-2">
+                    <option value="all">🚩 Toutes Priorités</option>
+                    <option value="haute">🔴 Haute</option>
+                    <option value="moyenne">🟠 Moyenne</option>
+                    <option value="basse">🟢 Basse</option>
+                </select>
+
+                <select id="filter-status" onchange="renderTasks()"
+                    class="p-2 rounded-lg bg-slate-100 border border-slate-200 outline-none text-sm font-bold text-indigo-600 ml-2">
+                    <option value="active">⏳ En cours</option>
+                    <option value="all">👁️ Tout voir</option>
+                    <option value="done">✅ Terminées</option>
                 </select>
             </div>
         </section>
@@ -275,7 +334,7 @@
                 <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h
                 </div>
             </div>
-            <div id="gantt-scroll-container" class="overflow-x-auto relative">
+            <div id="gantt-scroll-container">
                 <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
             </div>
         </section>
@@ -376,65 +435,131 @@
 
         function renderTasks() {
             const filterValue = document.getElementById('filter-who')?.value || 'all';
+            const filterPrio = document.getElementById('filter-prio')?.value || 'all';
+            const filterStatus = document.getElementById('filter-status')?.value || 'active';
+            const searchQuery = document.getElementById('search-task')?.value.toLowerCase() || '';
+
             const container = document.getElementById('gantt-container');
 
-            const dayWidth = 40; // COLONNES FINES
-            const labelWidth = 160;
-            const nbDaysTotal = 60;
+            const dayWidth = 40; // Largeur d'une colonne jour
+            const labelWidth = 160; // Largeur de la colonne de gauche (sticky)
+            const nbDaysTotal = 60; // Nombre de jours affichés
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+
+            // On commence la vue 15 jours avant aujourd'hui
             const viewStart = new Date(today);
             viewStart.setDate(today.getDate() - 15);
 
+            // Configuration de la grille de fond
             container.style.width = `${(nbDaysTotal * dayWidth) + labelWidth}px`;
             container.style.backgroundSize = `${dayWidth}px 100%`;
             container.style.backgroundPosition = `${labelWidth}px 0`;
 
+            // --- 1. GÉNÉRATION DE L'EN-TÊTE DES DATES ---
+            let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; display: flex; height: 40px; border-bottom: 1px solid #e2e8f0; background: white;">`;
+
+            for (let i = 0; i < nbDaysTotal; i++) {
+                const currentDay = new Date(viewStart);
+                currentDay.setDate(viewStart.getDate() + i);
+
+                const isToday = currentDay.getTime() === today.getTime();
+                const dayNum = currentDay.getDate();
+                const monthNum = currentDay.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
+
+                headerHTML += `
+            <div class="header-day" style="width: ${dayWidth}px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; border-right: 1px solid #f1f5f9; ${isToday ? 'background: #fef2f2; color: #ef4444;' : 'color: #64748b;'}">
+                <span>${dayNum}</span>
+                <span class="uppercase opacity-60" style="font-size: 7px;">${monthNum}</span>
+            </div>`;
+            }
+            headerHTML += `</div>`;
+
+            // --- 2. LIGNE "AUJOURD'HUI" ---
             const diffToday = (today - viewStart) / (1000 * 60 * 60 * 24);
             const todayLeft = labelWidth + (diffToday * dayWidth);
-            let timelineHTML = `<div class="today-line" style="left: ${todayLeft}px;"><div class="today-label">Aujourd'hui</div></div>`;
+            let timelineHTML = `<div class="today-line" style="left: ${todayLeft}px; top: 40px;"><div class="today-label">Aujourd'hui</div></div>`;
 
+            // --- 3. FILTRAGE ET TRI ---
             let filteredTasks = [...allTasks];
-            if (filterValue !== 'all') filteredTasks = filteredTasks.filter(t => t.who === filterValue);
+
+            // Filtre Responsable
+            if (filterValue !== 'all') {
+                filteredTasks = filteredTasks.filter(t => t.who === filterValue);
+            }
+
+            // Filtre Priorité
+            if (filterPrio !== 'all') {
+                filteredTasks = filteredTasks.filter(t => t.priority === filterPrio);
+            }
+
+            // Filtre Statut (NOUVEAU)
+            if (filterStatus === 'active') {
+                filteredTasks = filteredTasks.filter(t => !t.done);
+            } else if (filterStatus === 'done') {
+                filteredTasks = filteredTasks.filter(t => t.done);
+            }
+
+            // Filtre Recherche (NOUVEAU)
+            if (searchQuery) {
+                filteredTasks = filteredTasks.filter(t => t.desc.toLowerCase().includes(searchQuery));
+            }
+
+            // Tri par date
             filteredTasks.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
 
+            // Gestion des retards (alerte en haut de page)
             const delayed = allTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
-            document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
-            document.getElementById('delay-count').innerText = delayed.length;
-            document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
+            const delayContainer = document.getElementById('delay-container');
+            if (delayContainer) {
+                delayContainer.classList.toggle('hidden', delayed.length === 0);
+                const delayCountEl = document.getElementById('delay-count');
+                if (delayCountEl) delayCountEl.innerText = delayed.length;
+                const delayListEl = document.getElementById('delay-list');
+                if (delayListEl) delayListEl.innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
+            }
 
+            // --- 4. GÉNÉRATION DES LIGNES DE TÂCHES ---
             let totalHrs = 0;
             const tasksHTML = filteredTasks.map((t) => {
                 totalHrs += parseFloat(t.time || 0);
                 const tDate = t.date ? new Date(t.date) : today;
+
+                // Calcul de la position horizontale
                 let leftPosPx = ((tDate - viewStart) / (1000 * 60 * 60 * 24)) * dayWidth;
 
                 const respo = responsables.find(r => r.id === t.who)?.name || "??";
                 const isLate = !t.done && t.date && new Date(t.date) < today;
                 const prioClass = `prio-${t.priority || 'moyenne'}`;
 
-                // 1. Préparation de l'info-bulle (Texte + Note si elle existe)
                 const hasNote = t.note && t.note.trim() !== "";
                 const tooltipText = hasNote ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
 
                 return `
-    <div class="gantt-row ${t.done ? 'done' : ''}">
-        <div class="task-label" title="${tooltipText}">${t.desc}</div>
-        <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                style="left: calc(${labelWidth}px + ${leftPosPx}px); width: 120px;" 
-                onclick="openEditModal('${t.id}')"
-                title="${tooltipText}"> <span class="truncate text-[9px] uppercase">${respo}</span>
-                ${hasNote ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
-        </div>
-        <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${labelWidth + 125}px + ${leftPosPx}px);">
-            ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
-        </div>
-    </div>`;
+            <div class="gantt-row ${t.done ? 'done' : ''}" style="min-height: 50px; height: auto;">
+                <div class="task-label" title="${tooltipText}">${t.desc}</div>
+                
+                <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
+                     style="left: calc(${labelWidth}px + ${leftPosPx}px); width: 120px;" 
+                     onclick="openEditModal('${t.id}')"
+                     title="${tooltipText}"> 
+                    <span class="truncate text-[9px] uppercase">${respo}</span>
+                    ${hasNote ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                </div>
+                
+                <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
+                     style="left: calc(${labelWidth + 125}px + ${leftPosPx}px);">
+                    ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
+                </div>
+            </div>`;
             }).join('');
 
-            container.innerHTML = timelineHTML + tasksHTML;
-            document.getElementById('total-hours').innerText = `${totalHrs} h total`;
+            // --- 5. INJECTION DANS LE DOM ---
+            container.innerHTML = headerHTML + timelineHTML + tasksHTML;
+
+            const totalHoursEl = document.getElementById('total-hours');
+            if (totalHoursEl) totalHoursEl.innerText = `${totalHrs} h total`;
         }
 
         async function addTask() {
