@@ -312,76 +312,114 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="flex bg-slate-100 p-1 rounded-xl mr-2">
+        <div
+            class="flex items-center gap-8 bg-white/80 backdrop-blur-md p-2 rounded-3xl border border-slate-200 shadow-xl shadow-slate-100/50">
+
+            <nav class="flex items-center gap-1">
                 <a href="stats.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-indigo-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
+                    class="group relative px-4 py-2.5 flex items-center gap-3 transition-all duration-300">
+                    <div class="absolute inset-0 bg-indigo-50 rounded-2xl scale-100 transition-transform"></div>
+                    <svg class="relative w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path d="M18 20V10M12 20V4M6 20v-6"></path>
                     </svg>
-                    Stats
+                    <span class="relative text-sm font-bold text-indigo-700">Stats</span>
                 </a>
-                <a href="liste_taches_hors_projet.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <span>📝</span> Libres
+
+                <a href="#"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+                    <span class="text-xl group-hover:scale-125 transition-transform duration-200">📝</span>
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900">Libres</span>
                 </a>
-                <a href="responsables.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <span>👥</span> Équipe
+
+                <a href="#"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+                    <span class="text-xl group-hover:scale-125 transition-transform duration-200">👥</span>
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900">Équipe</span>
                 </a>
-                <a href="profil.html"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all flex items-center gap-2">
-                    <span>👤</span> Profil
-                </a>
+            </nav>
+
+            <div class="h-8 w-[1px] bg-slate-200"></div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="openForm()"
+                    class="group relative flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm tracking-wide overflow-hidden transition-all hover:pr-8 active:scale-95">
+                    <span class="relative z-10">+ PROJET</span>
+                    <span
+                        class="absolute right-2 opacity-0 group-hover:opacity-100 group-hover:right-3 transition-all">→</span>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500">
+                    </div>
+                </button>
+
+                <button onclick="logout()"
+                    class="group flex items-center justify-center w-11 h-11 rounded-2xl border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:rotate-12 transition-transform"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </div>
-
-            <button onclick="openForm()"
-                class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm uppercase">
-                + Projet
-            </button>
-
-            <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                title="Déconnexion">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-            </button>
         </div>
     </nav>
 
-    <main class="w-full px-4 md:px-6 py-4 mx-auto">
-        <div class="px-6 py-8">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-                <div>
-                    <h2 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Performance
-                        Méthodes Logistique Industrielle</h2>
-                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">Planning</h1>
+    <main class="w-full px-2 md:px-4 py-4 mx-auto">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 px-2">
+            <div>
+                <span
+                    class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2">
+                    Performance Méthodes Logistique Industrielle
+                </span>
+                <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                    Planning <span class="text-indigo-600">Projets</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+                <div id="save-status"
+                    class="flex items-center gap-2 text-[10px] font-black text-emerald-500 bg-emerald-50/50 px-3 py-1.5 rounded-xl border border-emerald-100 opacity-0 transition-opacity">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    SYNC
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <div id="save-status"
-                        class="text-[10px] font-black text-emerald-500 opacity-0 transition-opacity bg-emerald-50 px-3 py-1 rounded-lg">
-                        SYNCHRONISÉ</div>
-                    <div
-                        class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm font-black text-[10px] uppercase tracking-wider text-slate-400">
-                        <button onclick="changeView('Day')"
-                            class="px-5 py-2 hover:text-indigo-600 rounded-xl transition">Jour</button>
-                        <button onclick="changeView('Week')"
-                            class="px-5 py-2 hover:text-indigo-600 border-x border-slate-100 rounded-xl transition">Semaine</button>
-                        <button onclick="changeView('Month')"
-                            class="px-5 py-2 hover:text-indigo-600 rounded-xl transition">Mois</button>
-                    </div>
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                    <button onclick="changeView('Day')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm">Jour</button>
+                    <button onclick="changeView('Week')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm border-x border-slate-200">Semaine</button>
+                    <button onclick="changeView('Month')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm">Mois</button>
                 </div>
             </div>
         </div>
 
-        <div id="gantt-container" class="resizable-gantt border-x-0">
-            <div id="gantt-chart"></div>
+        <div
+            class="flex flex-wrap items-center gap-6 mb-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mx-2">
+            <div class="flex items-center gap-3">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsable</label>
+                <select id="filter-owner" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all">Tous les membres</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</label>
+                <select id="filter-status" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all">Tous les statuts</option>
+                    <option value="À faire">⚪ À faire</option>
+                    <option value="En cours">🔵 En cours</option>
+                    <option value="Terminé">✅ Terminé</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="w-full bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
+            <div id="gantt-container" class="resizable-gantt !border-none">
+                <div id="gantt-chart" class="w-full"></div>
+            </div>
         </div>
     </main>
 
@@ -480,7 +518,7 @@
         let projects = [];
         let responsables = [];
         let gantt;
-        let currentView = 'Day';
+        let currentView = 'Month';
 
         const getColor = (name) => {
             let hash = 0;
@@ -493,27 +531,73 @@
             if (!window.fbMethods) return setTimeout(loadAllData, 200);
             const { onValue, ref } = window.fbMethods;
 
+            // 1. Chargement des responsables
             onValue(ref(window.fbDB, 'responsables'), (snap) => {
                 const data = snap.val();
                 responsables = data ? Object.values(data) : [];
                 document.getElementById('p-owner').innerHTML = responsables.map(r =>
                     `<option value="${r.id}">${r.name}</option>`
                 ).join('') || '<option value="">Aucun membre</option>';
+                // Dans loadAllData, section onValue(ref(window.fbDB, 'responsables')...
+                const filterOwner = document.getElementById('filter-owner');
+                filterOwner.innerHTML = '<option value="all">Tous les membres</option>' +
+                    responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             });
 
+            // 2. Chargement des projets avec DOUBLE TRI
             onValue(ref(window.fbDB, 'projects'), (snap) => {
                 const data = snap.val();
-                projects = data ? Object.values(data) : [];
+                let projectsData = data ? Object.values(data) : [];
+
+                projectsData.sort((a, b) => {
+                    const dateA = a.start ? new Date(a.start) : new Date('2099-12-31');
+                    const dateB = b.start ? new Date(b.start) : new Date('2099-12-31');
+
+                    // SI LES DATES SONT DIFFÉRENTES : Tri par date
+                    if (dateA.getTime() !== dateB.getTime()) {
+                        return dateA - dateB;
+                    }
+
+                    // SI LES DATES SONT IDENTIQUES : Tri alphabétique sur le nom
+                    const nameA = (a.name || "").toLowerCase();
+                    const nameB = (b.name || "").toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+
+
+
+                // Dans loadAllData, section onValue(ref(window.fbDB, 'responsables')...
+                const filterOwner = document.getElementById('filter-owner');
+                filterOwner.innerHTML = '<option value="all">Tous les membres</option>' +
+                    responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+
+                projects = projectsData;
                 renderGantt();
                 updateProjectSelector();
+
+
+
+
             });
         }
 
         function updateProjectSelector() {
             const selector = document.getElementById('project-selector');
             if (!selector) return;
+
             let html = '<option value="">-- Nouveau Projet --</option>';
-            projects.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
+
+            projects.forEach(p => {
+                // On définit une icône selon le statut
+                let statusIcon = "🔵"; // En cours / Par défaut
+                if (p.status === "Terminé") statusIcon = "✅";
+                if (p.status === "À faire") statusIcon = "⚪";
+
+                // On affiche le nom, le responsable et le statut
+                html += `<option value="${p.id}">${statusIcon} ${p.name}</option>`;
+            });
+
             selector.innerHTML = html;
         }
 
@@ -532,41 +616,77 @@
         function renderGantt(view = currentView) {
             currentView = view;
             const chartEl = document.getElementById('gantt-chart');
+            if (!chartEl) return;
 
-            if (!projects || projects.length === 0) {
-                chartEl.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold italic">Aucun projet actif.</div>`;
+            // --- 1. RÉCUPÉRATION DES FILTRES ---
+            const filterOwnerVal = document.getElementById('filter-owner')?.value || 'all';
+            const filterStatusVal = document.getElementById('filter-status')?.value || 'all';
+
+            // --- 2. FILTRAGE DES DONNÉES ---
+            let filteredProjects = projects.filter(p => {
+                const matchOwner = (filterOwnerVal === 'all' || p.owner === filterOwnerVal);
+                const matchStatus = (filterStatusVal === 'all' || p.status === filterStatusVal);
+                return matchOwner && matchStatus;
+            });
+
+            // Si aucun projet ne correspond
+            if (filteredProjects.length === 0) {
+                chartEl.innerHTML = `<div class="p-20 text-center text-slate-400 font-bold italic">Aucun projet ne correspond aux filtres.</div>`;
                 return;
             }
 
-            const tasks = projects.map(p => {
+            // --- 3. PRÉPARATION DES TÂCHES ---
+            const tasks = filteredProjects.map(p => {
                 const respoFound = responsables.find(r => r.id === p.owner);
                 const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
+
+                const status = p.status || "À faire";
+                const progress = p.progress || 0;
+
+                let statusIcon = "🔵";
+                if (status === "Terminé") statusIcon = "✅";
+                if (status === "À faire") statusIcon = "⚪";
+
                 return {
                     id: p.id,
-                    name: `${p.name} [${displayName}]`,
+                    name: `${statusIcon} ${p.name} [${displayName}] - ${status} (${progress}%)`,
                     start: p.start || new Date().toISOString().split('T')[0],
                     end: p.end || new Date().toISOString().split('T')[0],
-                    progress: p.progress || 0,
-                    custom_class: p.status === "Terminé" ? 'project-finished' : ''
+                    progress: progress,
+                    custom_class: status === "Terminé" ? 'project-finished' : ''
                 };
             });
 
-            chartEl.innerHTML = '';
+            // --- 4. RENDU DU GANTT ---
+            chartEl.innerHTML = ''; // On vide avant de reconstruire
 
             gantt = new Gantt("#gantt-chart", tasks, {
                 language: 'fr',
                 view_mode: view,
                 bar_height: 38,
-                on_click: task => { window.location.href = `liste_taches.html?id=${task.id}`; },
-                on_date_change: (task, start, end) => updateQuick(task.id, {
-                    start: start.toISOString().split('T')[0],
-                    end: end.toISOString().split('T')[0]
-                }),
-                on_progress_change: (task, progress) => updateQuick(task.id, { progress })
+                on_click: task => {
+                    // Redirection vers la liste des tâches au clic sur la barre
+                    window.location.href = `liste_taches.html?id=${task.id}`;
+                },
+                on_date_change: (task, start, end) => {
+                    if (typeof updateQuick === 'function') {
+                        updateQuick(task.id, {
+                            start: start.toISOString().split('T')[0],
+                            end: end.toISOString().split('T')[0]
+                        });
+                    }
+                },
+                on_progress_change: (task, progress) => {
+                    if (typeof updateQuick === 'function') {
+                        updateQuick(task.id, { progress });
+                    }
+                }
             });
 
+            // --- 5. PERSONNALISATION POST-RENDU (Couleurs et Édition) ---
             setTimeout(() => {
-                projects.forEach(p => {
+                filteredProjects.forEach(p => {
+                    // Appliquer la couleur personnalisée par responsable
                     const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
                     if (bar) {
                         const color = p.status === "Terminé" ? '#94a3b8' : getColor(p.owner);
@@ -574,15 +694,18 @@
                     }
                 });
 
-                document.querySelectorAll('.gantt .grid-row text').forEach((el, idx) => {
+                // Rendre les noms des projets cliquables pour ouvrir la MODALE d'édition
+                document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
+                    el.style.cursor = 'pointer';
                     el.onclick = (e) => {
                         e.stopPropagation();
-                        if (projects[idx]) editProject(projects[idx].id);
+                        // On récupère l'ID via l'attribut data-id du parent .grid-row
+                        const taskId = el.closest('.grid-row').getAttribute('data-id');
+                        if (taskId) editProject(taskId);
                     };
                 });
             }, 150);
         }
-
         async function updateQuick(id, data) {
             const user = auth.currentUser;
             const editorName = user ? (user.displayName || user.email) : "Système";
