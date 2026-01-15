@@ -235,6 +235,17 @@
 
 <body class="text-slate-900 font-sans">
 
+    <div id="update-banner"
+        class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 z-50 hidden">
+        <span>Une nouvelle version est disponible !</span>
+        <button onclick="window.location.reload()"
+            class="bg-white text-blue-600 px-4 py-1 rounded font-bold hover:bg-gray-100 transition">
+            Actualiser
+        </button>
+    </div>
+
+
+
     <div id="login-screen"
         class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
         <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
@@ -933,6 +944,28 @@
                 document.getElementById('app-version').innerText = 'v--';
             }
         }
+
+
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                // On écoute l'installation d'un nouveau Service Worker
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        // Dès que le nouveau SW est installé et prêt, on affiche le bouton
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            const banner = document.getElementById('update-banner');
+                            if (banner) {
+                                banner.classList.remove('hidden');
+                            }
+                        }
+                    });
+                });
+            });
+        }
+
+
 
         // Appeler la fonction au chargement de la page
         updateVersionDisplay();
