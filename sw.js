@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pilotage-v3.1.3'; // Change le nom à v2, v3... quand tu fais une grosse mise à jour
+const CACHE_NAME = 'pilotage-v3.1.4'; // Change le nom à v2, v3... quand tu fais une grosse mise à jour
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './responsables.html',
   './liste_taches_hors_projet.html',
   './profil.html',
+  './manager.html',
   './manifest.json',
   './stats.html',
   './icon.png',
