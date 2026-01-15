@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Performance Logistique - Édition Totale</title>
+    <title>Tableau de Performance Logistique - Édition Manuelle</title>
     <style>
         :root {
             --dark-teal: #004d4d;
@@ -12,144 +13,407 @@
             --cell-bg: #e9e9e9;
         }
 
-        body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; padding: 20px; background-color: #f4f4f4; }
-        .container { width: 100%; max-width: 1000px; background-color: white; border: 2px solid var(--border-color); padding: 20px; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: white;
+            border: 2px solid var(--border-color);
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
         /* Header */
-        .header { 
-            display: grid; 
-            grid-template-columns: 100px 1fr 100px; 
-            align-items: center; 
-            margin-bottom: 15px; 
-            gap: 15px; 
-        }
-        
-        .logo-spmi { width: 80px; height: auto; display: block; }
-        .horloge-pilote { width: 55px; height: auto; justify-self: end; }
-
-        .main-title { 
-            background-color: var(--bright-green); 
-            color: white; padding: 10px; font-weight: bold; 
-            font-size: 1.3rem; text-align: center; 
-            text-transform: uppercase; border: 1px solid var(--dark-teal); 
+        .header {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
         }
 
-        /* Sections */
-        .sub-header, .section-title, .situation-title { background-color: var(--dark-teal); color: white; text-align: center; padding: 10px; margin-bottom: 5px; font-weight: bold; }
+        .logo-spmi {
+            width: 80px;
+            height: auto;
+            display: block;
+        }
 
-        /* Champ Objectif Éditable */
-        .objective-container { text-align: center; margin-bottom: 25px; }
-        .editable-objective { 
-            background-color: var(--bright-green); 
-            color: white; 
+        .horloge-pilote {
+            width: 55px;
+            height: auto;
+            justify-self: end;
+        }
+
+        .main-title {
+            background-color: var(--bright-green);
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            text-align: center;
+            text-transform: uppercase;
             border: 1px solid var(--dark-teal);
-            padding: 10px; 
-            width: 60%; 
-            font-weight: bold; 
+        }
+
+        .sub-header,
+        .section-title,
+        .situation-title {
+            background-color: var(--dark-teal);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .objective-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .editable-objective {
+            background-color: var(--bright-green);
+            color: white;
+            border: 1px solid var(--dark-teal);
+            padding: 10px;
+            width: 60%;
+            font-weight: bold;
             text-align: center;
             font-size: 1rem;
             outline: none;
         }
 
-        /* Champ Tournée */
-        .tournee-field { margin-bottom: 20px; }
-        .editable-input { 
-            border: 2px solid var(--border-color); 
-            padding: 8px; 
-            width: 100%; 
-            box-sizing: border-box; 
+        .tournee-field {
+            margin-bottom: 20px;
+        }
+
+        .editable-input {
+            border: 2px solid var(--border-color);
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
             font-size: 1rem;
         }
 
         /* Tableau */
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { border: 2px solid var(--border-color); padding: 10px 5px; background-color: white; font-size: 0.95rem; }
-        td { border: 1px solid white; background-color: var(--cell-bg); height: 50px; }
-
-        .table-input { width: 100%; height: 100%; border: none; background-color: transparent; padding: 5px; box-sizing: border-box; text-align: center; font-size: 0.9rem; }
-        .table-input:focus { background-color: #fff; outline: 2px solid var(--bright-green); }
-
-        .col-tendance { width: 80px; }
-        .tendance-select {
-            width: 100%; height: 100%; border: none; background-color: transparent;
-            cursor: pointer; text-align: center; font-size: 1.8rem; appearance: none;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
 
-        .status-ok { background-color: #c8e6c9 !important; }
-        .status-encours { background-color: #fff9c4 !important; }
-        .status-nok { background-color: #ffcdd2 !important; }
+        th {
+            border: 2px solid var(--border-color);
+            padding: 10px 5px;
+            background-color: white;
+            font-size: 0.95rem;
+        }
 
+        td {
+            border: 1px solid white;
+            background-color: var(--cell-bg);
+            height: 60px;
+        }
+
+        .table-input,
+        .table-textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: transparent;
+            padding: 8px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 0.9rem;
+            font-family: inherit;
+            display: block;
+        }
+
+        /* Style spécifique pour Observation */
+        .table-textarea {
+            resize: none;
+            text-align: left;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .table-input:focus,
+        .table-textarea:focus {
+            background-color: #fff;
+            outline: none;
+        }
+
+        /* --- SYSTÈME DE SÉLECTION DE SMILEY --- */
+        .tendance-cell {
+            position: relative;
+            padding: 0 !important;
+            overflow: visible;
+        }
+
+        .custom-select-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .custom-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            display: none;
+            z-index: 999;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-select-wrapper.open .custom-options {
+            display: block;
+        }
+
+        .option {
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .option:hover {
+            background-color: #f0f0f0;
+        }
+
+        .smiley-icon {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .clear-icon {
+            font-size: 18px;
+            color: #999;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background-color: #c6efce !important;
+        }
+
+        .status-encours {
+            background-color: #ffeb9c !important;
+        }
+
+        .status-nok {
+            background-color: #ffc7ce !important;
+        }
+
+        #loading-msg {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <div class="header">
-        <img class="logo-spmi" src="https://mikefri.github.io/Pilotage_Projet/asset/spmi.png" alt="Logo SPMI">
-        <div class="main-title">COMPRENDRE POUR PERFORMER</div>
-        <img class="horloge-pilote" src="https://mikefri.github.io/Pilotage_Projet/asset/M00.png" alt="Horloge M00">
+    <div class="container">
+        <div class="header">
+            <img class="logo-spmi" src="asset/spmi.png" alt="Logo"
+                onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
+            <div class="main-title">COMPRENDRE POUR PERFORMER</div>
+            <img class="horloge-pilote" src="asset/M00.png" alt="H" onerror="this.style.display='none'">
+        </div>
+
+        <div class="sub-header">Performance - Méthode Logistique</div>
+
+        <div class="tournee-field">
+            <input type="text" class="editable-input" value="Tournée Terrain : DET / DUO / DPX">
+        </div>
+
+        <div class="section-title">OBJECTIF</div>
+
+        <div class="objective-container">
+            <input type="text" class="editable-objective" value="0 projet prioritaire en retard">
+        </div>
+
+        <div class="situation-title">SITUATION ACTUELLE</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 18%;">Projets</th>
+                    <th style="width: 12%;">Statut</th>
+                    <th style="width: 15%;">Responsable</th>
+                    <th style="width: 32%;">Observation</th>
+                    <th style="width: 8%;">AV%</th>
+                    <th style="width: 15%;">Tendance</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr>
+                    <td colspan="6" id="loading-msg">Chargement des données...</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    <div class="sub-header">Performance - Méthode Logistique</div>
-    
-    <div class="tournee-field">
-        <input type="text" class="editable-input" value="Tournée Terrain : DET / DUO / DPX">
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    <div class="section-title">OBJECTIF</div>
-    
-    <div class="objective-container">
-        <input type="text" class="editable-objective" value="0 projet prioritaire en retard">
-    </div>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
+            authDomain: "pilotage-gantt.firebaseapp.com",
+            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "pilotage-gantt",
+            storageBucket: "pilotage-gantt.firebasestorage.app",
+            messagingSenderId: "1064606456262",
+            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
+        };
 
-    <div class="situation-title">SITUATION ACTUELLE</div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 18%;">Projets</th>
-                <th style="width: 12%;">Statut</th>
-                <th style="width: 15%;">Responsable</th>
-                <th style="width: 32%;">Observation</th>
-                <th style="width: 8%;">AV%</th>
-                <th class="col-tendance">Tendance</th>
-            </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-    </table>
-</div>
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-<script>
-    const rows = 6;
-    const tableBody = document.getElementById('table-body');
+        let projectsData = [];
+        let responsablesMap = {};
 
-    for (let i = 0; i < rows; i++) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" class="table-input"></td>
-            <td><input type="text" class="table-input"></td>
-            <td><input type="text" class="table-input"></td>
-            <td><input type="text" class="table-input"></td>
-            <td><input type="text" class="table-input"></td>
-            <td>
-                <select class="tendance-select" onchange="updateColor(this)">
-                    <option value=""></option>
-                    <option value="ok">😊</option>
-                    <option value="encours">😐</option>
-                    <option value="nok">☹️</option>
-                </select>
-            </td>
-        `;
-        tableBody.appendChild(tr);
-    }
+        // 1. Récupération des Responsables (ID -> Nom)
+        const respRef = ref(db, 'responsables');
+        onValue(respRef, (snapshot) => {
+            const data = snapshot.val();
+            responsablesMap = {};
+            if (data) {
+                Object.values(data).forEach(r => {
+                    responsablesMap[r.id] = r.name;
+                });
+            }
+            renderTable();
+        });
 
-    function updateColor(selectElement) {
-        const cell = selectElement.parentElement;
-        cell.classList.remove('status-ok', 'status-encours', 'status-nok');
-        if (selectElement.value === 'ok') cell.classList.add('status-ok');
-        if (selectElement.value === 'encours') cell.classList.add('status-encours');
-        if (selectElement.value === 'nok') cell.classList.add('status-nok');
-    }
-</script>
+        // 2. Récupération des Projets
+        const projectsRef = ref(db, 'projects');
+        onValue(projectsRef, (snapshot) => {
+            const data = snapshot.val();
+            projectsData = data ? Object.values(data) : [];
 
+            // Tri : Non terminés en premier
+            projectsData.sort((a, b) => {
+                if (a.status === 'Terminé' && b.status !== 'Terminé') return 1;
+                if (a.status !== 'Terminé' && b.status === 'Terminé') return -1;
+                return (a.name || '').localeCompare(b.name || '');
+            });
+
+            renderTable();
+        });
+
+        function renderTable() {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+
+            const minRows = 12;
+            const loops = Math.max(projectsData.length, minRows);
+
+            for (let i = 0; i < loops; i++) {
+                const project = projectsData[i];
+
+                // Variables par défaut (vide)
+                let pName = "", pStatus = "", pOwnerName = "", pProg = "";
+
+                // Si un projet existe pour cette ligne, on remplit SEULEMENT les champs demandés
+                if (project) {
+                    pName = project.name || "";
+                    pStatus = project.status || "";
+                    // Mapping ID -> Nom
+                    pOwnerName = responsablesMap[project.owner] || "Non assigné";
+                    // Ajout du %
+                    pProg = (project.progress !== undefined) ? project.progress + '%' : "0%";
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="text" class="table-input" value="${pName}" readonly></td>
+                    
+                    <td><input type="text" class="table-input" value="${pStatus}" readonly></td>
+                    
+                    <td><input type="text" class="table-input" value="${pOwnerName}" readonly></td>
+                    
+                    <td><textarea class="table-textarea"></textarea></td>
+                    
+                    <td><input type="text" class="table-input" value="${pProg}" readonly></td>
+                    
+                    <td class="tendance-cell">
+                        <div class="custom-select-wrapper" onclick="toggleSelect(this)">
+                            <div class="select-trigger">
+                                <img src="" class="smiley-icon" style="display:none;">
+                            </div>
+                            <div class="custom-options">
+                                <div class="option" onclick="selectSmiley(event, this, '', '')"><span class="clear-icon">✖</span></div>
+                                <div class="option" onclick="selectSmiley(event, this, 'ok', 'asset/smiley_vert.png')"><img src="asset/smiley_vert.png" class="smiley-icon"></div>
+                                <div class="option" onclick="selectSmiley(event, this, 'encours', 'asset/smiley_orange.png')"><img src="asset/smiley_orange.png" class="smiley-icon"></div>
+                                <div class="option" onclick="selectSmiley(event, this, 'nok', 'asset/smiley_rouge.png')"><img src="asset/smiley_rouge.png" class="smiley-icon"></div>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            }
+        }
+
+        // Fonctions globales pour le sélecteur de smiley
+        window.toggleSelect = function (wrapper) {
+            document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+                if (w !== wrapper) w.classList.remove('open');
+            });
+            wrapper.classList.toggle('open');
+        }
+
+        window.selectSmiley = function (event, optionElement, value, imgSrc) {
+            event.stopPropagation();
+            const wrapper = optionElement.closest('.custom-select-wrapper');
+            const cell = wrapper.closest('td');
+            const triggerImg = wrapper.querySelector('.select-trigger img');
+
+            cell.classList.remove('status-ok', 'status-encours', 'status-nok');
+
+            if (value === "") {
+                triggerImg.src = "";
+                triggerImg.style.display = "none";
+            } else {
+                triggerImg.src = imgSrc;
+                triggerImg.style.display = "block";
+                cell.classList.add('status-' + value);
+            }
+            wrapper.classList.remove('open');
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+            }
+        }
+    </script>
 </body>
+
 </html>
