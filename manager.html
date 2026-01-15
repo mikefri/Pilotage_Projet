@@ -279,124 +279,39 @@
         </table>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <script>
+        const rows = 6;
+        const tableBody = document.getElementById('table-body');
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
-            authDomain: "pilotage-gantt.firebaseapp.com",
-            databaseURL: "https://pilotage-gantt-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "pilotage-gantt",
-            storageBucket: "pilotage-gantt.firebasestorage.app",
-            messagingSenderId: "1064606456262",
-            appId: "1:1064606456262:web:39e19391518d3cab93fac7"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // --- RENDRE LES FONCTIONS ACCESSIBLES AU HTML ---
-        window.toggleSelect = function (wrapper) {
-            document.querySelectorAll('.custom-select-wrapper').forEach(w => {
-                if (w !== wrapper) w.classList.remove('open');
-            });
-            wrapper.classList.toggle('open');
+        for (let i = 0; i < rows; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+            <td><input type="text" class="table-input"></td>
+            <td><input type="text" class="table-input"></td>
+            <td><input type="text" class="table-input"></td>
+            <td><input type="text" class="table-input"></td>
+            <td><input type="text" class="table-input"></td>
+            <td>
+                <select class="tendance-select" onchange="updateColor(this)">
+                    <option value=""></option>
+                    <option value="ok">😊</option>
+                    <option value="encours">😐</option>
+                    <option value="nok">☹️</option>
+                </select>
+            </td>
+        `;
+            tableBody.appendChild(tr);
         }
 
-        window.selectSmiley = function (event, optionElement, value, imgSrc) {
-            event.stopPropagation();
-            const wrapper = optionElement.closest('.custom-select-wrapper');
-            const cell = wrapper.closest('td');
-            const triggerImg = wrapper.querySelector('.select-trigger img');
+        function updateColor(selectElement) {
+            const cell = selectElement.parentElement;
             cell.classList.remove('status-ok', 'status-encours', 'status-nok');
-            if (value === "") {
-                triggerImg.src = "";
-                triggerImg.style.display = "none";
-            } else {
-                triggerImg.src = imgSrc;
-                triggerImg.style.display = "block";
-                cell.classList.add('status-' + value);
-            }
-            wrapper.classList.remove('open');
+            if (selectElement.value === 'ok') cell.classList.add('status-ok');
+            if (selectElement.value === 'encours') cell.classList.add('status-encours');
+            if (selectElement.value === 'nok') cell.classList.add('status-nok');
         }
-
-        window.onclick = function (event) {
-            if (!event.target.closest('.custom-select-wrapper')) {
-                document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
-            }
-        }
-
-        // --- LOGIQUE DE CHARGEMENT DES DONNÉES ---
-        let projectsData = [];
-        let responsablesMap = {};
-
-        function renderTable() {
-            const tableBody = document.getElementById('table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = '';
-
-            const minRows = 12;
-            const loops = Math.max(projectsData.length, minRows);
-
-            for (let i = 0; i < loops; i++) {
-                const project = projectsData[i];
-                let pName = "", pStatus = "", pOwnerName = "", pProg = "";
-
-                if (project) {
-                    pName = project.name || "";
-                    pStatus = project.status || "";
-                    pOwnerName = responsablesMap[project.owner] || "Non assigné";
-                    pProg = (project.progress !== undefined) ? project.progress + '%' : "0%";
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                <td><input type="text" class="table-input" value="${pName}" readonly></td>
-                <td><input type="text" class="table-input" value="${pStatus}" readonly></td>
-                <td><input type="text" class="table-input" value="${pOwnerName}" readonly></td>
-                <td><textarea class="table-textarea"></textarea></td>
-                <td><input type="text" class="table-input" value="${pProg}" readonly></td>
-                <td class="tendance-cell">
-                    <div class="custom-select-wrapper" onclick="toggleSelect(this)">
-                        <div class="select-trigger">
-                            <img src="" class="smiley-icon" style="display:none;">
-                        </div>
-                        <div class="custom-options">
-                            <div class="option" onclick="selectSmiley(event, this, '', '')"><span class="clear-icon">✖</span></div>
-                            <div class="option" onclick="selectSmiley(event, this, 'ok', 'asset/smiley_vert.png')"><img src="asset/smiley_vert.png" class="smiley-icon"></div>
-                            <div class="option" onclick="selectSmiley(event, this, 'encours', 'asset/smiley_orange.png')"><img src="asset/smiley_orange.png" class="smiley-icon"></div>
-                            <div class="option" onclick="selectSmiley(event, this, 'nok', 'asset/smiley_rouge.png')"><img src="asset/smiley_rouge.png" class="smiley-icon"></div>
-                        </div>
-                    </div>
-                </td>
-            `;
-                tableBody.appendChild(tr);
-            }
-        }
-
-        // Récupération des Responsables
-        onValue(ref(db, 'responsables'), (snapshot) => {
-            const data = snapshot.val();
-            responsablesMap = {};
-            if (data) {
-                Object.values(data).forEach(r => { responsablesMap[r.id] = r.name; });
-            }
-            renderTable();
-        });
-
-        // Récupération des Projets
-        onValue(ref(db, 'projects'), (snapshot) => {
-            const data = snapshot.val();
-            projectsData = data ? Object.values(data) : [];
-            projectsData.sort((a, b) => {
-                if (a.status === 'Terminé' && b.status !== 'Terminé') return 1;
-                if (a.status !== 'Terminé' && b.status === 'Terminé') return -1;
-                return (a.name || '').localeCompare(b.name || '');
-            });
-            renderTable();
-        });
     </script>
+
 </body>
 
 </html>
