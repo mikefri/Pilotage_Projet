@@ -235,6 +235,17 @@
 
 <body class="text-slate-900 font-sans">
 
+    <div id="update-banner"
+        class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 z-[999] hidden">
+        <span>Une nouvelle version est disponible !</span>
+        <button onclick="window.location.reload()"
+            class="bg-white text-blue-600 px-4 py-1 rounded font-bold hover:bg-gray-100 transition">
+            Actualiser
+        </button>
+    </div>
+
+
+
     <div id="login-screen"
         class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
         <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
@@ -326,6 +337,19 @@
                     <span class="relative text-sm font-bold text-indigo-700">Stats</span>
                 </a>
 
+                <a href="manager.html"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+
+                    <span class="text-xl group-hover:scale-110 transition-transform duration-200 ease-out">
+                        💼
+                    </span>
+
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900 antialiased">
+                        Manager Dashboard
+                    </span>
+                </a>
+
+
                 <a href="liste_taches_hors_projet.html"
                     class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
                     <span class="text-xl group-hover:scale-125 transition-transform duration-200">📝</span>
@@ -367,12 +391,10 @@
     <main class="w-full px-2 md:px-4 py-4 mx-auto">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 px-2">
             <div>
-                <span
-                    class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2">
-                    Performance Méthodes Logistique Industrielle
-                </span>
+
+
                 <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
-                    Planning <span class="text-indigo-600">Projets</span>
+                    Performance <span class="text-indigo-600">Méthodes Logistique Industrielle</span>
                 </h1>
             </div>
 
@@ -922,6 +944,28 @@
                 document.getElementById('app-version').innerText = 'v--';
             }
         }
+
+
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                // On écoute l'installation d'un nouveau Service Worker
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        // Dès que le nouveau SW est installé et prêt, on affiche le bouton
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            const banner = document.getElementById('update-banner');
+                            if (banner) {
+                                banner.classList.remove('hidden');
+                            }
+                        }
+                    });
+                });
+            });
+        }
+
+
 
         // Appeler la fonction au chargement de la page
         updateVersionDisplay();
