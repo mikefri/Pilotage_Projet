@@ -490,6 +490,17 @@
                             <option value="En cours" selected>En cours</option>
                             <option value="Terminé">Terminé</option>
                         </select>
+                        <div>
+                            <label
+                                class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Priorité</label>
+                            <select id="p-priority"
+                                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
+                                <option value="1">🔴 P1 - Haute</option>
+                                <option value="2" selected>🟡 P2 - Moyenne</option>
+                                <option value="3">🔵 P3 - Basse</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
 
@@ -572,19 +583,19 @@
                 let projectsData = data ? Object.values(data) : [];
 
                 projectsData.sort((a, b) => {
-                    const dateA = a.start ? new Date(a.start) : new Date('2099-12-31');
-                    const dateB = b.start ? new Date(b.start) : new Date('2099-12-31');
+    // 1. Tri par Priorité (1, 2 ou 3)
+    const prioA = parseInt(a.priority) || 2;
+    const prioB = parseInt(b.priority) || 2;
+    if (prioA !== prioB) return prioA - prioB;
 
-                    // SI LES DATES SONT DIFFÉRENTES : Tri par date
-                    if (dateA.getTime() !== dateB.getTime()) {
-                        return dateA - dateB;
-                    }
+    // 2. Tri par Date si priorité égale
+    const dateA = a.start ? new Date(a.start) : new Date('2099-12-31');
+    const dateB = b.start ? new Date(b.start) : new Date('2099-12-31');
+    if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
 
-                    // SI LES DATES SONT IDENTIQUES : Tri alphabétique sur le nom
-                    const nameA = (a.name || "").toLowerCase();
-                    const nameB = (b.name || "").toLowerCase();
-                    return nameA.localeCompare(nameB);
-                });
+    // 3. Tri alphabétique si dates égales
+    return (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase());
+});
 
 
 
@@ -659,25 +670,37 @@
 
             // --- 3. PRÉPARATION DES TÂCHES ---
             const tasks = filteredProjects.map(p => {
-                const respoFound = responsables.find(r => r.id === p.owner);
-                const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
+    const respoFound = responsables.find(r => r.id === p.owner);
+    const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
 
-                const status = p.status || "À faire";
-                const progress = p.progress || 0;
+    const status = p.status || "À faire";
+    const progress = p.progress || 0;
+    const priority = p.priority || "2"; // P2 (Moyenne) par défaut si non définie
 
-                let statusIcon = "🔵";
-                if (status === "Terminé") statusIcon = "✅";
-                if (status === "À faire") statusIcon = "⚪";
+    
 
-                return {
-                    id: p.id,
-                    name: `${statusIcon} ${p.name} [${displayName}] - ${status} (${progress}%)`,
-                    start: p.start || new Date().toISOString().split('T')[0],
-                    end: p.end || new Date().toISOString().split('T')[0],
-                    progress: progress,
-                    custom_class: status === "Terminé" ? 'project-finished' : ''
-                };
-            });
+    // 2. Définition du badge de priorité
+    let prioBadge = "🟡 P2";
+    if (priority === "1") prioBadge = "🔴 P1";
+    if (priority === "3") prioBadge = "🔵 P3";
+
+    // 3. Construction de la classe CSS personnalisée
+    // On combine le statut terminé ET la priorité pour le style
+    let customClass = `priority-${priority}`;
+    if (status === "Terminé") {
+        customClass = 'project-finished';
+    }
+
+    return {
+        id: p.id,
+        // Libellé formaté : [Priorité] Icône Nom [Responsable] - %
+        name: `${prioBadge} | ${statusIcon} ${p.name} [${displayName}] - ${progress}%`,
+        start: p.start || new Date().toISOString().split('T')[0],
+        end: p.end || new Date().toISOString().split('T')[0],
+        progress: progress,
+        custom_class: customClass
+    };
+});
 
             // --- 4. RENDU DU GANTT ---
             chartEl.innerHTML = ''; // On vide avant de reconstruire
@@ -769,6 +792,7 @@
                     name: document.getElementById('p-name').value || "Projet sans nom",
                     owner: document.getElementById('p-owner').value,
                     status: document.getElementById('p-status').value,
+                    priority: document.getElementById('p-priority').value,
                     start: startVal,
                     end: endVal,
                     progress: parseInt(document.getElementById('p-progress').value) || 0,
@@ -812,7 +836,7 @@
             document.getElementById('p-end').value = p.end;
             document.getElementById('p-progress').value = p.progress;
             document.getElementById('prog-val').innerText = p.progress + "%";
-
+            document.getElementById('p-priority').value = p.priority || "2"; // Par défaut P2 si vide
             // Gestion du sélecteur de projet et du bouton supprimer
             document.getElementById('btn-delete').classList.remove('hidden');
             document.getElementById('project-selector').value = p.id;
