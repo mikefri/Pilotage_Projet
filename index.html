@@ -436,6 +436,16 @@
                     <option value="Terminé">✅ Terminé</option>
                 </select>
             </div>
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Priorité</label>
+                <select id="filter-priority" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all" selected>Toutes les priorités</option>
+                    <option value="1">🔴 P1 - Haute</option>
+                    <option value="2">🟡 P2 - Moyenne</option>
+                    <option value="3">🔵 P3 - Basse</option>
+                </select>
+            </div>
         </div>
 
         <div class="w-full bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
@@ -561,57 +571,59 @@
         };
 
         function loadAllData() {
+            // Vérification de la disponibilité de Firebase
             if (!window.fbMethods) return setTimeout(loadAllData, 200);
             const { onValue, ref } = window.fbMethods;
 
-            // 1. Chargement des responsables
+            // 1. ÉCOUTEUR DES RESPONSABLES (Chargé une seule fois ou à chaque modif d'équipe)
             onValue(ref(window.fbDB, 'responsables'), (snap) => {
                 const data = snap.val();
                 responsables = data ? Object.values(data) : [];
-                document.getElementById('p-owner').innerHTML = responsables.map(r =>
-                    `<option value="${r.id}">${r.name}</option>`
-                ).join('') || '<option value="">Aucun membre</option>';
-                // Dans loadAllData, section onValue(ref(window.fbDB, 'responsables')...
+
+                // Mise à jour du formulaire d'ajout/édition
+                const pOwner = document.getElementById('p-owner');
+                if (pOwner) {
+                    pOwner.innerHTML = responsables.map(r =>
+                        `<option value="${r.id}">${r.name}</option>`
+                    ).join('') || '<option value="">Aucun membre</option>';
+                }
+
+                // Mise à jour du filtre principal (Unique source de vérité)
                 const filterOwner = document.getElementById('filter-owner');
-                filterOwner.innerHTML = '<option value="all">Tous les membres</option>' +
-                    responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                if (filterOwner) {
+                    filterOwner.innerHTML = '<option value="all">Tous les membres</option>' +
+                        responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                }
+
+                // Rafraîchir le Gantt si les projets sont déjà là pour afficher les noms des responsables
+                if (projects.length > 0) renderGantt();
             });
 
-            // 2. Chargement des projets avec DOUBLE TRI
+            // 2. ÉCOUTEUR DES PROJETS (Avec logique de tri robuste)
             onValue(ref(window.fbDB, 'projects'), (snap) => {
                 const data = snap.val();
                 let projectsData = data ? Object.values(data) : [];
 
+                // TRIPLE TRI : Priorité > Date > Nom
                 projectsData.sort((a, b) => {
-    // 1. Tri par Priorité (1, 2 ou 3)
-    const prioA = parseInt(a.priority) || 2;
-    const prioB = parseInt(b.priority) || 2;
-    if (prioA !== prioB) return prioA - prioB;
+                    const prioA = parseInt(a.priority) || 2;
+                    const prioB = parseInt(b.priority) || 2;
+                    if (prioA !== prioB) return prioA - prioB;
 
-    // 2. Tri par Date si priorité égale
-    const dateA = a.start ? new Date(a.start) : new Date('2099-12-31');
-    const dateB = b.start ? new Date(b.start) : new Date('2099-12-31');
-    if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
+                    const dateA = a.start ? new Date(a.start) : new Date('2099-12-31');
+                    const dateB = b.start ? new Date(b.start) : new Date('2099-12-31');
+                    if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
 
-    // 3. Tri alphabétique si dates égales
-    return (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase());
-});
-
-
-
-                // Dans loadAllData, section onValue(ref(window.fbDB, 'responsables')...
-                const filterOwner = document.getElementById('filter-owner');
-                filterOwner.innerHTML = '<option value="all">Tous les membres</option>' +
-                    responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-
+                    return (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase());
+                });
 
                 projects = projectsData;
-                renderGantt();
-                updateProjectSelector();
 
-
-
-
+                // On lance le rendu UNIQUEMENT si les fonctions existent
+                if (typeof renderGantt === 'function') {
+                    renderGantt();
+                    updateProjectSelector();
+                }
             });
         }
 
@@ -652,65 +664,69 @@
             if (!chartEl) return;
 
             // --- 1. RÉCUPÉRATION DES FILTRES ---
+            // Utilisation du ?. pour éviter que le script s'arrête si un élément manque dans le HTML
             const filterOwnerVal = document.getElementById('filter-owner')?.value || 'all';
             const filterStatusVal = document.getElementById('filter-status')?.value || 'all';
+            const filterPriorityValue = document.getElementById('filter-priority')?.value || 'all';
 
             // --- 2. FILTRAGE DES DONNÉES ---
             let filteredProjects = projects.filter(p => {
                 const matchOwner = (filterOwnerVal === 'all' || p.owner === filterOwnerVal);
                 const matchStatus = (filterStatusVal === 'all' || p.status === filterStatusVal);
-                return matchOwner && matchStatus;
+                // Gestion de la priorité avec valeur par défaut "2" pour les anciens projets
+                const matchPriority = (filterPriorityValue === 'all' || (p.priority || "2") === filterPriorityValue);
+                return matchOwner && matchStatus && matchPriority;
             });
 
-            // Si aucun projet ne correspond
+            // Si aucun projet ne correspond (Correction de la variable 'container' par 'chartEl')
             if (filteredProjects.length === 0) {
-                chartEl.innerHTML = `<div class="p-20 text-center text-slate-400 font-bold italic">Aucun projet ne correspond aux filtres.</div>`;
+                chartEl.innerHTML = `<div class="p-20 text-center text-slate-400">Aucun projet ne correspond à ces critères.</div>`;
                 return;
             }
 
             // --- 3. PRÉPARATION DES TÂCHES ---
             const tasks = filteredProjects.map(p => {
-    const respoFound = responsables.find(r => r.id === p.owner);
-    const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
+                const respoFound = responsables.find(r => r.id === p.owner);
+                const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
 
-    const status = p.status || "À faire";
-    const progress = p.progress || 0;
-    const priority = p.priority || "2"; // P2 (Moyenne) par défaut si non définie
+                const status = p.status || "À faire";
+                const progress = p.progress || 0;
+                const priority = p.priority || "2";
 
-    
+                // Définition de l'icône de statut
+                let statusIcon = "🔵";
+                if (status === "Terminé") statusIcon = "✅";
+                if (status === "À faire") statusIcon = "⚪";
 
-    // 2. Définition du badge de priorité
-    let prioBadge = "🟡 P2";
-    if (priority === "1") prioBadge = "🔴 P1";
-    if (priority === "3") prioBadge = "🔵 P3";
+                // Définition du badge de priorité
+                let prioBadge = "🟡 P2";
+                if (priority === "1") prioBadge = "🔴 P1";
+                if (priority === "3") prioBadge = "🔵 P3";
 
-    // 3. Construction de la classe CSS personnalisée
-    // On combine le statut terminé ET la priorité pour le style
-    let customClass = `priority-${priority}`;
-    if (status === "Terminé") {
-        customClass = 'project-finished';
-    }
+                // Définition de la classe CSS pour le style des barres
+                let customClass = `priority-${priority}`;
+                if (status === "Terminé") customClass = 'project-finished';
 
-    return {
-        id: p.id,
-        // Libellé formaté : [Priorité] Icône Nom [Responsable] - %
-        name: `${prioBadge} | ${statusIcon} ${p.name} [${displayName}] - ${progress}%`,
-        start: p.start || new Date().toISOString().split('T')[0],
-        end: p.end || new Date().toISOString().split('T')[0],
-        progress: progress,
-        custom_class: customClass
-    };
-});
+                return {
+                    id: p.id,
+                    // Format du nom : Priorité | Statut | Nom | Responsable | Progression
+                    name: `${prioBadge} | ${status} | ${p.name} | ${displayName} | ${progress}%`,
+                    start: p.start || new Date().toISOString().split('T')[0],
+                    end: p.end || new Date().toISOString().split('T')[0],
+                    progress: progress,
+                    custom_class: customClass
+                };
+            });
 
             // --- 4. RENDU DU GANTT ---
-            chartEl.innerHTML = ''; // On vide avant de reconstruire
+            chartEl.innerHTML = ''; // Nettoyage du conteneur avant reconstruction
 
             gantt = new Gantt("#gantt-chart", tasks, {
                 language: 'fr',
                 view_mode: view,
                 bar_height: 38,
                 on_click: task => {
-                    // Redirection vers la liste des tâches au clic sur la barre
+                    // Lien vers la page de détails des tâches
                     window.location.href = `liste_taches.html?id=${task.id}`;
                 },
                 on_date_change: (task, start, end) => {
@@ -731,7 +747,7 @@
             // --- 5. PERSONNALISATION POST-RENDU (Couleurs et Édition) ---
             setTimeout(() => {
                 filteredProjects.forEach(p => {
-                    // Appliquer la couleur personnalisée par responsable
+                    // Application de la couleur par responsable (ou gris si terminé)
                     const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
                     if (bar) {
                         const color = p.status === "Terminé" ? '#94a3b8' : getColor(p.owner);
@@ -739,18 +755,19 @@
                     }
                 });
 
-                // Rendre les noms des projets cliquables pour ouvrir la MODALE d'édition
+                // Gestion du clic sur les textes pour ouvrir la modale d'édition
                 document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
                     el.style.cursor = 'pointer';
                     el.onclick = (e) => {
                         e.stopPropagation();
-                        // On récupère l'ID via l'attribut data-id du parent .grid-row
                         const taskId = el.closest('.grid-row').getAttribute('data-id');
                         if (taskId) editProject(taskId);
                     };
                 });
             }, 150);
         }
+
+
         async function updateQuick(id, data) {
             const user = auth.currentUser;
             const editorName = user ? (user.displayName || user.email) : "Système";
@@ -824,41 +841,65 @@
         }
 
         function editProject(id) {
+            // 1. Recherche du projet dans le tableau global
             const p = projects.find(i => i.id === id);
             if (!p) return;
 
-            // Remplissage des champs classiques
+            // 2. Remplissage des champs de texte et dates
             document.getElementById('p-id').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-owner').value = p.owner;
-            document.getElementById('p-status').value = p.status;
-            document.getElementById('p-start').value = p.start;
-            document.getElementById('p-end').value = p.end;
-            document.getElementById('p-progress').value = p.progress;
-            document.getElementById('prog-val').innerText = p.progress + "%";
-            document.getElementById('p-priority').value = p.priority || "2"; // Par défaut P2 si vide
-            // Gestion du sélecteur de projet et du bouton supprimer
-            document.getElementById('btn-delete').classList.remove('hidden');
-            document.getElementById('project-selector').value = p.id;
+            document.getElementById('p-name').value = p.name || "";
+            document.getElementById('p-owner').value = p.owner || "";
+            document.getElementById('p-status').value = p.status || "À faire";
+            document.getElementById('p-start').value = p.start || "";
+            document.getElementById('p-end').value = p.end || "";
 
-            // --- LOGIQUE DE SUIVI DES MODIFICATIONS ---
+            // 3. Gestion de la progression (input + affichage texte)
+            document.getElementById('p-progress').value = p.progress || 0;
+            document.getElementById('prog-val').innerText = (p.progress || 0) + "%";
+
+            // 4. GESTION DE LA PRIORITÉ (Valeur par défaut "2" si vide)
+            document.getElementById('p-priority').value = p.priority || "2";
+
+            // 5. INTERFACE ET SÉLECTEURS
+            // Affiche le bouton supprimer
+            const btnDelete = document.getElementById('btn-delete');
+            if (btnDelete) btnDelete.classList.remove('hidden');
+
+            // Mise à jour du sélecteur de projet (si présent dans ta modale)
+            const projectSelector = document.getElementById('project-selector');
+            if (projectSelector) projectSelector.value = p.id;
+
+            // 6. LOGIQUE DE SUIVI DES MODIFICATIONS (Historique)
             const infoBox = document.getElementById('edit-info');
             const infoText = document.getElementById('last-edit-text');
 
             if (p.lastEditedBy && p.lastEditedAt) {
-                // Si les données de suivi existent, on les affiche
                 if (infoBox) infoBox.classList.remove('hidden');
                 if (infoText) infoText.innerText = `${p.lastEditedBy} le ${p.lastEditedAt}`;
             } else {
-                // Sinon, on cache la zone pour les anciens projets
                 if (infoBox) infoBox.classList.add('hidden');
             }
-            // ------------------------------------------
 
-            openForm(true);
+            // 7. OUVERTURE DE LA MODALE
+            // On appelle ta fonction openForm et on assure la visibilité de l'overlay
+            const overlay = document.getElementById('form-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            }
+
+            if (typeof openForm === 'function') {
+                openForm(true); // true indique le mode édition
+            }
         }
 
         function openForm(isEdit = false) {
+            const overlay = document.getElementById('form-overlay');
+            if (!overlay) return;
+
+            // --- SÉCURITÉ : On réinitialise le style forcé ---
+            overlay.style.display = ''; // On vide le style pour laisser le CSS (modal-active) piloter
+
             if (isEdit !== true) {
                 document.getElementById('p-id').value = '';
                 document.getElementById('p-name').value = '';
@@ -867,11 +908,30 @@
                 document.getElementById('btn-delete').classList.add('hidden');
                 document.getElementById('project-selector').value = '';
             }
-            document.getElementById('form-overlay').classList.add('modal-active');
+
+            // On active la modale
+            overlay.classList.add('modal-active');
         }
 
         function closeForm() {
-            document.getElementById('form-overlay').classList.remove('modal-active');
+            const overlay = document.getElementById('form-overlay');
+
+            if (overlay) {
+                // 1. On retire les classes d'affichage de Tailwind
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+
+                // 2. FORCE : On s'assure via le style inline que c'est caché
+                overlay.style.setProperty('display', 'none', 'important');
+            }
+
+            // 3. Nettoyage du formulaire (pour ne pas avoir les données du projet précédent au prochain clic)
+            const form = document.getElementById('project-form');
+            if (form) form.reset();
+
+            // 4. On vide l'ID pour que le prochain "Ajout" soit bien considéré comme nouveau
+            const idP = document.getElementById('p-id');
+            if (idP) idP.value = "";
         }
 
         function changeView(v) { renderGantt(v); }

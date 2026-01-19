@@ -19,8 +19,6 @@
             background-color: #f4f4f4;
             margin: 0;
             min-height: 100vh;
-            overflow-x: hidden;
-            /* Empêche le scroll horizontal global */
         }
 
         /* --- SIDEBAR --- */
@@ -39,9 +37,7 @@
             overflow-y: auto;
         }
 
-        .sidebar.open {
-            left: 0;
-        }
+        .sidebar.open { left: 0; }
 
         .toggle-tab {
             position: fixed;
@@ -56,37 +52,23 @@
             border-radius: 0 10px 10px 0;
             transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: bold;
-            box-shadow: 3px 0 8px rgba(0, 0, 0, 0.2);
         }
 
-        .sidebar.open+.toggle-tab {
-            left: 350px;
-        }
+        .sidebar.open+.toggle-tab { left: 350px; }
 
-        /* Alignement cases menu */
         .project-item {
             display: flex;
             align-items: center;
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
-            min-height: 60px;
         }
 
-        .check-area {
-            min-width: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .project-item:hover { background-color: #f9f9f9; }
 
-        .project-item span {
-            font-weight: 700;
-            flex: 1;
-            color: #333;
-        }
+        .project-item span { font-weight: 700; color: #333; }
 
-        /* --- TABLEAU ANTI-SCROLL --- */
+        /* --- TABLEAU --- */
         .container {
             width: 95%;
             max-width: 1450px;
@@ -114,25 +96,29 @@
             border: 1px solid white;
             background: var(--cell-bg);
             height: 95px;
-            overflow: hidden;
+            vertical-align: middle;
         }
 
-        /* Suppression du scroll dans les textarea */
+        .project-cell-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 95px;
+            width: 100%;
+        }
+
         .table-textarea {
             width: 100%;
-            height: 100%;
             border: none;
             background: transparent;
-            padding: 10px;
+            padding: 5px 10px;
             font-size: 1.1rem;
             font-weight: 700;
             resize: none;
             outline: none;
             overflow: hidden;
-            /* EMPECHE LE SCROLL VISIBLE */
             display: block;
-            word-break: break-all;
-            /* Force le retour à la ligne pour les textes longs sans espaces */
+            text-align: center;
         }
 
         .main-title {
@@ -156,47 +142,43 @@
             margin-top: 15px;
         }
 
-        .smiley-icon {
-            width: 55px;
-            height: 55px;
-            margin: auto;
-        }
+        .smiley-icon { width: 55px; height: 55px; margin: auto; }
 
-        .status-ok {
-            background-color: #c6efce !important;
-        }
-
-        .status-encours {
-            background-color: #ffeb9c !important;
-        }
-
-        .status-nok {
-            background-color: #ffc7ce !important;
-        }
+        .status-ok { background-color: #c6efce !important; }
+        .status-encours { background-color: #ffeb9c !important; }
+        .status-nok { background-color: #ffc7ce !important; }
 
         #login-screen {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
         }
 
-        .hidden {
-            display: none !important;
+        .hidden { display: none !important; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 0.5in; }
+            .sidebar, #toggle-tab, .btn-retour, #login-screen { display: none !important; }
+            html, body { height: 100%; background-color: white !important; }
+            .container {
+                display: flex !important; flex-direction: column !important;
+                height: 98vh !important; width: 100% !important; max-width: none !important;
+                border: 3px solid black !important; padding: 15px !important; margin: 0 !important;
+            }
+            table { flex: 1 !important; width: 100% !important; border-collapse: collapse !important; }
+            th { font-size: 1.2rem !important; border: 2px solid black !important; padding: 10px !important; }
+            td { border: 1px solid black !important; background-color: #e9e9e9 !important; padding: 0 !important; }
+            .project-cell-wrapper { height: 100% !important; }
+            td:nth-child(1) .table-textarea { font-size: 1.5rem !important; font-weight: 900 !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
 </head>
 
 <body>
-
     <div id="sidebar" class="sidebar">
         <div class="flex justify-between items-center mb-6 border-b-2 border-black pb-2">
             <h2 class="font-black text-xl uppercase italic">Projets</h2>
-
-            <a href="index.html" class="btn-retour text-red-600 font-bold text-sm">RETOUR</a>
+            <a href="index.html" class="btn-retour text-red-600 font-bold text-sm"></a>
         </div>
         <div id="project-list-sidebar"></div>
     </div>
@@ -215,21 +197,25 @@
 
         <div class="container">
             <div class="grid grid-cols-[120px_1fr_120px] items-center mb-6 gap-6">
-                <img src="asset/spmi.png" style="width:110px"
-                    onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
+                <a href="index.html" target="_blank">
+                    <img src="asset/spmi.png" style="width:110px" onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'" title="Retour">
+                </a>
                 <div class="main-title">Comprendre pour Performer</div>
-                <div class="flex justify-end"><img src="asset/M00.png" style="width:80px"></div>
+                <div class="flex justify-end">
+                    <img src="asset/M00.png" style="width:80px; cursor:pointer;" onclick="window.print()" title="Imprimer le rapport">
+                </div>
             </div>
 
             <div class="section-header">Performance - Méthode Logistique</div>
-            <div class="border-2 border-black p-4 text-center font-black text-2xl uppercase bg-yellow-50 mb-6">Tournée
-                Terrain : DET / DUO / DPX</div>
+            <div class="border-2 border-black p-4 text-center font-black text-2xl uppercase bg-yellow-50 mb-4">
+                Tournée Terrain : DET / DUO / DPX
+            </div>
 
             <div class="section-header">Objectif</div>
-            <div class="flex justify-center mb-8">
-                <div
-                    class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-5 w-3/4 font-black text-center text-4xl shadow-lg">
-                    0 PROJET EN RETARD</div>
+            <div class="flex justify-center mb-4">
+                <div class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-4 w-3/4 font-black text-center text-3xl shadow-lg">
+                    0 PROJET EN RETARD
+                </div>
             </div>
 
             <div class="section-header">Situation Actuelle</div>
@@ -251,7 +237,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -287,21 +273,47 @@
         };
 
         onAuthStateChanged(auth, (user) => {
-            if (user) { document.getElementById('login-screen').classList.add('hidden'); initApp(); }
-            else { document.getElementById('login-screen').classList.remove('hidden'); }
+            if (user) { 
+                document.getElementById('login-screen').classList.add('hidden'); 
+                initApp(); 
+            }
+            else { 
+                document.getElementById('login-screen').classList.remove('hidden'); 
+            }
         });
 
         function initApp() {
+            const user = auth.currentUser;
+
+            // 1. Récupérer la sélection enregistrée pour cet utilisateur
+            onValue(ref(db, `selections/${user.uid}`), (s) => {
+                const data = s.val();
+                if (data && data.selectedIds) {
+                    selectedProjectIds = data.selectedIds;
+                }
+                renderSidebar();
+                renderTable();
+            });
+
+            // 2. Récupérer les responsables
             onValue(ref(db, 'responsables'), (s) => {
                 responsablesMap = {};
                 if (s.val()) Object.values(s.val()).forEach(r => responsablesMap[r.id] = r.name);
                 renderTable();
             });
-            onValue(ref(db, 'reporting'), (s) => { reportingData = s.val() || {}; renderTable(); });
+
+            // 3. Récupérer les observations/tendances
+            onValue(ref(db, 'reporting'), (s) => { 
+                reportingData = s.val() || {}; 
+                renderTable(); 
+            });
+
+            // 4. Récupérer les projets
             onValue(ref(db, 'projects'), (s) => {
                 projectsData = s.val() ? Object.values(s.val()) : [];
                 projectsData.sort((a, b) => (a.status === 'Terminé' ? 1 : -1));
-                if (selectedProjectIds.length === 0) selectedProjectIds = projectsData.slice(0, 8).map(p => p.id);
+                
+                // On ne force plus la sélection des 8 premiers ici pour respecter le choix utilisateur
                 renderSidebar();
                 renderTable();
             });
@@ -309,27 +321,48 @@
 
         function renderSidebar() {
             const list = document.getElementById('project-list-sidebar');
+            if (!list) return;
             list.innerHTML = '';
-            projectsData.forEach(p => {
+            const sortedProjects = [...projectsData].sort((a, b) => (parseInt(a.priority) || 2) - (parseInt(b.priority) || 2));
+            
+            sortedProjects.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'project-item';
-                const checked = selectedProjectIds.includes(p.id) ? 'checked' : '';
-                div.innerHTML = `<div class="check-area"><input type="checkbox" ${checked} class="w-5 h-5"></div><span>${p.name}</span>`;
-                div.onclick = (e) => {
-                    if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; }
-                    toggleProject(p.id);
-                };
+                const isChecked = selectedProjectIds.includes(p.id);
+                const prioText = p.priority === "1" ? "(P1)" : p.priority === "3" ? "(P3)" : "(P2)";
+                div.innerHTML = `
+                    <div class="w-[30px] flex justify-center flex-shrink-0">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} class="w-4 h-4" onclick="event.stopPropagation(); toggleProject('${p.id}')">
+                    </div>
+                    <span class="text-[10px] text-gray-500 mr-2 flex-shrink-0">${prioText}</span>
+                    <span class="text-[14px] leading-tight">${p.name}</span>
+                `;
+                div.onclick = () => toggleProject(p.id);
                 list.appendChild(div);
             });
         }
 
         window.toggleProject = (id) => {
-            selectedProjectIds = selectedProjectIds.includes(id) ? selectedProjectIds.filter(i => i !== id) : [...selectedProjectIds, id];
+            const user = auth.currentUser;
+            // Mise à jour locale
+            selectedProjectIds = selectedProjectIds.includes(id) 
+                ? selectedProjectIds.filter(i => i !== id) 
+                : [...selectedProjectIds, id];
+            
+            // Sauvegarde immédiate dans Firebase pour cet utilisateur
+            if (user) {
+                set(ref(db, `selections/${user.uid}`), {
+                    selectedIds: selectedProjectIds
+                });
+            }
+            
+            renderSidebar();
             renderTable();
         };
 
         function renderTable() {
             const body = document.getElementById('table-body');
+            if (!body) return;
             body.innerHTML = '';
             const filtered = projectsData.filter(p => selectedProjectIds.includes(p.id));
 
@@ -337,13 +370,21 @@
                 const report = reportingData[p.id] || {};
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><textarea class="table-textarea text-[#004d4d]" readonly>${p.name}</textarea></td>
-                    <td><div class="flex items-center justify-center h-full font-black uppercase text-center text-xs">${p.status}</div></td>
-                    <td><div class="flex items-center justify-center h-full text-center font-bold text-sm">${responsablesMap[p.owner] || ''}</div></td>
-                    <td><textarea class="table-textarea" onchange="saveData('${p.id}', 'obs', this.value)">${report.obs || ''}</textarea></td>
-                    <td><div class="flex items-center justify-center h-full font-black text-xl">${p.progress}%</div></td>
+                    <td>
+                        <div class="project-cell-wrapper">
+                            <textarea class="table-textarea text-[#004d4d]" readonly>${p.name}</textarea>
+                        </div>
+                    </td>
+                    <td><div class="flex items-center justify-center h-[95px] font-black uppercase text-center text-xs px-2">${p.status}</div></td>
+                    <td><div class="flex items-center justify-center h-[95px] text-center font-bold text-sm px-2">${responsablesMap[p.owner] || ''}</div></td>
+                    <td>
+                        <div class="project-cell-wrapper">
+                            <textarea class="table-textarea" onchange="saveData('${p.id}', 'obs', this.value)">${report.obs || ''}</textarea>
+                        </div>
+                    </td>
+                    <td><div class="flex items-center justify-center h-[95px] font-black text-xl">${p.progress}%</div></td>
                     <td class="${report.trend ? 'status-' + report.trend : ''}" onclick="cycleTrend('${p.id}', '${report.trend || ''}')">
-                        <div class="flex items-center justify-center h-full cursor-pointer">
+                        <div class="flex items-center justify-center h-[95px] cursor-pointer">
                             <img src="${report.trendImg || ''}" class="smiley-icon" style="${report.trendImg ? '' : 'display:none'}">
                         </div>
                     </td>
@@ -367,5 +408,4 @@
         window.saveData = (pId, f, v) => update(ref(db, `reporting/${pId}`), { [f]: v });
     </script>
 </body>
-
 </html>
