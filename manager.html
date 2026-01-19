@@ -108,9 +108,17 @@
             vertical-align: middle;
         }
 
+        /* Centrage vertical pour le projet */
+        .project-cell-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+        }
+
         .table-textarea {
             width: 100%;
-            height: 100%;
             border: none;
             background: transparent;
             padding: 10px;
@@ -120,6 +128,7 @@
             outline: none;
             overflow: hidden;
             display: block;
+            text-align: center; /* Centrage horizontal aussi */
         }
 
         .main-title {
@@ -182,15 +191,11 @@
                 margin: 0.5in;
             }
 
-            .sidebar,
-            #toggle-tab,
-            .btn-retour,
-            #login-screen {
+            .sidebar, #toggle-tab, .btn-retour, #login-screen {
                 display: none !important;
             }
 
-            html,
-            body {
+            html, body {
                 height: 100%;
                 background-color: white !important;
             }
@@ -224,31 +229,24 @@
                 padding: 10px !important;
             }
 
-            /* --- GROSSISSEMENT DU TEXTE POUR L'IMPRESSION --- */
-            
-            /* Colonne 1: Projet (Textarea) */
+            /* Colonne 1: Projet (Texte agrandi et centré verticalement) */
             td:nth-child(1) .table-textarea {
-                font-size: 1.5rem !important; /* Augmenté */
+                font-size: 1.5rem !important;
                 font-weight: 900 !important;
                 line-height: 1.2 !important;
+                text-align: center !important;
             }
 
             /* Colonne 2: Statut */
             td:nth-child(2) div {
-                font-size: 1.4rem !important; /* Augmenté */
+                font-size: 1.4rem !important;
                 font-weight: 900 !important;
             }
 
             /* Colonne 3: Responsable */
             td:nth-child(3) div {
-                font-size: 1.4rem !important; /* Augmenté */
+                font-size: 1.4rem !important;
                 font-weight: 900 !important;
-            }
-
-            /* Colonne 4: Observation */
-            td:nth-child(4) .table-textarea {
-                font-size: 1.1rem !important;
-                font-weight: 700 !important;
             }
 
             .smiley-icon {
@@ -292,9 +290,7 @@
                     <img src="asset/spmi.png" style="width:110px"
                         onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
                 </a>
-
                 <div class="main-title">Comprendre pour Performer</div>
-
                 <div class="flex justify-end">
                     <img src="asset/M00.png" style="width:80px; cursor:pointer;" onclick="window.print()"
                         title="Imprimer le rapport">
@@ -308,8 +304,7 @@
 
             <div class="section-header">Objectif</div>
             <div class="flex justify-center mb-4">
-                <div
-                    class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-4 w-3/4 font-black text-center text-3xl shadow-lg">
+                <div class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-4 w-3/4 font-black text-center text-3xl shadow-lg">
                     0 PROJET EN RETARD
                 </div>
             </div>
@@ -407,22 +402,15 @@
                     <span class="text-[10px] text-gray-500 mr-2 flex-shrink-0">${prioText}</span>
                     <span class="text-[14px] leading-tight">${p.name}</span>
                 `;
-                
-                div.onclick = () => {
-                    toggleProject(p.id);
-                };
+                div.onclick = () => toggleProject(p.id);
                 list.appendChild(div);
             });
         }
 
         window.toggleProject = (id) => {
-            if (selectedProjectIds.includes(id)) {
-                selectedProjectIds = selectedProjectIds.filter(i => i !== id);
-            } else {
-                selectedProjectIds.push(id);
-            }
-            renderSidebar(); // Important pour mettre à jour les cases à cocher
-            renderTable();   // Important pour mettre à jour le tableau
+            selectedProjectIds = selectedProjectIds.includes(id) ? selectedProjectIds.filter(i => i !== id) : [...selectedProjectIds, id];
+            renderSidebar();
+            renderTable();
         };
 
         function renderTable() {
@@ -434,7 +422,11 @@
                 const report = reportingData[p.id] || {};
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><textarea class="table-textarea text-[#004d4d]" readonly>${p.name}</textarea></td>
+                    <td>
+                        <div class="project-cell-wrapper">
+                            <textarea class="table-textarea text-[#004d4d]" readonly>${p.name}</textarea>
+                        </div>
+                    </td>
                     <td><div class="flex items-center justify-center h-full font-black uppercase text-center text-xs">${p.status}</div></td>
                     <td><div class="flex items-center justify-center h-full text-center font-bold text-sm">${responsablesMap[p.owner] || ''}</div></td>
                     <td><textarea class="table-textarea" onchange="saveData('${p.id}', 'obs', this.value)">${report.obs || ''}</textarea></td>
@@ -464,5 +456,4 @@
         window.saveData = (pId, f, v) => update(ref(db, `reporting/${pId}`), { [f]: v });
     </script>
 </body>
-
 </html>
