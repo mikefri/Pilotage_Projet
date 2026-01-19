@@ -19,8 +19,6 @@
             background-color: #f4f4f4;
             margin: 0;
             min-height: 100vh;
-            overflow-x: hidden;
-            /* Empêche le scroll horizontal global */
         }
 
         /* --- SIDEBAR --- */
@@ -56,37 +54,27 @@
             border-radius: 0 10px 10px 0;
             transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: bold;
-            box-shadow: 3px 0 8px rgba(0, 0, 0, 0.2);
         }
 
         .sidebar.open+.toggle-tab {
             left: 350px;
         }
 
-        /* Alignement cases menu */
+        /* Ajustement menu latéral (sans flex:1 pour coller le texte) */
         .project-item {
             display: flex;
             align-items: center;
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
-            min-height: 60px;
-        }
-
-        .check-area {
-            min-width: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .project-item span {
             font-weight: 700;
-            flex: 1;
             color: #333;
         }
 
-        /* --- TABLEAU ANTI-SCROLL --- */
+        /* --- TABLEAU --- */
         .container {
             width: 95%;
             max-width: 1450px;
@@ -114,10 +102,9 @@
             border: 1px solid white;
             background: var(--cell-bg);
             height: 95px;
-            overflow: hidden;
+            vertical-align: middle;
         }
 
-        /* Suppression du scroll dans les textarea */
         .table-textarea {
             width: 100%;
             height: 100%;
@@ -129,10 +116,7 @@
             resize: none;
             outline: none;
             overflow: hidden;
-            /* EMPECHE LE SCROLL VISIBLE */
             display: block;
-            word-break: break-all;
-            /* Force le retour à la ligne pour les textes longs sans espaces */
         }
 
         .main-title {
@@ -187,6 +171,78 @@
         .hidden {
             display: none !important;
         }
+
+        /* --- STYLE IMPRESSION PORTRAIT OPTIMISÉ --- */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0.5in;
+            }
+
+            .sidebar,
+            #toggle-tab,
+            .btn-retour,
+            #login-screen {
+                display: none !important;
+            }
+
+            html,
+            body {
+                height: 100%;
+                background-color: white !important;
+            }
+
+            .container {
+                display: flex !important;
+                flex-direction: column !important;
+                height: 98vh !important;
+                /* Remplit la page verticalement */
+                width: 100% !important;
+                max-width: none !important;
+                border: 3px solid black !important;
+                /* Cadre noir bien visible */
+                padding: 15px !important;
+                margin: 0 !important;
+            }
+
+            table {
+                flex: 1 !important;
+                /* Étire le tableau vers le bas */
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            th {
+                font-size: 1.2rem !important;
+                border: 2px solid black !important;
+                padding: 10px !important;
+            }
+
+            td {
+                border: 1px solid black !important;
+                background-color: #e9e9e9 !important;
+                font-size: 1.2rem !important;
+                /* Texte des cellules plus gros */
+                font-weight: 800 !important;
+                padding: 10px !important;
+            }
+
+            .table-textarea {
+                font-size: 1.2rem !important;
+                font-weight: 800 !important;
+                color: black !important;
+            }
+
+            .smiley-icon {
+                width: 60px !important;
+                height: 60px !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 
@@ -195,7 +251,6 @@
     <div id="sidebar" class="sidebar">
         <div class="flex justify-between items-center mb-6 border-b-2 border-black pb-2">
             <h2 class="font-black text-xl uppercase italic">Projets</h2>
-
             <a href="index.html" class="btn-retour text-red-600 font-bold text-sm">RETOUR</a>
         </div>
         <div id="project-list-sidebar"></div>
@@ -215,21 +270,30 @@
 
         <div class="container">
             <div class="grid grid-cols-[120px_1fr_120px] items-center mb-6 gap-6">
-                <img src="asset/spmi.png" style="width:110px"
-                    onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
+                <a href="index.html" target="_blank">
+                    <img src="asset/spmi.png" style="width:110px"
+                        onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
+                </a>
+
                 <div class="main-title">Comprendre pour Performer</div>
-                <div class="flex justify-end"><img src="asset/M00.png" style="width:80px"></div>
+
+                <div class="flex justify-end">
+                    <img src="asset/M00.png" style="width:80px; cursor:pointer;" onclick="window.print()"
+                        title="Imprimer le rapport">
+                </div>
             </div>
 
             <div class="section-header">Performance - Méthode Logistique</div>
-            <div class="border-2 border-black p-4 text-center font-black text-2xl uppercase bg-yellow-50 mb-6">Tournée
-                Terrain : DET / DUO / DPX</div>
+            <div class="border-2 border-black p-4 text-center font-black text-2xl uppercase bg-yellow-50 mb-4">
+                Tournée Terrain : DET / DUO / DPX
+            </div>
 
             <div class="section-header">Objectif</div>
-            <div class="flex justify-center mb-8">
+            <div class="flex justify-center mb-4">
                 <div
-                    class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-5 w-3/4 font-black text-center text-4xl shadow-lg">
-                    0 PROJET EN RETARD</div>
+                    class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-4 w-3/4 font-black text-center text-3xl shadow-lg">
+                    0 PROJET EN RETARD
+                </div>
             </div>
 
             <div class="section-header">Situation Actuelle</div>
@@ -310,14 +374,27 @@
         function renderSidebar() {
             const list = document.getElementById('project-list-sidebar');
             list.innerHTML = '';
-            projectsData.forEach(p => {
+            const sortedProjects = [...projectsData].sort((a, b) => (parseInt(a.priority) || 2) - (parseInt(b.priority) || 2));
+
+            sortedProjects.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'project-item';
                 const checked = selectedProjectIds.includes(p.id) ? 'checked' : '';
-                div.innerHTML = `<div class="check-area"><input type="checkbox" ${checked} class="w-5 h-5"></div><span>${p.name}</span>`;
+                const prioText = p.priority === "1" ? "(P1)" : p.priority === "3" ? "(P3)" : "(P2)";
+
+                div.innerHTML = `
+                    <div class="w-[30px] flex justify-center flex-shrink-0">
+                        <input type="checkbox" ${checked} class="w-4 h-4">
+                    </div>
+                    <span class="text-[10px] text-gray-500 mr-2 flex-shrink-0">${prioText}</span>
+                    <span class="text-[14px] leading-tight">${p.name}</span>
+                `;
                 div.onclick = (e) => {
-                    if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; }
-                    toggleProject(p.id);
+                    if (e.target.tagName !== 'INPUT') {
+                        const cb = div.querySelector('input');
+                        cb.checked = !cb.checked;
+                        toggleProject(p.id);
+                    }
                 };
                 list.appendChild(div);
             });
