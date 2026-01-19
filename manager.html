@@ -108,7 +108,7 @@
             vertical-align: middle;
         }
 
-        /* Centrage vertical pour le projet */
+        /* --- WRAPPER POUR CENTRAGE VERTICAL --- */
         .project-cell-wrapper {
             display: flex;
             align-items: center;
@@ -119,6 +119,7 @@
 
         .table-textarea {
             width: 100%;
+            height: 100%;
             border: none;
             background: transparent;
             padding: 10px;
@@ -128,7 +129,7 @@
             outline: none;
             overflow: hidden;
             display: block;
-            text-align: center; /* Centrage horizontal aussi */
+            text-align: center;
         }
 
         .main-title {
@@ -158,17 +159,9 @@
             margin: auto;
         }
 
-        .status-ok {
-            background-color: #c6efce !important;
-        }
-
-        .status-encours {
-            background-color: #ffeb9c !important;
-        }
-
-        .status-nok {
-            background-color: #ffc7ce !important;
-        }
+        .status-ok { background-color: #c6efce !important; }
+        .status-encours { background-color: #ffeb9c !important; }
+        .status-nok { background-color: #ffc7ce !important; }
 
         #login-screen {
             position: fixed;
@@ -180,11 +173,9 @@
             justify-content: center;
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
-        /* --- STYLE IMPRESSION PORTRAIT OPTIMISÉ --- */
+        /* --- STYLE IMPRESSION PORTRAIT --- */
         @media print {
             @page {
                 size: A4 portrait;
@@ -229,7 +220,9 @@
                 padding: 10px !important;
             }
 
-            /* Colonne 1: Projet (Texte agrandi et centré verticalement) */
+            /* --- TEXTE GROSSI ET CENTRÉ (IMPRESSION) --- */
+            
+            /* Col 1: Projets */
             td:nth-child(1) .table-textarea {
                 font-size: 1.5rem !important;
                 font-weight: 900 !important;
@@ -237,16 +230,23 @@
                 text-align: center !important;
             }
 
-            /* Colonne 2: Statut */
+            /* Col 2: Statut */
             td:nth-child(2) div {
                 font-size: 1.4rem !important;
                 font-weight: 900 !important;
             }
 
-            /* Colonne 3: Responsable */
+            /* Col 3: Responsable */
             td:nth-child(3) div {
                 font-size: 1.4rem !important;
                 font-weight: 900 !important;
+            }
+
+            /* Col 4: Observation (Agrandie et centrée) */
+            td:nth-child(4) .table-textarea {
+                font-size: 1.4rem !important;
+                font-weight: 800 !important;
+                text-align: center !important;
             }
 
             .smiley-icon {
@@ -388,18 +388,15 @@
             const list = document.getElementById('project-list-sidebar');
             list.innerHTML = '';
             const sortedProjects = [...projectsData].sort((a, b) => (parseInt(a.priority) || 2) - (parseInt(b.priority) || 2));
-
             sortedProjects.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'project-item';
                 const isChecked = selectedProjectIds.includes(p.id);
-                const prioText = p.priority === "1" ? "(P1)" : p.priority === "3" ? "(P3)" : "(P2)";
-
                 div.innerHTML = `
                     <div class="w-[30px] flex justify-center flex-shrink-0">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} class="w-4 h-4" onclick="event.stopPropagation(); toggleProject('${p.id}')">
                     </div>
-                    <span class="text-[10px] text-gray-500 mr-2 flex-shrink-0">${prioText}</span>
+                    <span class="text-[10px] text-gray-500 mr-2 flex-shrink-0">${p.priority === "1" ? "(P1)" : p.priority === "3" ? "(P3)" : "(P2)"}</span>
                     <span class="text-[14px] leading-tight">${p.name}</span>
                 `;
                 div.onclick = () => toggleProject(p.id);
@@ -429,7 +426,11 @@
                     </td>
                     <td><div class="flex items-center justify-center h-full font-black uppercase text-center text-xs">${p.status}</div></td>
                     <td><div class="flex items-center justify-center h-full text-center font-bold text-sm">${responsablesMap[p.owner] || ''}</div></td>
-                    <td><textarea class="table-textarea" onchange="saveData('${p.id}', 'obs', this.value)">${report.obs || ''}</textarea></td>
+                    <td>
+                        <div class="project-cell-wrapper">
+                            <textarea class="table-textarea" onchange="saveData('${p.id}', 'obs', this.value)">${report.obs || ''}</textarea>
+                        </div>
+                    </td>
                     <td><div class="flex items-center justify-center h-full font-black text-xl">${p.progress}%</div></td>
                     <td class="${report.trend ? 'status-' + report.trend : ''}" onclick="cycleTrend('${p.id}', '${report.trend || ''}')">
                         <div class="flex items-center justify-center h-full cursor-pointer">
@@ -456,4 +457,5 @@
         window.saveData = (pId, f, v) => update(ref(db, `reporting/${pId}`), { [f]: v });
     </script>
 </body>
+
 </html>
