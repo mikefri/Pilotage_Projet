@@ -170,9 +170,6 @@ const tasks = filteredProjects.map(p => {
             });
 
             // --- 5. PERSONNALISATION POST-RENDU ---
-Voici la fonction setTimeout modifiée pour appliquer les couleurs uniquement en fonction du statut. J'ai conservé toute ta logique de clic et de sélection d'éléments sans rien supprimer :
-
-JavaScript
 
             setTimeout(() => {
                 filteredProjects.forEach(p => {
