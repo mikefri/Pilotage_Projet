@@ -104,20 +104,26 @@
             const chartEl = document.getElementById('gantt-chart');
             if (!chartEl) return;
 
-            // --- 1. RÉCUPÉRATION DES FILTRES ---
-            // Utilisation du ?. pour éviter que le script s'arrête si un élément manque dans le HTML
-            const filterOwnerVal = document.getElementById('filter-owner')?.value || 'all';
-            const filterStatusVal = document.getElementById('filter-status')?.value || 'all';
-            const filterPriorityValue = document.getElementById('filter-priority')?.value || 'all';
+// --- 1. RÉCUPÉRATION DES FILTRES ---
+    const filterOwnerVal = document.getElementById('filter-owner')?.value || 'all';
+    const filterPriorityValue = document.getElementById('filter-priority')?.value || 'all';
 
-            // --- 2. FILTRAGE DES DONNÉES ---
-            let filteredProjects = projects.filter(p => {
-                const matchOwner = (filterOwnerVal === 'all' || p.owner === filterOwnerVal);
-                const matchStatus = (filterStatusVal === 'all' || p.status === filterStatusVal);
-                // Gestion de la priorité avec valeur par défaut "2" pour les anciens projets
-                const matchPriority = (filterPriorityValue === 'all' || (p.priority || "2") === filterPriorityValue);
-                return matchOwner && matchStatus && matchPriority;
-            });
+    // Nouvelle logique pour les statuts multiples
+    const selectedStatusElements = document.querySelectorAll('.status-filter:checked');
+    const selectedStatuses = Array.from(selectedStatusElements).map(el => el.value);
+    const selectedStatuses = Array.from(selectedStatusElements).map(el => el.value);
+
+    // --- 2. FILTRAGE DES DONNÉES ---
+    let filteredProjects = projects.filter(p => {
+        const matchOwner = (filterOwnerVal === 'all' || p.owner === filterOwnerVal);
+        const matchPriority = (filterPriorityValue === 'all' || (p.priority || "2") === filterPriorityValue);
+        
+        // On vérifie si le statut du projet est dans notre tableau de statuts cochés
+        const matchStatus = selectedStatuses.includes(p.status || "À faire");
+
+        return matchOwner && matchStatus && matchPriority;
+    });
+
 
             // Si aucun projet ne correspond (Correction de la variable 'container' par 'chartEl')
             if (filteredProjects.length === 0) {
