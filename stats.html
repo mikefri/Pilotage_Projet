@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Statistiques Globales</title>
+    <title>Dashboard Pro - Cockpit Gantt</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .progress-bar {
@@ -20,61 +20,309 @@
             opacity: 1;
             filter: grayscale(0);
         }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-animate {
+            animation: slideIn 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        .card-animate:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .card-animate:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .card-animate:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .card-animate:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .retard-badge {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .retard-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            100% {
+                left: 100%;
+            }
+        }
+
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .person-card {
+            transition: all 0.3s ease;
+        }
+
+        .person-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            left: -6px;
+            top: 8px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 0;
+            top: 20px;
+            bottom: -20px;
+            width: 2px;
+            background: #e2e8f0;
+        }
     </style>
 </head>
 
-<body class="bg-[#F1F5F9] text-slate-900 font-sans">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 font-sans min-h-screen">
 
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-black text-slate-800 tracking-tight">COCKPIT <span class="text-indigo-600">GANTT</span>
-        </h1>
-        <a href="index.html"
-            class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5M5 12L12 19M5 12L12 5" />
-            </svg>
-            RETOUR
-        </a>
+    <!-- NAVIGATION -->
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">
+                    COCKPIT <span class="text-indigo-600">GANTT</span>
+                </h1>
+                <span id="last-update" class="text-xs text-slate-400 font-bold"></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="exportStats()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-sm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                    EXPORT CSV
+                </button>
+                <a href="index.html"
+                    class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" />
+                    </svg>
+                    RETOUR
+                </a>
+            </div>
+        </div>
     </nav>
 
     <main class="max-w-7xl mx-auto p-6">
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <p class="text-xs font-black uppercase text-slate-400 mb-1">Projets Actifs</p>
-                <h2 id="stat-total-projects" class="text-3xl font-black text-slate-800">0</h2>
+        <!-- KPI CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 stat-card card-animate">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-black uppercase text-slate-400">Projets Actifs</p>
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <path d="M9 3v18M3 9h18M3 15h18" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 id="stat-total-projects" class="text-4xl font-black text-slate-800 mb-1">0</h2>
+                <p class="text-xs text-slate-500 font-semibold">En cours de réalisation</p>
             </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <p class="text-xs font-black uppercase text-red-400 mb-1">Retards Critiques</p>
-                <h2 id="stat-total-delays" class="text-3xl font-black text-red-500">0</h2>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-red-200 stat-card card-animate">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-black uppercase text-red-400">Retards Critiques</p>
+                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4M12 16h.01" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 id="stat-total-delays" class="text-4xl font-black text-red-500 mb-1">0</h2>
+                <p class="text-xs text-slate-500 font-semibold">Tâches en dépassement</p>
             </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <p class="text-xs font-black uppercase text-indigo-400 mb-1">Charge Totale (Hrs)</p>
-                <h2 id="stat-total-hours" class="text-3xl font-black text-indigo-600">0</h2>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 stat-card card-animate">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-black uppercase text-indigo-400">Charge Totale</p>
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l4 2" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 id="stat-total-hours" class="text-4xl font-black text-indigo-600 mb-1">0</h2>
+                <p class="text-xs text-slate-500 font-semibold">Heures cumulées</p>
             </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <p class="text-xs font-black uppercase text-emerald-400 mb-1">Avancement Global</p>
-                <h2 id="stat-global-progress" class="text-3xl font-black text-emerald-500">0%</h2>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-emerald-200 stat-card card-animate">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-black uppercase text-emerald-400">Avancement Global</p>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <path d="M22 4L12 14.01l-3-3" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 id="stat-global-progress" class="text-4xl font-black text-emerald-500 mb-1">0%</h2>
+                <p class="text-xs text-slate-500 font-semibold">Toutes tâches confondues</p>
             </div>
         </div>
 
-        <h3 class="text-sm font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
+        <!-- ALERTES RETARDS PAR PERSONNE -->
+        <div id="alerts-section" class="mb-10"></div>
+
+        <!-- CHARGE PAR RESPONSABLE -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 mb-10">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-sm font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    Charge par Responsable
+                </h3>
+                <span class="text-xs text-slate-400 font-bold">Tâches non terminées</span>
+            </div>
+            <div id="charge-bars" class="space-y-4"></div>
+        </div>
+
+        <!-- ÉCHÉANCES À VENIR -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 mb-10">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-sm font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    Échéances à venir (7 jours)
+                </h3>
+            </div>
+            <div id="upcoming-deadlines" class="space-y-0 relative pl-4"></div>
+        </div>
+
+        <!-- FILTRES PROJETS -->
+        <div class="flex gap-3 mb-6 flex-wrap">
+            <input type="text" id="search-project" placeholder="🔍 Rechercher un projet..."
+                oninput="applyFilters()"
+                class="flex-1 min-w-[200px] p-3 rounded-xl bg-white border border-slate-200 outline-none focus:border-indigo-300 transition">
+
+            <select id="filter-delays" onchange="applyFilters()"
+                class="p-3 rounded-xl bg-white border border-slate-200 outline-none font-bold text-sm focus:border-indigo-300 transition">
+                <option value="all">📊 Tous les projets</option>
+                <option value="delays">⚠️ Avec retards uniquement</option>
+                <option value="ontime">✅ À jour uniquement</option>
+            </select>
+
+            <select id="filter-owner" onchange="applyFilters()"
+                class="p-3 rounded-xl bg-white border border-slate-200 outline-none font-bold text-sm focus:border-indigo-300 transition">
+                <option value="all">👤 Tous les responsables</option>
+            </select>
+        </div>
+
+        <!-- PROJETS ACTIFS -->
+        <h3 class="text-sm font-black uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            Analyse Projets Actifs
+            Projets en Cours
         </h3>
         <div id="active-projects-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
             <div class="col-span-full py-10 text-center text-slate-400 italic">Chargement...</div>
         </div>
 
-        <h3 class="text-sm font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
+        <!-- ARCHIVES -->
+        <h3 class="text-sm font-black uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-slate-300"></span>
             Archives (Terminés)
         </h3>
-        <div id="completed-projects-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-80">
+        <div id="completed-projects-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         </div>
 
     </main>
+
+    <!-- MODAL DÉTAILS RETARDS PERSONNE -->
+    <div id="person-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden modal-content">
+            <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 id="modal-person-name" class="text-2xl font-black">Nom Personne</h3>
+                        <p id="modal-person-subtitle" class="text-red-100 text-sm font-semibold mt-1"></p>
+                    </div>
+                    <button onclick="closePersonModal()"
+                        class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <div id="modal-tasks-list" class="space-y-3"></div>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -95,138 +343,486 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
+        let allProjects = [];
+        let allTasks = [];
+        let allResponsables = {};
+        let filteredProjects = [];
+
         onAuthStateChanged(auth, (user) => {
-            if (user) { loadStats(); } else { window.location.href = "index.html"; }
+            if (user) {
+                loadStats();
+            } else {
+                window.location.href = "index.html";
+            }
         });
 
         function loadStats() {
             onValue(ref(db, 'projects'), (pSnap) => {
                 onValue(ref(db, 'taches'), (tSnap) => {
                     onValue(ref(db, 'responsables'), (rSnap) => {
-                        renderDashboard(pSnap.val() || {}, Object.values(tSnap.val() || {}), rSnap.val() || {});
+                        allProjects = Object.values(pSnap.val() || {});
+                        allTasks = Object.values(tSnap.val() || {});
+                        allResponsables = rSnap.val() || {};
+                        renderDashboard();
+                        updateLastUpdate();
                     });
                 });
             });
         }
 
-        function createCard(project, projectTasks, ownerName, isCompleted) {
-            const doneTasks = projectTasks.filter(t => t.done).length;
-            const progress = projectTasks.length > 0 ? Math.round((doneTasks / projectTasks.length) * 100) : 0;
-            const today = new Date().setHours(0, 0, 0, 0);
-            const delays = projectTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
-            const totalHours = projectTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
-
-            if (isCompleted) {
-                return `
-                <div class="bg-slate-100 rounded-3xl p-5 border border-slate-200 archive-card shadow-inner">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="font-bold text-slate-500 line-through">${project.name}</h4>
-                        <span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black">TERMINÉ</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-400">
-                        <span>${projectTasks.length} Tâches</span>
-                        <span>${totalHours} Heures cumulées</span>
-                    </div>
-                </div>`;
-            }
-
-            return `
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 hover:border-indigo-200 transition-all">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h4 class="text-lg font-black text-slate-800">${project.name}</h4>
-                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">Responsable : ${ownerName}</p>
-                    </div>
-                    <span class="px-3 py-1 rounded-full text-[10px] font-black ${delays > 0 ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-emerald-50 text-emerald-500'}">
-                        ${delays} RETARD(S)
-                    </span>
-                </div>
-                <div class="mb-4">
-                    <div class="flex justify-between text-[10px] font-black text-slate-500 mb-1 uppercase">
-                        <span>Progression</span>
-                        <span>${progress}%</span>
-                    </div>
-                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                        <div class="bg-indigo-600 h-full progress-bar" style="width: ${progress}%"></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Tâches</p>
-                        <p class="text-sm font-black text-slate-700">${projectTasks.length}</p>
-                    </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Heures</p>
-                        <p class="text-sm font-black text-slate-700">${totalHours}</p>
-                    </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Restant</p>
-                        <p class="text-sm font-black text-indigo-600">${projectTasks.length - doneTasks}</p>
-                    </div>
-                </div>
-            </div>`;
+        function updateLastUpdate() {
+            document.getElementById('last-update').innerText =
+                `Mis à jour : ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
         }
 
-        function renderDashboard(projects, tasks, responsables) {
-            const activeGrid = document.getElementById('active-projects-grid');
-            const completedGrid = document.getElementById('completed-projects-grid');
-            activeGrid.innerHTML = '';
-            completedGrid.innerHTML = '';
+        function renderDashboard() {
+            const today = new Date().setHours(0, 0, 0, 0);
 
-            const projectArray = Object.values(projects);
-
-            // FILTRAGE INTELLIGENT (Gère "Terminé", "termine", "Termine", etc.)
-            const activeProjs = projectArray.filter(p => {
+            // Séparation actifs / terminés
+            const activeProjs = allProjects.filter(p => {
                 const s = (p.status || "").toLowerCase();
-                // Un projet est actif s'il n'est pas "terminé" (avec ou sans accent)
                 return s !== 'terminé' && s !== 'termine';
             });
 
-            const completedProjs = projectArray.filter(p => {
+            const completedProjs = allProjects.filter(p => {
                 const s = (p.status || "").toLowerCase();
-                // Un projet est complété s'il est marqué "terminé" (avec ou sans accent)
                 return s === 'terminé' || s === 'termine';
             });
 
-            // --- MISE À JOUR DES COMPTEURS DU HAUT ---
-            let totalTasks = tasks.length;
-            let totalDone = tasks.filter(t => t.done).length;
-            let today = new Date().setHours(0, 0, 0, 0);
+            // Stats globales
+            const activeIds = activeProjs.map(p => p.id);
+            const activeTasks = allTasks.filter(t => activeIds.includes(t.projectId));
 
-            // On ne compte les retards que pour les projets ACTIFS
-            let activeIds = activeProjs.map(p => p.id);
-            let totalDelays = tasks.filter(t =>
-                activeIds.includes(t.projectId) && !t.done && t.date && new Date(t.date) < today
-            ).length;
-
-            let totalHours = tasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+            const totalDone = activeTasks.filter(t => t.done).length;
+            const totalDelays = activeTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
+            const totalHours = activeTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+            const globalProgress = activeTasks.length > 0 ? Math.round((totalDone / activeTasks.length) * 100) : 0;
 
             document.getElementById('stat-total-projects').innerText = activeProjs.length;
             document.getElementById('stat-total-delays').innerText = totalDelays;
             document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
-            document.getElementById('stat-global-progress').innerText = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) + "%" : "0%";
+            document.getElementById('stat-global-progress').innerText = globalProgress + "%";
 
-            // --- RENDU DES PROJETS ACTIFS ---
-            if (activeProjs.length === 0) {
-                activeGrid.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet en cours.</p>";
-            } else {
-                activeProjs.forEach(p => {
-                    const pTasks = tasks.filter(t => t.projectId === p.id);
-                    const owner = responsables[p.owner]?.name || "Inconnu";
-                    activeGrid.innerHTML += createCard(p, pTasks, owner, false);
-                });
+            // Alertes retards par personne
+            renderPersonAlerts(activeTasks, today);
+
+            // Charge par responsable
+            renderChargeBarres(activeTasks);
+
+            // Échéances à venir
+            renderUpcomingDeadlines(activeTasks, today);
+
+            // Remplir le filtre de responsables
+            populateOwnerFilter(activeProjs);
+
+            // Affichage des projets
+            filteredProjects = activeProjs;
+            applyFilters();
+
+            // Archives
+            renderArchives(completedProjs);
+        }
+
+        function renderPersonAlerts(tasks, today) {
+            const retardsParPersonne = {};
+
+            tasks.forEach(t => {
+                if (!t.done && t.date && new Date(t.date) < today) {
+                    if (!retardsParPersonne[t.who]) {
+                        retardsParPersonne[t.who] = [];
+                    }
+                    retardsParPersonne[t.who].push(t);
+                }
+            });
+
+            const container = document.getElementById('alerts-section');
+            container.innerHTML = '';
+
+            if (Object.keys(retardsParPersonne).length === 0) {
+                return;
             }
 
-            // --- RENDU DES ARCHIVES (TERMINÉS) ---
-            if (completedProjs.length > 0) {
-                completedProjs.forEach(p => {
-                    const pTasks = tasks.filter(t => t.projectId === p.id);
-                    completedGrid.innerHTML += createCard(p, pTasks, "", true);
-                });
-            } else {
-                completedGrid.innerHTML = "<p class='col-span-full text-sm text-slate-400'>Aucune archive pour le moment.</p>";
+            const sortedPeople = Object.entries(retardsParPersonne).sort((a, b) => b[1].length - a[1].length);
+
+            container.innerHTML = `
+                <div class="bg-red-50 border-2 border-red-200 rounded-3xl p-6 shadow-lg">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-red-700 uppercase tracking-tight">Alertes Retards Critiques</h3>
+                            <p class="text-sm text-red-600 font-semibold">${Object.keys(retardsParPersonne).length} personne(s) concernée(s)</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="person-cards-container">
+                    </div>
+                </div>
+            `;
+
+            const cardsContainer = document.getElementById('person-cards-container');
+
+            sortedPeople.forEach(([respoId, tasksList]) => {
+                const person = allResponsables[respoId];
+                if (!person) return;
+
+                const nbRetards = tasksList.length;
+                const severity = nbRetards > 5 ? 'CRITIQUE' : nbRetards > 2 ? 'URGENT' : 'ALERTE';
+                const colorClass = nbRetards > 5 ? 'red' : nbRetards > 2 ? 'orange' : 'yellow';
+
+                cardsContainer.innerHTML += `
+                    <div class="bg-white rounded-2xl p-5 border-2 border-${colorClass}-200 person-card cursor-pointer hover:border-${colorClass}-400 transition"
+                         onclick="openPersonModal('${respoId}')">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-${colorClass}-100 flex items-center justify-center font-black text-${colorClass}-600 text-lg">
+                                    ${person.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-slate-800 text-sm">${person.name}</h4>
+                                    <p class="text-xs text-${colorClass}-600 font-bold">${nbRetards} retard(s)</p>
+                                </div>
+                            </div>
+                            <span class="retard-badge px-3 py-1.5 rounded-full text-xs font-black bg-${colorClass}-500 text-white">
+                                ${severity}
+                            </span>
+                        </div>
+                        <div class="text-xs text-slate-500 font-semibold">
+                            Cliquez pour voir les détails →
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.openPersonModal = function (respoId) {
+            const person = allResponsables[respoId];
+            if (!person) return;
+
+            const today = new Date().setHours(0, 0, 0, 0);
+            const retards = allTasks.filter(t =>
+                t.who === respoId && !t.done && t.date && new Date(t.date) < today
+            );
+
+            document.getElementById('modal-person-name').innerText = person.name;
+            document.getElementById('modal-person-subtitle').innerText = `${retards.length} tâche(s) en retard`;
+
+            const tasksList = document.getElementById('modal-tasks-list');
+            tasksList.innerHTML = retards.map(t => {
+                const project = allProjects.find(p => p.id === t.projectId);
+                const daysLate = Math.floor((today - new Date(t.date)) / (1000 * 60 * 60 * 24));
+
+                return `
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <h5 class="font-bold text-slate-800 text-sm mb-1">${t.desc}</h5>
+                                <p class="text-xs text-slate-500 font-semibold">📁 ${project?.name || 'Projet inconnu'}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-black whitespace-nowrap ml-3">
+                                -${daysLate}j
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-slate-600 font-semibold mt-3 pt-3 border-t border-red-100">
+                            <span>⏱️ ${t.time || 0}h estimées</span>
+                            <span>📅 Échéance : ${new Date(t.date).toLocaleDateString('fr-FR')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('person-modal').classList.remove('hidden');
+        };
+
+        window.closePersonModal = function () {
+            document.getElementById('person-modal').classList.add('hidden');
+        };
+
+        function renderChargeBarres(tasks) {
+            const chargeParPersonne = {};
+
+            tasks.filter(t => !t.done).forEach(t => {
+                if (!chargeParPersonne[t.who]) {
+                    chargeParPersonne[t.who] = { hours: 0, count: 0 };
+                }
+                chargeParPersonne[t.who].hours += parseFloat(t.time || 0);
+                chargeParPersonne[t.who].count += 1;
+            });
+
+            const maxCharge = Math.max(...Object.values(chargeParPersonne).map(c => c.hours), 1);
+            const container = document.getElementById('charge-bars');
+            container.innerHTML = '';
+
+            const sorted = Object.entries(chargeParPersonne).sort((a, b) => b[1].hours - a[1].hours);
+
+            sorted.forEach(([respoId, data]) => {
+                const name = allResponsables[respoId]?.name || "Inconnu";
+                const percent = (data.hours / maxCharge) * 100;
+                const colorClass = data.hours > maxCharge * 0.7 ? 'bg-red-600' : data.hours > maxCharge * 0.4 ? 'bg-orange-500' : 'bg-indigo-600';
+
+                container.innerHTML += `
+                    <div class="flex items-center gap-4">
+                        <div class="w-32 min-w-[8rem]">
+                            <p class="text-sm font-black text-slate-700">${name}</p>
+                            <p class="text-xs text-slate-400 font-semibold">${data.count} tâche(s)</p>
+                        </div>
+                        <div class="flex-1 bg-slate-100 h-10 rounded-xl overflow-hidden relative">
+                            <div class="${colorClass} h-full flex items-center px-4 transition-all duration-1000" 
+                                 style="width: ${percent}%">
+                                <span class="text-white text-xs font-black">${Math.round(data.hours)}h</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Aucune charge active</p>';
             }
         }
+
+        function renderUpcomingDeadlines(tasks, today) {
+            const nextWeek = new Date(today + 7 * 24 * 60 * 60 * 1000);
+
+            const upcoming = tasks
+                .filter(t => !t.done && t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek)
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(0, 10);
+
+            const container = document.getElementById('upcoming-deadlines');
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Aucune échéance dans les 7 prochains jours 🎉</p>';
+                return;
+            }
+
+            container.innerHTML = upcoming.map((t, index) => {
+                const project = allProjects.find(p => p.id === t.projectId);
+                const person = allResponsables[t.who];
+                const daysLeft = Math.ceil((new Date(t.date) - today) / (1000 * 60 * 60 * 24));
+                const isLast = index === upcoming.length - 1;
+
+                const urgencyColor = daysLeft <= 1 ? 'red' : daysLeft <= 3 ? 'orange' : 'emerald';
+
+                return `
+                    <div class="relative pl-6 pb-6 ${!isLast ? 'border-l-2 border-slate-200' : ''}">
+                        <div class="timeline-dot bg-${urgencyColor}-500 border-4 border-white shadow-md"></div>
+                        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-${urgencyColor}-300 transition">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex-1">
+                                    <h5 class="font-bold text-sm text-slate-800 mb-1">${t.desc}</h5>
+                                    <div class="flex items-center gap-3 text-xs text-slate-500 font-semibold">
+                                        <span>📁 ${project?.name || 'Projet inconnu'}</span>
+                                        <span>•</span>
+                                        <span>👤 ${person?.name || 'Inconnu'}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs font-black text-${urgencyColor}-600 mb-1">
+                                        ${daysLeft === 0 ? "AUJOURD'HUI" : daysLeft === 1 ? "DEMAIN" : `Dans ${daysLeft}j`}
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 font-semibold">${new Date(t.date).toLocaleDateString('fr-FR')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function populateOwnerFilter(projects) {
+            const ownerIds = [...new Set(projects.map(p => p.owner))];
+            const select = document.getElementById('filter-owner');
+            const currentValue = select.value;
+
+            select.innerHTML = '<option value="all">👤 Tous les responsables</option>' +
+                ownerIds.map(id => {
+                    const name = allResponsables[id]?.name || 'Inconnu';
+                    return `<option value="${id}">👤 ${name}</option>`;
+                }).join('');
+
+            select.value = currentValue;
+        }
+
+        window.applyFilters = function () {
+            const searchTerm = document.getElementById('search-project').value.toLowerCase();
+            const delayFilter = document.getElementById('filter-delays').value;
+            const ownerFilter = document.getElementById('filter-owner').value;
+
+            const today = new Date().setHours(0, 0, 0, 0);
+
+            const activeProjs = allProjects.filter(p => {
+                const s = (p.status || "").toLowerCase();
+                return s !== 'terminé' && s !== 'termine';
+            });
+
+            filteredProjects = activeProjs.filter(p => {
+                // Recherche
+                if (searchTerm && !p.name.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                // Responsable
+                if (ownerFilter !== 'all' && p.owner !== ownerFilter) {
+                    return false;
+                }
+
+                // Retards
+                if (delayFilter !== 'all') {
+                    const pTasks = allTasks.filter(t => t.projectId === p.id);
+                    const delays = pTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
+
+                    if (delayFilter === 'delays' && delays === 0) {
+                        return false;
+                    }
+                    if (delayFilter === 'ontime' && delays > 0) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            renderActiveProjects();
+        };
+
+        function renderActiveProjects() {
+            const container = document.getElementById('active-projects-grid');
+            container.innerHTML = '';
+
+            if (filteredProjects.length === 0) {
+                container.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet ne correspond aux filtres</p>";
+                return;
+            }
+
+            const today = new Date().setHours(0, 0, 0, 0);
+
+            filteredProjects.forEach((p, index) => {
+                const pTasks = allTasks.filter(t => t.projectId === p.id);
+                const doneTasks = pTasks.filter(t => t.done).length;
+                const progress = pTasks.length > 0 ? Math.round((doneTasks / pTasks.length) * 100) : 0;
+                const delays = pTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
+                const totalHours = pTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+                const owner = allResponsables[p.owner]?.name || "Inconnu";
+
+                const severity = delays > 5 ? 'CRITIQUE' : delays > 2 ? 'URGENT' : delays > 0 ? 'ALERTE' : 'À JOUR';
+                const colorClass = delays > 5 ? 'red' : delays > 2 ? 'orange' : delays > 0 ? 'yellow' : 'emerald';
+
+                container.innerHTML += `
+                    <a href="projet.html?id=${p.id}" 
+                       class="block bg-white rounded-3xl p-6 shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all card-animate"
+                       style="animation-delay: ${index * 0.1}s">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <h4 class="text-lg font-black text-slate-800 mb-1">${p.name}</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-tight">👤 ${owner}</p>
+                            </div>
+                            <span class="retard-badge px-3 py-1.5 rounded-full text-xs font-black ${delays > 0 ? `bg-${colorClass}-500 text-white animate-pulse` : 'bg-emerald-50 text-emerald-600'}">
+                                ${delays > 0 ? `${delays} ${severity}` : '✓ ' + severity}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <div class="flex justify-between text-xs font-black text-slate-500 mb-2 uppercase">
+                                <span>Progression</span>
+                                <span class="text-indigo-600">${progress}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 h-full progress-bar" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tâches</p>
+                                <p class="text-base font-black text-slate-700">${pTasks.length}</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Heures</p>
+                                <p class="text-base font-black text-indigo-600">${Math.round(totalHours)}</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Restant</p>
+                                <p class="text-base font-black text-slate-700">${pTasks.length - doneTasks}</p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+        }
+
+        function renderArchives(completedProjs) {
+            const container = document.getElementById('completed-projects-grid');
+            container.innerHTML = '';
+
+            if (completedProjs.length === 0) {
+                container.innerHTML = "<p class='col-span-full text-sm text-slate-400 text-center py-4'>Aucune archive pour le moment</p>";
+                return;
+            }
+
+            completedProjs.forEach(p => {
+                const pTasks = allTasks.filter(t => t.projectId === p.id);
+                const totalHours = pTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+                container.innerHTML += `
+                    <div class="bg-slate-100 rounded-3xl p-5 border border-slate-200 archive-card shadow-inner">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-slate-500 line-through text-sm">${p.name}</h4>
+                            <span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black">✓ TERMINÉ</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] font-bold text-slate-400">
+                            <span>📊 ${pTasks.length} tâches</span>
+                            <span>⏱️ ${Math.round(totalHours)}h</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.exportStats = function () {
+            const today = new Date().setHours(0, 0, 0, 0);
+
+            const activeProjs = allProjects.filter(p => {
+                const s = (p.status || "").toLowerCase();
+                return s !== 'terminé' && s !== 'termine';
+            });
+
+            const csv = [
+                ['Projet', 'Responsable', 'Total Tâches', 'Terminées', 'En Cours', 'Progression (%)', 'Retards', 'Heures Totales', 'Statut'],
+                ...activeProjs.map(p => {
+                    const pTasks = allTasks.filter(t => t.projectId === p.id);
+                    const done = pTasks.filter(t => t.done).length;
+                    const delays = pTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
+                    const hours = pTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+                    const progress = pTasks.length > 0 ? Math.round((done / pTasks.length) * 100) : 0;
+                    const status = delays > 5 ? 'CRITIQUE' : delays > 2 ? 'URGENT' : delays > 0 ? 'ALERTE' : 'À JOUR';
+
+                    return [
+                        `"${p.name}"`,
+                        allResponsables[p.owner]?.name || 'Inconnu',
+                        pTasks.length,
+                        done,
+                        pTasks.length - done,
+                        progress,
+                        delays,
+                        Math.round(hours),
+                        status
+                    ];
+                })
+            ].map(row => row.join(',')).join('\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cockpit-gantt-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
     </script>
 </body>
 
