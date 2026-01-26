@@ -116,29 +116,33 @@ let projects = [];
             }
 
             // --- 3. PRÉPARATION DES TÂCHES ---
-            const tasks = filteredProjects.map(p => {
-                const respoFound = responsables.find(r => r.id === p.owner);
-                const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
-                const status = p.status || "À faire";
-                const progress = p.progress || 0;
-                const priority = p.priority || "2";
+const tasks = filteredProjects.map(p => {
+    const respoFound = responsables.find(r => r.id === p.owner);
+    const displayName = respoFound ? respoFound.name : (p.owner || "Inconnu");
+    const status = p.status || "À faire";
+    const progress = p.progress || 0;
+    const priority = p.priority || "2";
 
-                let prioBadge = "🟡 P2";
-                if (priority === "1") prioBadge = "🔴 P1";
-                if (priority === "3") prioBadge = "🔵 P3";
+    // On garde vos badges de priorité pour le texte
+    let prioBadge = "🟡 P2";
+    if (priority === "1") prioBadge = "🔴 P1";
+    if (priority === "3") prioBadge = "🔵 P3";
 
-                let customClass = `priority-${priority}`;
-                if (status === "Terminé") customClass = 'project-finished';
+    // --- NOUVELLE LOGIQUE : Class basée sur le statut ---
+    let customClass = "status-a-faire";
+    if (status === "En cours") customClass = "status-en-cours";
+    if (status === "Terminé") customClass = "status-termine";
 
-                return {
-                    id: p.id,
-                    name: `${prioBadge} | ${status} | ${p.name} | ${displayName} | ${progress}%`,
-                    start: p.start || new Date().toISOString().split('T')[0],
-                    end: p.end || new Date().toISOString().split('T')[0],
-                    progress: progress,
-                    custom_class: customClass
-                };
-            });
+    return {
+        id: p.id,
+        // On conserve le format du nom avec le responsable et la progression
+        name: `${prioBadge} | ${status} | ${p.name} | ${displayName} | ${progress}%`,
+        start: p.start || new Date().toISOString().split('T')[0],
+        end: p.end || new Date().toISOString().split('T')[0],
+        progress: progress,
+        custom_class: customClass
+    };
+});
 
             // --- 4. RENDU DU GANTT ---
             chartEl.innerHTML = ''; 
@@ -166,15 +170,28 @@ let projects = [];
             });
 
             // --- 5. PERSONNALISATION POST-RENDU ---
+Voici la fonction setTimeout modifiée pour appliquer les couleurs uniquement en fonction du statut. J'ai conservé toute ta logique de clic et de sélection d'éléments sans rien supprimer :
+
+JavaScript
+
             setTimeout(() => {
                 filteredProjects.forEach(p => {
+                    // Application de la couleur par STATUT (au lieu du responsable)
                     const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
                     if (bar) {
-                        const color = p.status === "Terminé" ? '#94a3b8' : getColor(p.owner);
+                        let color = '#94a3b8'; // Gris par défaut (À faire)
+                        
+                        if (p.status === "En cours") {
+                            color = '#3b82f6'; // Bleu
+                        } else if (p.status === "Terminé") {
+                            color = '#22c55e'; // Vert
+                        }
+                        
                         bar.style.setProperty('fill', color, 'important');
                     }
                 });
 
+                // Gestion du clic sur les textes pour ouvrir la modale d'édition (Conservé à l'identique)
                 document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
                     el.style.cursor = 'pointer';
                     el.onclick = (e) => {
