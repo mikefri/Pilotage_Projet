@@ -497,7 +497,12 @@
             });
         }
 
-
+// On écoute les changements sur toutes les cases à cocher de statut
+document.querySelectorAll('.status-filter').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+        renderGantt(); // Relance le rendu avec les nouveaux filtres
+    });
+});
 
         // Appeler la fonction au chargement de la page
         updateVersionDisplay();
