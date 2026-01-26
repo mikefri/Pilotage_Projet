@@ -389,6 +389,35 @@ let projects = [];
             });
         });
 
+// Fonction pour ouvrir/fermer le menu comme sur Excel
+function toggleStatusDropdown() {
+    const dropdown = document.getElementById('status-dropdown');
+    dropdown.classList.toggle('hidden');
+}
+
+// Fermer le menu si on clique en dehors
+window.onclick = function(event) {
+    if (!event.target.closest('#multi-select-container')) {
+        const dropdown = document.getElementById('status-dropdown');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+        }
+    }
+}
+
+// Optionnel : Mettre à jour le texte du bouton (ex: "2 sélectionnés")
+document.querySelectorAll('.status-filter').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+        const checked = document.querySelectorAll('.status-filter:checked');
+        const label = document.getElementById('selected-status-label');
+        if (checked.length === 0) label.innerText = "Aucun filtre";
+        else if (checked.length === 3) label.innerText = "Tous les statuts";
+        else label.innerText = checked.length + " statuts sélectionnés";
+        
+        renderGantt(); // Garde ton appel existant pour mettre à jour le Gantt
+    });
+});
+
         // Initialisation
         loadAllData();
         updateVersionDisplay();
