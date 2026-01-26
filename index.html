@@ -432,17 +432,25 @@
 
             <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</label>
-<div id="filter-status-group" class="flex gap-4 items-center bg-slate-100 p-2 rounded-lg">
-    <span class="text-sm font-bold">Statuts :</span>
-    <label class="flex items-center gap-1">
-        <input type="checkbox" class="status-filter" value="À faire" checked> À faire
-    </label>
-    <label class="flex items-center gap-1">
-        <input type="checkbox" class="status-filter" value="En cours" checked> En cours
-    </label>
-    <label class="flex items-center gap-1">
-        <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
-    </label>
+<div class="relative inline-block text-left" id="multi-select-container">
+    <button type="button" onclick="toggleStatusDropdown()" class="flex items-center justify-between w-48 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <span id="selected-status-label">Tous les statuts</span>
+        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    </button>
+
+    <div id="status-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl p-2">
+        <div class="flex flex-col gap-2">
+            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                <input type="checkbox" class="status-filter" value="À faire" checked> À faire
+            </label>
+            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                <input type="checkbox" class="status-filter" value="En cours" checked> En cours
+            </label>
+            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
+            </label>
+        </div>
+    </div>
 </div>
             </div>
             <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
