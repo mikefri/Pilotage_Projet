@@ -432,13 +432,18 @@
 
             <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</label>
-                <select id="filter-status" onchange="renderGantt()"
-                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
-                    <option value="all">Tous les statuts</option>
-                    <option value="À faire">⚪ À faire</option>
-                    <option value="En cours">🔵 En cours</option>
-                    <option value="Terminé">✅ Terminé</option>
-                </select>
+<div id="filter-status-group" class="flex gap-4 items-center bg-slate-100 p-2 rounded-lg">
+    <span class="text-sm font-bold">Statuts :</span>
+    <label class="flex items-center gap-1">
+        <input type="checkbox" class="status-filter" value="À faire" checked> À faire
+    </label>
+    <label class="flex items-center gap-1">
+        <input type="checkbox" class="status-filter" value="En cours" checked> En cours
+    </label>
+    <label class="flex items-center gap-1">
+        <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
+    </label>
+</div>
             </div>
             <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Priorité</label>
