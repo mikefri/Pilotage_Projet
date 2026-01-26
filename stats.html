@@ -4,23 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Suivi Consolidé - Tous Responsables</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .progress-bar {
-            transition: width 1s ease-in-out;
-        }
-
-        .archive-card {
-            opacity: 0.75;
-            filter: grayscale(0.4);
-        }
-
-        .archive-card:hover {
-            opacity: 1;
-            filter: grayscale(0);
-        }
-
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -38,46 +24,17 @@
             opacity: 0;
         }
 
-        .card-animate:nth-child(1) {
-            animation-delay: 0.1s;
+        .person-card {
+            transition: all 0.3s ease;
         }
 
-        .card-animate:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .card-animate:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        .card-animate:nth-child(4) {
-            animation-delay: 0.4s;
-        }
-
-        .retard-badge {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .retard-badge::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shine 2s infinite;
-        }
-
-        @keyframes shine {
-            100% {
-                left: 100%;
-            }
+        .person-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
         }
 
         .modal-backdrop {
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
             animation: fadeIn 0.2s ease-out;
         }
 
@@ -107,62 +64,83 @@
             }
         }
 
+        .badge-critical {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
         .stat-card {
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.2s;
         }
 
         .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .person-card {
-            transition: all 0.3s ease;
+        .task-item {
+            transition: background 0.2s;
         }
 
-        .person-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
-
-        .timeline-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            position: absolute;
-            left: -6px;
-            top: 8px;
-        }
-
-        .timeline-line {
-            position: absolute;
-            left: 0;
-            top: 20px;
-            bottom: -20px;
-            width: 2px;
-            background: #e2e8f0;
+        .task-item:hover {
+            background: #f8fafc;
         }
     </style>
 </head>
 
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 font-sans min-h-screen">
 
+    <!-- ÉCRAN DE CONNEXION -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-8">
+                <span class="bg-indigo-600 text-white p-3 rounded-2xl text-xl font-bold">GP</span>
+                <h1 class="text-2xl font-bold mt-4 text-slate-800">Accès Restreint</h1>
+            </div>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email"
+                    class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
+                <input type="password" id="login-password" placeholder="Mot de passe"
+                    class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none">
+                <button onclick="login()"
+                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Se
+                    connecter</button>
+                <p id="login-error" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- NAVIGATION -->
     <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <h1 class="text-xl font-black text-slate-800 tracking-tight">
-                    Dashboard <span class="text-indigo-600"></span>
-                </h1>
-                <span id="last-update" class="text-xs text-slate-400 font-bold"></span>
+                <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm"
+                    onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">
+                        SUIVI <span class="text-indigo-600">CONSOLIDÉ</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 font-semibold">Projets + Tâches Libres</p>
+                </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="exportStats()"
+                <span id="last-update" class="text-xs text-slate-400 font-bold"></span>
+                <button onclick="exportToCSV()"
                     class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-sm">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
                     </svg>
-                    EXPORT CSV
+                    EXPORT
                 </button>
                 <a href="index.html"
                     class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm transition flex items-center gap-2">
@@ -177,25 +155,11 @@
 
     <main class="max-w-7xl mx-auto p-6">
 
-        <!-- KPI CARDS -->
+        <!-- KPI GLOBAUX -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 stat-card card-animate">
-                <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-black uppercase text-slate-400">Projets Actifs</p>
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <path d="M9 3v18M3 9h18M3 15h18" />
-                        </svg>
-                    </div>
-                </div>
-                <h2 id="stat-total-projects" class="text-4xl font-black text-slate-800 mb-1">0</h2>
-                <p class="text-xs text-slate-500 font-semibold">En cours de réalisation</p>
-            </div>
-
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-red-200 stat-card card-animate">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-black uppercase text-red-400">Retards Critiques</p>
+                    <p class="text-xs font-black uppercase text-red-400">Retards Totaux</p>
                     <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
                             <circle cx="12" cy="12" r="10" />
@@ -207,7 +171,22 @@
                 <p class="text-xs text-slate-500 font-semibold">Tâches en dépassement</p>
             </div>
 
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 stat-card card-animate">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-orange-200 stat-card card-animate"
+                style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-black uppercase text-orange-400">À Venir (7j)</p>
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                            <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 id="stat-upcoming" class="text-4xl font-black text-orange-500 mb-1">0</h2>
+                <p class="text-xs text-slate-500 font-semibold">Échéances proches</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 stat-card card-animate"
+                style="animation-delay: 0.2s">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-xs font-black uppercase text-indigo-400">Charge Totale</p>
                     <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
@@ -218,96 +197,61 @@
                     </div>
                 </div>
                 <h2 id="stat-total-hours" class="text-4xl font-black text-indigo-600 mb-1">0</h2>
-                <p class="text-xs text-slate-500 font-semibold">Heures cumulées</p>
+                <p class="text-xs text-slate-500 font-semibold">Heures restantes</p>
             </div>
 
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-emerald-200 stat-card card-animate">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 stat-card card-animate"
+                style="animation-delay: 0.3s">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-black uppercase text-emerald-400">Avancement Global</p>
-                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <path d="M22 4L12 14.01l-3-3" />
+                    <p class="text-xs font-black uppercase text-slate-400">Tâches Actives</p>
+                    <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                            <path d="M9 11l3 3L22 4" />
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                         </svg>
                     </div>
                 </div>
-                <h2 id="stat-global-progress" class="text-4xl font-black text-emerald-500 mb-1">0%</h2>
-                <p class="text-xs text-slate-500 font-semibold">Toutes tâches confondues</p>
+                <h2 id="stat-active-tasks" class="text-4xl font-black text-slate-700 mb-1">0</h2>
+                <p class="text-xs text-slate-500 font-semibold">En cours</p>
             </div>
         </div>
 
-        <!-- ALERTES RETARDS PAR PERSONNE -->
-        <div id="alerts-section" class="mb-10"></div>
-
-        <!-- CHARGE PAR RESPONSABLE -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 mb-10">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-sm font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                    Charge par Responsable
-                </h3>
-                <span class="text-xs text-slate-400 font-bold">Tâches non terminées</span>
+        <!-- FILTRE PAR RESPONSABLE -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-10">
+            <div class="flex items-center gap-4 flex-wrap">
+                <label class="text-sm font-black text-slate-600">Filtrer par responsable :</label>
+                <select id="filter-person" onchange="applyPersonFilter()"
+                    class="flex-1 max-w-xs p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-sm">
+                    <option value="all">👥 Tous les responsables</option>
+                </select>
+                <button onclick="resetFilters()"
+                    class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold text-slate-600 transition">
+                    Réinitialiser
+                </button>
             </div>
-            <div id="charge-bars" class="space-y-4"></div>
         </div>
 
-        <!-- ÉCHÉANCES À VENIR -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 mb-10">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-sm font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                    Échéances à venir (7 jours)
-                </h3>
-            </div>
-            <div id="upcoming-deadlines" class="space-y-0 relative pl-4"></div>
-        </div>
-
-        <!-- FILTRES PROJETS -->
-        <div class="flex gap-3 mb-6 flex-wrap">
-            <input type="text" id="search-project" placeholder="🔍 Rechercher un projet..."
-                oninput="applyFilters()"
-                class="flex-1 min-w-[200px] p-3 rounded-xl bg-white border border-slate-200 outline-none focus:border-indigo-300 transition">
-
-            <select id="filter-delays" onchange="applyFilters()"
-                class="p-3 rounded-xl bg-white border border-slate-200 outline-none font-bold text-sm focus:border-indigo-300 transition">
-                <option value="all">📊 Tous les projets</option>
-                <option value="delays">⚠️ Avec retards uniquement</option>
-                <option value="ontime">✅ À jour uniquement</option>
-            </select>
-
-            <select id="filter-owner" onchange="applyFilters()"
-                class="p-3 rounded-xl bg-white border border-slate-200 outline-none font-bold text-sm focus:border-indigo-300 transition">
-                <option value="all">👤 Tous les responsables</option>
-            </select>
-        </div>
-
-        <!-- PROJETS ACTIFS -->
+        <!-- GRILLE DES RESPONSABLES -->
         <h3 class="text-sm font-black uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            Projets en Cours
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            Alertes par Responsable
         </h3>
-        <div id="active-projects-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        <div id="people-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             <div class="col-span-full py-10 text-center text-slate-400 italic">Chargement...</div>
-        </div>
-
-        <!-- ARCHIVES -->
-        <h3 class="text-sm font-black uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-slate-300"></span>
-            Archives (Terminés)
-        </h3>
-        <div id="completed-projects-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         </div>
 
     </main>
 
-    <!-- MODAL DÉTAILS RETARDS PERSONNE -->
+    <!-- MODAL DÉTAILS PERSONNE -->
     <div id="person-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center modal-backdrop">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden modal-content">
-            <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
+        <div
+            class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden modal-content">
+            <!-- En-tête modal -->
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-6 text-white sticky top-0 z-10">
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 id="modal-person-name" class="text-2xl font-black">Nom Personne</h3>
-                        <p id="modal-person-subtitle" class="text-red-100 text-sm font-semibold mt-1"></p>
+                        <p id="modal-person-subtitle" class="text-indigo-100 text-sm font-semibold mt-1"></p>
                     </div>
                     <button onclick="closePersonModal()"
                         class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition flex items-center justify-center">
@@ -318,7 +262,26 @@
                     </button>
                 </div>
             </div>
-            <div class="p-6 max-h-[60vh] overflow-y-auto">
+
+            <!-- Contenu modal -->
+            <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 120px);">
+                <!-- Onglets -->
+                <div class="flex gap-2 mb-6 border-b border-slate-200">
+                    <button onclick="switchTab('retards')" id="tab-retards"
+                        class="tab-button px-4 py-2 font-bold text-sm transition border-b-2 border-red-500 text-red-600">
+                        🔴 Retards (<span id="tab-count-retards">0</span>)
+                    </button>
+                    <button onclick="switchTab('upcoming')" id="tab-upcoming"
+                        class="tab-button px-4 py-2 font-bold text-sm transition border-b-2 border-transparent text-slate-400 hover:text-slate-600">
+                        🟠 À venir 7j (<span id="tab-count-upcoming">0</span>)
+                    </button>
+                    <button onclick="switchTab('all')" id="tab-all"
+                        class="tab-button px-4 py-2 font-bold text-sm transition border-b-2 border-transparent text-slate-400 hover:text-slate-600">
+                        📊 Toutes (<span id="tab-count-all">0</span>)
+                    </button>
+                </div>
+
+                <!-- Contenu des onglets -->
                 <div id="modal-tasks-list" class="space-y-3"></div>
             </div>
         </div>
@@ -327,7 +290,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
@@ -343,474 +306,421 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        let allProjects = [];
-        let allTasks = [];
         let allResponsables = {};
-        let filteredProjects = [];
+        let allProjects = [];
+        let allTasksProjets = [];
+        let allTasksLibres = [];
+        let currentModalPerson = null;
+        let currentTab = 'retards';
+
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                errorEl.classList.add('hidden');
+            } catch (e) {
+                errorEl.innerText = "Identifiants incorrects";
+                errorEl.classList.remove('hidden');
+            }
+        };
 
         onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
             if (user) {
-                loadStats();
+                if (loginScreen) loginScreen.classList.add('hidden');
+                loadAllData();
             } else {
-                window.location.href = "index.html";
+                if (loginScreen) loginScreen.classList.remove('hidden');
             }
         });
 
-        function loadStats() {
-            onValue(ref(db, 'projects'), (pSnap) => {
-                onValue(ref(db, 'taches'), (tSnap) => {
-                    onValue(ref(db, 'responsables'), (rSnap) => {
-                        allProjects = Object.values(pSnap.val() || {});
-                        allTasks = Object.values(tSnap.val() || {});
-                        allResponsables = rSnap.val() || {};
-                        renderDashboard();
-                        updateLastUpdate();
-                    });
-                });
+        function loadAllData() {
+            // Charger les responsables
+            onValue(ref(db, 'responsables'), (snap) => {
+                allResponsables = snap.val() || {};
+                populatePersonFilter();
+                renderDashboard();
+            });
+
+            // Charger les projets
+            onValue(ref(db, 'projects'), (snap) => {
+                allProjects = snap.val() ? Object.values(snap.val()) : [];
+                renderDashboard();
+            });
+
+            // Charger les tâches des projets
+            onValue(ref(db, 'taches'), (snap) => {
+                allTasksProjets = snap.val() ? Object.values(snap.val()) : [];
+                renderDashboard();
+            });
+
+            // Charger les tâches libres
+            onValue(ref(db, 'taches_libres'), (snap) => {
+                allTasksLibres = snap.val() ? Object.values(snap.val()) : [];
+                renderDashboard();
             });
         }
 
-        function updateLastUpdate() {
-            document.getElementById('last-update').innerText =
-                `Mis à jour : ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
-        }
-
-        function renderDashboard() {
-            const today = new Date().setHours(0, 0, 0, 0);
-
-            // Séparation actifs / terminés
-            const activeProjs = allProjects.filter(p => {
-                const s = (p.status || "").toLowerCase();
-                return s !== 'terminé' && s !== 'termine';
-            });
-
-            const completedProjs = allProjects.filter(p => {
-                const s = (p.status || "").toLowerCase();
-                return s === 'terminé' || s === 'termine';
-            });
-
-            // Stats globales
-            const activeIds = activeProjs.map(p => p.id);
-            const activeTasks = allTasks.filter(t => activeIds.includes(t.projectId));
-
-            const totalDone = activeTasks.filter(t => t.done).length;
-            const totalDelays = activeTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
-            const totalHours = activeTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
-            const globalProgress = activeTasks.length > 0 ? Math.round((totalDone / activeTasks.length) * 100) : 0;
-
-            document.getElementById('stat-total-projects').innerText = activeProjs.length;
-            document.getElementById('stat-total-delays').innerText = totalDelays;
-            document.getElementById('stat-total-hours').innerText = Math.round(totalHours);
-            document.getElementById('stat-global-progress').innerText = globalProgress + "%";
-
-            // Alertes retards par personne
-            renderPersonAlerts(activeTasks, today);
-
-            // Charge par responsable
-            renderChargeBarres(activeTasks);
-
-            // Échéances à venir
-            renderUpcomingDeadlines(activeTasks, today);
-
-            // Remplir le filtre de responsables
-            populateOwnerFilter(activeProjs);
-
-            // Affichage des projets
-            filteredProjects = activeProjs;
-            applyFilters();
-
-            // Archives
-            renderArchives(completedProjs);
-        }
-
-        function renderPersonAlerts(tasks, today) {
-            const retardsParPersonne = {};
-
-            tasks.forEach(t => {
-                if (!t.done && t.date && new Date(t.date) < today) {
-                    if (!retardsParPersonne[t.who]) {
-                        retardsParPersonne[t.who] = [];
-                    }
-                    retardsParPersonne[t.who].push(t);
-                }
-            });
-
-            const container = document.getElementById('alerts-section');
-            container.innerHTML = '';
-
-            if (Object.keys(retardsParPersonne).length === 0) {
-                return;
-            }
-
-            const sortedPeople = Object.entries(retardsParPersonne).sort((a, b) => b[1].length - a[1].length);
-
-            container.innerHTML = `
-                <div class="bg-red-50 border-2 border-red-200 rounded-3xl p-6 shadow-lg">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                <line x1="12" y1="9" x2="12" y2="13"/>
-                                <line x1="12" y1="17" x2="12.01" y2="17"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-black text-red-700 uppercase tracking-tight">Alertes Retards Critiques</h3>
-                            <p class="text-sm text-red-600 font-semibold">${Object.keys(retardsParPersonne).length} personne(s) concernée(s)</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="person-cards-container">
-                    </div>
-                </div>
-            `;
-
-            const cardsContainer = document.getElementById('person-cards-container');
-
-            sortedPeople.forEach(([respoId, tasksList]) => {
-                const person = allResponsables[respoId];
-                if (!person) return;
-
-                const nbRetards = tasksList.length;
-                const severity = nbRetards > 5 ? 'CRITIQUE' : nbRetards > 2 ? 'URGENT' : 'ALERTE';
-                const colorClass = nbRetards > 5 ? 'red' : nbRetards > 2 ? 'orange' : 'yellow';
-
-                cardsContainer.innerHTML += `
-                    <div class="bg-white rounded-2xl p-5 border-2 border-${colorClass}-200 person-card cursor-pointer hover:border-${colorClass}-400 transition"
-                         onclick="openPersonModal('${respoId}')">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-xl bg-${colorClass}-100 flex items-center justify-center font-black text-${colorClass}-600 text-lg">
-                                    ${person.name.substring(0, 2).toUpperCase()}
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-slate-800 text-sm">${person.name}</h4>
-                                    <p class="text-xs text-${colorClass}-600 font-bold">${nbRetards} retard(s)</p>
-                                </div>
-                            </div>
-                            <span class="retard-badge px-3 py-1.5 rounded-full text-xs font-black bg-${colorClass}-500 text-white">
-                                ${severity}
-                            </span>
-                        </div>
-                        <div class="text-xs text-slate-500 font-semibold">
-                            Cliquez pour voir les détails →
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        window.openPersonModal = function (respoId) {
-            const person = allResponsables[respoId];
-            if (!person) return;
-
-            const today = new Date().setHours(0, 0, 0, 0);
-            const retards = allTasks.filter(t =>
-                t.who === respoId && !t.done && t.date && new Date(t.date) < today
-            );
-
-            document.getElementById('modal-person-name').innerText = person.name;
-            document.getElementById('modal-person-subtitle').innerText = `${retards.length} tâche(s) en retard`;
-
-            const tasksList = document.getElementById('modal-tasks-list');
-            tasksList.innerHTML = retards.map(t => {
-                const project = allProjects.find(p => p.id === t.projectId);
-                const daysLate = Math.floor((today - new Date(t.date)) / (1000 * 60 * 60 * 24));
-
-                return `
-                    <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex-1">
-                                <h5 class="font-bold text-slate-800 text-sm mb-1">${t.desc}</h5>
-                                <p class="text-xs text-slate-500 font-semibold">📁 ${project?.name || 'Projet inconnu'}</p>
-                            </div>
-                            <span class="px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-black whitespace-nowrap ml-3">
-                                -${daysLate}j
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-4 text-xs text-slate-600 font-semibold mt-3 pt-3 border-t border-red-100">
-                            <span>⏱️ ${t.time || 0}h estimées</span>
-                            <span>📅 Échéance : ${new Date(t.date).toLocaleDateString('fr-FR')}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            document.getElementById('person-modal').classList.remove('hidden');
-        };
-
-        window.closePersonModal = function () {
-            document.getElementById('person-modal').classList.add('hidden');
-        };
-
-        function renderChargeBarres(tasks) {
-            const chargeParPersonne = {};
-
-            tasks.filter(t => !t.done).forEach(t => {
-                if (!chargeParPersonne[t.who]) {
-                    chargeParPersonne[t.who] = { hours: 0, count: 0 };
-                }
-                chargeParPersonne[t.who].hours += parseFloat(t.time || 0);
-                chargeParPersonne[t.who].count += 1;
-            });
-
-            const maxCharge = Math.max(...Object.values(chargeParPersonne).map(c => c.hours), 1);
-            const container = document.getElementById('charge-bars');
-            container.innerHTML = '';
-
-            const sorted = Object.entries(chargeParPersonne).sort((a, b) => b[1].hours - a[1].hours);
-
-            sorted.forEach(([respoId, data]) => {
-                const name = allResponsables[respoId]?.name || "Inconnu";
-                const percent = (data.hours / maxCharge) * 100;
-                const colorClass = data.hours > maxCharge * 0.7 ? 'bg-red-600' : data.hours > maxCharge * 0.4 ? 'bg-orange-500' : 'bg-indigo-600';
-
-                container.innerHTML += `
-                    <div class="flex items-center gap-4">
-                        <div class="w-32 min-w-[8rem]">
-                            <p class="text-sm font-black text-slate-700">${name}</p>
-                            <p class="text-xs text-slate-400 font-semibold">${data.count} tâche(s)</p>
-                        </div>
-                        <div class="flex-1 bg-slate-100 h-10 rounded-xl overflow-hidden relative">
-                            <div class="${colorClass} h-full flex items-center px-4 transition-all duration-1000" 
-                                 style="width: ${percent}%">
-                                <span class="text-white text-xs font-black">${Math.round(data.hours)}h</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Aucune charge active</p>';
-            }
-        }
-
-        function renderUpcomingDeadlines(tasks, today) {
-            const nextWeek = new Date(today + 7 * 24 * 60 * 60 * 1000);
-
-            const upcoming = tasks
-                .filter(t => !t.done && t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek)
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .slice(0, 10);
-
-            const container = document.getElementById('upcoming-deadlines');
-
-            if (upcoming.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Aucune échéance dans les 7 prochains jours 🎉</p>';
-                return;
-            }
-
-            container.innerHTML = upcoming.map((t, index) => {
-                const project = allProjects.find(p => p.id === t.projectId);
-                const person = allResponsables[t.who];
-                const daysLeft = Math.ceil((new Date(t.date) - today) / (1000 * 60 * 60 * 24));
-                const isLast = index === upcoming.length - 1;
-
-                const urgencyColor = daysLeft <= 1 ? 'red' : daysLeft <= 3 ? 'orange' : 'emerald';
-
-                return `
-                    <div class="relative pl-6 pb-6 ${!isLast ? 'border-l-2 border-slate-200' : ''}">
-                        <div class="timeline-dot bg-${urgencyColor}-500 border-4 border-white shadow-md"></div>
-                        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-${urgencyColor}-300 transition">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1">
-                                    <h5 class="font-bold text-sm text-slate-800 mb-1">${t.desc}</h5>
-                                    <div class="flex items-center gap-3 text-xs text-slate-500 font-semibold">
-                                        <span>📁 ${project?.name || 'Projet inconnu'}</span>
-                                        <span>•</span>
-                                        <span>👤 ${person?.name || 'Inconnu'}</span>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-xs font-black text-${urgencyColor}-600 mb-1">
-                                        ${daysLeft === 0 ? "AUJOURD'HUI" : daysLeft === 1 ? "DEMAIN" : `Dans ${daysLeft}j`}
-                                    </p>
-                                    <p class="text-[10px] text-slate-400 font-semibold">${new Date(t.date).toLocaleDateString('fr-FR')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function populateOwnerFilter(projects) {
-            const ownerIds = [...new Set(projects.map(p => p.owner))];
-            const select = document.getElementById('filter-owner');
+        function populatePersonFilter() {
+            const select = document.getElementById('filter-person');
             const currentValue = select.value;
 
-            select.innerHTML = '<option value="all">👤 Tous les responsables</option>' +
-                ownerIds.map(id => {
-                    const name = allResponsables[id]?.name || 'Inconnu';
-                    return `<option value="${id}">👤 ${name}</option>`;
-                }).join('');
+            select.innerHTML = '<option value="all">👥 Tous les responsables</option>' +
+                Object.values(allResponsables).map(r =>
+                    `<option value="${r.id}">👤 ${r.name}</option>`
+                ).join('');
 
             select.value = currentValue;
         }
 
-        window.applyFilters = function () {
-            const searchTerm = document.getElementById('search-project').value.toLowerCase();
-            const delayFilter = document.getElementById('filter-delays').value;
-            const ownerFilter = document.getElementById('filter-owner').value;
+        function renderDashboard() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
 
-            const today = new Date().setHours(0, 0, 0, 0);
+            // Agréger TOUTES les tâches (projets + libres)
+            const allTasks = [
+                ...allTasksProjets.map(t => ({ ...t, source: 'projet' })),
+                ...allTasksLibres.map(t => ({ ...t, source: 'libre' }))
+            ];
 
-            const activeProjs = allProjects.filter(p => {
-                const s = (p.status || "").toLowerCase();
-                return s !== 'terminé' && s !== 'termine';
+            // Filtrer les tâches actives uniquement
+            const activeTasks = allTasks.filter(t => !t.done);
+
+            // Calculer les KPI globaux
+            const totalDelays = activeTasks.filter(t => t.date && new Date(t.date) < today).length;
+            const upcomingTasks = activeTasks.filter(t => t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek).length;
+            const totalHours = activeTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+            document.getElementById('stat-total-delays').innerText = totalDelays;
+            document.getElementById('stat-upcoming').innerText = upcomingTasks;
+            document.getElementById('stat-total-hours').innerText = Math.round(totalHours) + 'h';
+            document.getElementById('stat-active-tasks').innerText = activeTasks.length;
+
+            // Mettre à jour l'heure
+            document.getElementById('last-update').innerText =
+                `Mis à jour : ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+
+            // Grouper par responsable
+            const tasksByPerson = {};
+
+            activeTasks.forEach(t => {
+                if (!t.who) return;
+                if (!tasksByPerson[t.who]) {
+                    tasksByPerson[t.who] = {
+                        retards: [],
+                        upcoming: [],
+                        all: []
+                    };
+                }
+
+                tasksByPerson[t.who].all.push(t);
+
+                if (t.date) {
+                    const taskDate = new Date(t.date);
+                    if (taskDate < today) {
+                        tasksByPerson[t.who].retards.push(t);
+                    } else if (taskDate >= today && taskDate <= nextWeek) {
+                        tasksByPerson[t.who].upcoming.push(t);
+                    }
+                }
             });
 
-            filteredProjects = activeProjs.filter(p => {
-                // Recherche
-                if (searchTerm && !p.name.toLowerCase().includes(searchTerm)) {
-                    return false;
-                }
+            // Filtrer selon la sélection
+            const filterValue = document.getElementById('filter-person')?.value || 'all';
+            let filteredPeople = Object.keys(tasksByPerson);
 
-                // Responsable
-                if (ownerFilter !== 'all' && p.owner !== ownerFilter) {
-                    return false;
-                }
-
-                // Retards
-                if (delayFilter !== 'all') {
-                    const pTasks = allTasks.filter(t => t.projectId === p.id);
-                    const delays = pTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
-
-                    if (delayFilter === 'delays' && delays === 0) {
-                        return false;
-                    }
-                    if (delayFilter === 'ontime' && delays > 0) {
-                        return false;
-                    }
-                }
-
-                return true;
-            });
-
-            renderActiveProjects();
-        };
-
-        function renderActiveProjects() {
-            const container = document.getElementById('active-projects-grid');
-            container.innerHTML = '';
-
-            if (filteredProjects.length === 0) {
-                container.innerHTML = "<p class='col-span-full text-center py-10 text-slate-400 italic'>Aucun projet ne correspond aux filtres</p>";
-                return;
+            if (filterValue !== 'all') {
+                filteredPeople = filteredPeople.filter(id => id === filterValue);
             }
 
-            const today = new Date().setHours(0, 0, 0, 0);
+            // Trier par nombre de retards décroissant
+            filteredPeople.sort((a, b) =>
+                tasksByPerson[b].retards.length - tasksByPerson[a].retards.length
+            );
 
-            filteredProjects.forEach((p, index) => {
-                const pTasks = allTasks.filter(t => t.projectId === p.id);
-                const doneTasks = pTasks.filter(t => t.done).length;
-                const progress = pTasks.length > 0 ? Math.round((doneTasks / pTasks.length) * 100) : 0;
-                const delays = pTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
-                const totalHours = pTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
-                const owner = allResponsables[p.owner]?.name || "Inconnu";
-
-                const severity = delays > 5 ? 'CRITIQUE' : delays > 2 ? 'URGENT' : delays > 0 ? 'ALERTE' : 'À JOUR';
-                const colorClass = delays > 5 ? 'red' : delays > 2 ? 'orange' : delays > 0 ? 'yellow' : 'emerald';
-
-                container.innerHTML += `
-                    <a href="projet.html?id=${p.id}" 
-                       class="block bg-white rounded-3xl p-6 shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all card-animate"
-                       style="animation-delay: ${index * 0.1}s">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <h4 class="text-lg font-black text-slate-800 mb-1">${p.name}</h4>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-tight">👤 ${owner}</p>
-                            </div>
-                            <span class="retard-badge px-3 py-1.5 rounded-full text-xs font-black ${delays > 0 ? `bg-${colorClass}-500 text-white animate-pulse` : 'bg-emerald-50 text-emerald-600'}">
-                                ${delays > 0 ? `${delays} ${severity}` : '✓ ' + severity}
-                            </span>
-                        </div>
-                        
-                        <div class="mb-5">
-                            <div class="flex justify-between text-xs font-black text-slate-500 mb-2 uppercase">
-                                <span>Progression</span>
-                                <span class="text-indigo-600">${progress}%</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 h-full progress-bar" style="width: ${progress}%"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-3">
-                            <div class="bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tâches</p>
-                                <p class="text-base font-black text-slate-700">${pTasks.length}</p>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Heures</p>
-                                <p class="text-base font-black text-indigo-600">${Math.round(totalHours)}</p>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Restant</p>
-                                <p class="text-base font-black text-slate-700">${pTasks.length - doneTasks}</p>
-                            </div>
-                        </div>
-                    </a>
-                `;
-            });
+            renderPeopleCards(filteredPeople, tasksByPerson, today);
         }
 
-        function renderArchives(completedProjs) {
-            const container = document.getElementById('completed-projects-grid');
+        function renderPeopleCards(peopleIds, tasksByPerson, today) {
+            const container = document.getElementById('people-grid');
             container.innerHTML = '';
 
-            if (completedProjs.length === 0) {
-                container.innerHTML = "<p class='col-span-full text-sm text-slate-400 text-center py-4'>Aucune archive pour le moment</p>";
+            if (peopleIds.length === 0) {
+                container.innerHTML = '<div class="col-span-full py-10 text-center text-slate-400 italic">Aucune tâche active ou aucun responsable ne correspond aux filtres</div>';
                 return;
             }
 
-            completedProjs.forEach(p => {
-                const pTasks = allTasks.filter(t => t.projectId === p.id);
-                const totalHours = pTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+            peopleIds.forEach((personId, index) => {
+                const person = allResponsables[personId];
+                if (!person) return;
+
+                const data = tasksByPerson[personId];
+                const retardsCount = data.retards.length;
+                const upcomingCount = data.upcoming.length;
+                const totalCount = data.all.length;
+                const totalHours = data.all.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
+
+                // Déterminer la sévérité
+                let severity = 'À JOUR';
+                let colorClass = 'emerald';
+                let bgClass = 'bg-emerald-50';
+                let borderClass = 'border-emerald-200';
+
+                if (retardsCount > 0) {
+                    if (retardsCount > 5) {
+                        severity = 'CRITIQUE';
+                        colorClass = 'red';
+                        bgClass = 'bg-red-50';
+                        borderClass = 'border-red-300';
+                    } else if (retardsCount > 2) {
+                        severity = 'URGENT';
+                        colorClass = 'orange';
+                        bgClass = 'bg-orange-50';
+                        borderClass = 'border-orange-300';
+                    } else {
+                        severity = 'ALERTE';
+                        colorClass = 'yellow';
+                        bgClass = 'bg-yellow-50';
+                        borderClass = 'border-yellow-300';
+                    }
+                }
 
                 container.innerHTML += `
-                    <div class="bg-slate-100 rounded-3xl p-5 border border-slate-200 archive-card shadow-inner">
-                        <div class="flex justify-between items-center mb-3">
-                            <h4 class="font-bold text-slate-500 line-through text-sm">${p.name}</h4>
-                            <span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black">✓ TERMINÉ</span>
+                    <div class="bg-white rounded-3xl p-6 border-2 ${borderClass} person-card cursor-pointer card-animate shadow-sm hover:shadow-lg"
+                         style="animation-delay: ${index * 0.1}s"
+                         onclick="openPersonModal('${personId}')">
+                        
+                        <!-- En-tête -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-14 h-14 rounded-2xl ${bgClass} flex items-center justify-center font-black text-${colorClass}-600 text-xl">
+                                    ${person.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-slate-800 text-lg">${person.name}</h4>
+                                    <p class="text-xs text-slate-400 font-semibold">${totalCount} tâche(s) active(s)</p>
+                                </div>
+                            </div>
+                            ${retardsCount > 0 ? `
+                                <span class="badge-critical px-3 py-1.5 rounded-full text-xs font-black bg-${colorClass}-500 text-white shadow-md">
+                                    ${severity}
+                                </span>
+                            ` : `
+                                <span class="px-3 py-1.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-600">
+                                    ✓ ${severity}
+                                </span>
+                            `}
                         </div>
-                        <div class="flex justify-between items-center text-[10px] font-bold text-slate-400">
-                            <span>📊 ${pTasks.length} tâches</span>
-                            <span>⏱️ ${Math.round(totalHours)}h</span>
+
+                        <!-- Statistiques -->
+                        <div class="grid grid-cols-3 gap-3 mb-4">
+                            <div class="${retardsCount > 0 ? 'bg-red-50' : 'bg-slate-50'} p-3 rounded-xl border ${retardsCount > 0 ? 'border-red-100' : 'border-slate-100'}">
+                                <p class="text-[9px] font-bold ${retardsCount > 0 ? 'text-red-500' : 'text-slate-400'} uppercase mb-1">Retards</p>
+                                <p class="text-xl font-black ${retardsCount > 0 ? 'text-red-600' : 'text-slate-600'}">${retardsCount}</p>
+                            </div>
+                            <div class="${upcomingCount > 0 ? 'bg-orange-50' : 'bg-slate-50'} p-3 rounded-xl border ${upcomingCount > 0 ? 'border-orange-100' : 'border-slate-100'}">
+                                <p class="text-[9px] font-bold ${upcomingCount > 0 ? 'text-orange-500' : 'text-slate-400'} uppercase mb-1">7 jours</p>
+                                <p class="text-xl font-black ${upcomingCount > 0 ? 'text-orange-600' : 'text-slate-600'}">${upcomingCount}</p>
+                            </div>
+                            <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                                <p class="text-[9px] font-bold text-indigo-500 uppercase mb-1">Heures</p>
+                                <p class="text-xl font-black text-indigo-600">${Math.round(totalHours)}</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-500 font-semibold">
+                                ${data.all.filter(t => t.source === 'projet').length} projet(s) • 
+                                ${data.all.filter(t => t.source === 'libre').length} libre(s)
+                            </span>
+                            <span class="text-xs text-indigo-600 font-bold">Voir détails →</span>
                         </div>
                     </div>
                 `;
             });
         }
 
-        window.exportStats = function () {
-            const today = new Date().setHours(0, 0, 0, 0);
+        window.openPersonModal = function (personId) {
+            currentModalPerson = personId;
+            const person = allResponsables[personId];
+            if (!person) return;
 
-            const activeProjs = allProjects.filter(p => {
-                const s = (p.status || "").toLowerCase();
-                return s !== 'terminé' && s !== 'termine';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+
+            // Agréger toutes les tâches de cette personne
+            const allTasks = [
+                ...allTasksProjets.map(t => ({ ...t, source: 'projet' })),
+                ...allTasksLibres.map(t => ({ ...t, source: 'libre' }))
+            ].filter(t => t.who === personId && !t.done);
+
+            const retards = allTasks.filter(t => t.date && new Date(t.date) < today);
+            const upcoming = allTasks.filter(t => t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek);
+
+            document.getElementById('modal-person-name').innerText = person.name;
+            document.getElementById('modal-person-subtitle').innerText =
+                `${allTasks.length} tâche(s) active(s) • ${retards.length} retard(s) • ${upcoming.length} à venir`;
+
+            document.getElementById('tab-count-retards').innerText = retards.length;
+            document.getElementById('tab-count-upcoming').innerText = upcoming.length;
+            document.getElementById('tab-count-all').innerText = allTasks.length;
+
+            currentTab = 'retards';
+            switchTab('retards');
+
+            document.getElementById('person-modal').classList.remove('hidden');
+        };
+
+        window.switchTab = function (tab) {
+            currentTab = tab;
+
+            // Réinitialiser les onglets
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-red-500', 'text-red-600', 'border-orange-500', 'text-orange-600', 'border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-slate-400');
             });
 
+            // Activer l'onglet sélectionné
+            if (tab === 'retards') {
+                document.getElementById('tab-retards').classList.remove('border-transparent', 'text-slate-400');
+                document.getElementById('tab-retards').classList.add('border-red-500', 'text-red-600');
+            } else if (tab === 'upcoming') {
+                document.getElementById('tab-upcoming').classList.remove('border-transparent', 'text-slate-400');
+                document.getElementById('tab-upcoming').classList.add('border-orange-500', 'text-orange-600');
+            } else {
+                document.getElementById('tab-all').classList.remove('border-transparent', 'text-slate-400');
+                document.getElementById('tab-all').classList.add('border-indigo-500', 'text-indigo-600');
+            }
+
+            renderModalContent();
+        };
+
+        function renderModalContent() {
+            if (!currentModalPerson) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+
+            const allTasks = [
+                ...allTasksProjets.map(t => ({ ...t, source: 'projet' })),
+                ...allTasksLibres.map(t => ({ ...t, source: 'libre' }))
+            ].filter(t => t.who === currentModalPerson && !t.done);
+
+            let tasksToShow = [];
+
+            if (currentTab === 'retards') {
+                tasksToShow = allTasks.filter(t => t.date && new Date(t.date) < today);
+            } else if (currentTab === 'upcoming') {
+                tasksToShow = allTasks.filter(t => t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek);
+            } else {
+                tasksToShow = allTasks;
+            }
+
+            // Trier par date
+            tasksToShow.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+            const container = document.getElementById('modal-tasks-list');
+            container.innerHTML = '';
+
+            if (tasksToShow.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-400 py-10 italic">Aucune tâche dans cette catégorie 🎉</p>';
+                return;
+            }
+
+            tasksToShow.forEach(t => {
+                const taskDate = t.date ? new Date(t.date) : null;
+                const isLate = taskDate && taskDate < today;
+                const daysInfo = isLate ?
+                    `-${Math.floor((today - taskDate) / (1000 * 60 * 60 * 24))}j` :
+                    taskDate ? `Dans ${Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24))}j` : 'Pas de date';
+
+                const project = t.source === 'projet' ?
+                    allProjects.find(p => p.id === t.projectId) : null;
+
+                const sourceLabel = t.source === 'projet' ?
+                    `📁 ${project?.name || 'Projet inconnu'}` :
+                    '🎯 Tâche libre';
+
+                const bgColor = isLate ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200';
+                const badgeColor = isLate ? 'bg-red-500' : 'bg-orange-500';
+
+                container.innerHTML += `
+                    <div class="task-item ${bgColor} border rounded-xl p-4 transition">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <h5 class="font-bold text-sm text-slate-800 mb-1">${t.desc}</h5>
+                                <p class="text-xs text-slate-500 font-semibold">${sourceLabel}</p>
+                            </div>
+                            <span class="${badgeColor} text-white text-xs font-black px-2 py-1 rounded-lg whitespace-nowrap ml-3">
+                                ${daysInfo}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-slate-600 font-semibold mt-3 pt-3 border-t border-slate-200">
+                            <span>⏱️ ${t.time || 0}h</span>
+                            <span>📅 ${taskDate ? taskDate.toLocaleDateString('fr-FR') : 'Non défini'}</span>
+                            <span class="px-2 py-0.5 rounded ${t.priority === 'haute' ? 'bg-red-100 text-red-600' : t.priority === 'moyenne' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}">
+                                ${t.priority || 'moyenne'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.closePersonModal = function () {
+            document.getElementById('person-modal').classList.add('hidden');
+            currentModalPerson = null;
+        };
+
+        window.applyPersonFilter = function () {
+            renderDashboard();
+        };
+
+        window.resetFilters = function () {
+            document.getElementById('filter-person').value = 'all';
+            renderDashboard();
+        };
+
+        window.exportToCSV = function () {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+
+            const allTasks = [
+                ...allTasksProjets.map(t => ({ ...t, source: 'Projet' })),
+                ...allTasksLibres.map(t => ({ ...t, source: 'Libre' }))
+            ].filter(t => !t.done);
+
             const csv = [
-                ['Projet', 'Responsable', 'Total Tâches', 'Terminées', 'En Cours', 'Progression (%)', 'Retards', 'Heures Totales', 'Statut'],
-                ...activeProjs.map(p => {
-                    const pTasks = allTasks.filter(t => t.projectId === p.id);
-                    const done = pTasks.filter(t => t.done).length;
-                    const delays = pTasks.filter(t => !t.done && t.date && new Date(t.date) < today).length;
-                    const hours = pTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
-                    const progress = pTasks.length > 0 ? Math.round((done / pTasks.length) * 100) : 0;
-                    const status = delays > 5 ? 'CRITIQUE' : delays > 2 ? 'URGENT' : delays > 0 ? 'ALERTE' : 'À JOUR';
+                ['Responsable', 'Tâche', 'Source', 'Projet', 'Priorité', 'Heures', 'Échéance', 'Statut', 'Retard (jours)'],
+                ...allTasks.map(t => {
+                    const person = allResponsables[t.who];
+                    const taskDate = t.date ? new Date(t.date) : null;
+                    const isLate = taskDate && taskDate < today;
+                    const daysLate = isLate ? Math.floor((today - taskDate) / (1000 * 60 * 60 * 24)) : 0;
+                    const status = isLate ? 'RETARD' : (taskDate && taskDate <= nextWeek) ? 'À VENIR 7J' : 'NORMAL';
+                    const project = t.source === 'Projet' ? allProjects.find(p => p.id === t.projectId) : null;
 
                     return [
-                        `"${p.name}"`,
-                        allResponsables[p.owner]?.name || 'Inconnu',
-                        pTasks.length,
-                        done,
-                        pTasks.length - done,
-                        progress,
-                        delays,
-                        Math.round(hours),
-                        status
+                        person?.name || 'Inconnu',
+                        `"${t.desc}"`,
+                        t.source,
+                        project ? `"${project.name}"` : 'N/A',
+                        t.priority || 'moyenne',
+                        t.time || 0,
+                        taskDate ? taskDate.toLocaleDateString('fr-FR') : 'Non défini',
+                        status,
+                        daysLate
                     ];
                 })
             ].map(row => row.join(',')).join('\n');
@@ -819,7 +729,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `cockpit-gantt-${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `suivi-consolide-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             URL.revokeObjectURL(url);
         };
