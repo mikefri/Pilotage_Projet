@@ -42,7 +42,7 @@
         }
 
         .gantt-row {
-            height: 65px;
+            height: 50px;
             position: relative;
             border-bottom: 1px solid #f1f5f9;
             display: flex;
@@ -622,7 +622,7 @@
                 const tooltipText = hasNote ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
 
                 return `
-            <div class="gantt-row ${t.done ? 'done' : ''}" style="min-height: 65px; position: relative;">
+            <div class="gantt-row ${t.done ? 'done' : ''}" style="min-height: 50px; position: relative;">
                 <div class="task-label" title="${tooltipText}">${t.desc}</div>
                 
                 <!-- NOM RESPONSABLE AU-DESSUS -->
@@ -641,13 +641,6 @@
                      title="${tooltipText}"> 
                     <span class="text-[10px] font-black text-white drop-shadow pointer-events-none">${initiales}</span>
                     ${hasNote ? '<span class="ml-auto text-[10px] pointer-events-none">📝</span>' : ''}
-                </div>
-                
-                <!-- DATE + DURÉE EN DESSOUS -->
-                <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
-                     style="left: calc(${labelWidth}px + ${leftPosPx}px); bottom: 6px;">
-                    ${taskDate ? new Date(taskDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
-                    ${dureeJours > 1 ? ` • ${dureeJours}j` : ''}
                 </div>
             </div>`;
             }).join('');
