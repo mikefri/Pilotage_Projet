@@ -633,14 +633,14 @@
                 
                 <!-- BARRE AVEC INITIALES -->
                 <div class="task-bar ${couleur} ${prioClass} ${isLate ? '!bg-red-500' : ''}" 
-                     style="left: calc(${labelWidth}px + ${leftPosPx}px); width: ${barWidth}px;" 
+                     style="left: calc(${labelWidth}px + ${leftPosPx}px); width: ${barWidth}px; justify-content: center; gap: 4px;" 
                      draggable="true"
                      ondragstart="handleDragStart(event, '${t.id}')"
                      ondragend="this.style.opacity='1'"
                      onclick="openEditModal('${t.id}')"
                      title="${tooltipText}"> 
                     <span class="text-[10px] font-black text-white drop-shadow pointer-events-none">${initiales}</span>
-                    ${hasNote ? '<span class="ml-auto text-[10px] pointer-events-none">📝</span>' : ''}
+                    ${hasNote ? '<span class="text-[11px] pointer-events-none">📝</span>' : ''}
                 </div>
             </div>`;
             }).join('');
