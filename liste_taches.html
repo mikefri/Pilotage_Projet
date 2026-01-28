@@ -159,6 +159,16 @@
             font-weight: 800;
         }
 
+        .weekend-column {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background-color: #f8fafc;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 5;
+        }
+
         .btn-retour {
             background-color: #f1f5f9;
             color: #475569;
@@ -512,19 +522,28 @@
             const labelWidth = 160;
 
             let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; width: ${duration * dayWidth}px; overflow: visible;">`;
+            let weekendColumnsHTML = '';
 
             for (let i = 0; i < duration; i++) {
                 const curr = new Date(pStart);
                 curr.setDate(pStart.getDate() + i);
                 const isToday = curr.getTime() === today.getTime();
+                const dayOfWeek = curr.getDay(); // 0 = dimanche, 6 = samedi
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                // Ajouter les colonnes de week-end
+                if (isWeekend) {
+                    const leftPos = labelWidth + (i * dayWidth);
+                    weekendColumnsHTML += `<div class="weekend-column" style="left: ${leftPos}px; width: ${dayWidth}px;"></div>`;
+                }
 
                 headerHTML += `
-                <div class="header-day relative" style="width: ${dayWidth}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : 'color: #64748b;'}">
+                <div class="header-day relative" style="width: ${dayWidth}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
                     ${isToday ? `
                         <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ef4444] text-white text-[9px] px-2 py-0.5 rounded-md font-bold shadow-md" style="z-index: 100; white-space: nowrap;">
                             Aujourd'hui
                         </div>` : ''}
-                    <span class="${isToday ? 'text-[#ef4444] font-black text-sm' : ''}">${curr.getDate()}</span>
+                    <span class="${isToday ? 'text-[#ef4444] font-black text-sm' : isWeekend ? 'font-black' : ''}">${curr.getDate()}</span>
                     <span style="font-size: 7px;" class="uppercase ${isToday ? 'text-red-400 font-bold' : ''}">${curr.toLocaleDateString('fr-FR', { month: 'short' })}</span>
                 </div>`;
             }
@@ -583,7 +602,7 @@
             container.style.width = `${(duration * dayWidth) + labelWidth}px`;
             container.style.backgroundSize = `${dayWidth}px 100%`;
             container.style.backgroundPosition = `${labelWidth}px 0`;
-            container.innerHTML = headerHTML + timelineHTML + tasksHTML;
+            container.innerHTML = headerHTML + weekendColumnsHTML + timelineHTML + tasksHTML;
             document.getElementById('total-hours').innerText = totalHrs + " h total";
         }
 
