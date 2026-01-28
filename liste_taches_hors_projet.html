@@ -117,20 +117,34 @@
             bottom: 0;
             width: 2px;
             background-color: #ef4444;
-            z-index: 20;
+            z-index: 50;
             pointer-events: none;
         }
 
         .today-label {
             position: absolute;
-            top: -25px;
-            left: -50%;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             background: #ef4444;
             color: white;
             font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 4px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
             white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+            z-index: 51;
+        }
+
+        .weekend-column {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background-color: #f8fafc;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 5;
         }
 
         .btn-retour {
@@ -280,7 +294,9 @@
     <main class="max-w-full mx-auto mt-6 px-4">
         <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
             <div class="flex gap-2 items-center flex-wrap mb-4 border-b pb-4">
-                <input type="text" id="task-desc" placeholder="Nouvelle tâche libre..."
+                <input type="text" id="task-desc" placeholder="Nouvelle tâche..."
+                    class="w-48 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="text" id="task-note" placeholder="Détails / Notes..."
                     class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-time" placeholder="Hrs"
                     class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
@@ -496,8 +512,9 @@
             container.style.backgroundSize = `${dayWidth}px 100%`;
             container.style.backgroundPosition = `${labelWidth}px 0`;
 
-            // En-tête des dates
+            // En-tête des dates avec colonnes week-end
             let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; display: flex; height: 40px; border-bottom: 1px solid #e2e8f0; background: white;">`;
+            let weekendColumnsHTML = '';
 
             for (let i = 0; i < nbDaysTotal; i++) {
                 const currentDay = new Date(viewStart);
@@ -506,10 +523,18 @@
                 const isToday = currentDay.getTime() === today.getTime();
                 const dayNum = currentDay.getDate();
                 const monthNum = currentDay.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
+                const dayOfWeek = currentDay.getDay(); // 0 = dimanche, 6 = samedi
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                // Ajouter les colonnes de week-end
+                if (isWeekend) {
+                    const leftPos = labelWidth + (i * dayWidth);
+                    weekendColumnsHTML += `<div class="weekend-column" style="left: ${leftPos}px; width: ${dayWidth}px;"></div>`;
+                }
 
                 headerHTML += `
-            <div class="header-day" style="width: ${dayWidth}px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; border-right: 1px solid #f1f5f9; ${isToday ? 'background: #fef2f2; color: #ef4444;' : 'color: #64748b;'}">
-                <span>${dayNum}</span>
+            <div class="header-day" style="width: ${dayWidth}px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; border-right: 1px solid #f1f5f9; ${isToday ? 'background: #fef2f2; color: #ef4444;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
+                <span ${isWeekend ? 'class="font-black"' : ''}>${dayNum}</span>
                 <span class="uppercase opacity-60" style="font-size: 7px;">${monthNum}</span>
             </div>`;
             }
@@ -661,7 +686,7 @@
             </div>`;
             }).join('');
 
-            container.innerHTML = headerHTML + timelineHTML + tasksHTML;
+            container.innerHTML = headerHTML + weekendColumnsHTML + timelineHTML + tasksHTML;
 
             const totalHoursEl = document.getElementById('total-hours');
             if (totalHoursEl) totalHoursEl.innerText = `${totalHrs} h total`;
@@ -679,9 +704,11 @@
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
                 dateDebut: document.getElementById('task-date').value || new Date().toISOString().split('T')[0],
+                note: document.getElementById('task-note').value.trim() || '',
                 done: false
             });
             document.getElementById('task-desc').value = '';
+            document.getElementById('task-note').value = '';
             document.getElementById('task-time').value = '';
             document.getElementById('task-duree').value = '1';
         }

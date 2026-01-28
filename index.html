@@ -231,9 +231,36 @@
             /* Évite le double scroll */
         }
         .gantt {
-    /* Évite que le SVG ne réserve de l'espace blanc en bas */
-    display: block;
-}
+            /* Évite que le SVG ne réserve de l'espace blanc en bas */
+            display: block;
+        }
+
+        /* Styles pour la tooltip des notes */
+        .project-tooltip {
+            position: absolute;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 12px 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 1000;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .project-tooltip.visible {
+            opacity: 1;
+        }
+
+        .project-tooltip p {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.5;
+            margin: 0;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 
@@ -432,26 +459,26 @@
 
             <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</label>
-<div class="relative inline-block text-left" id="multi-select-container">
-    <button type="button" onclick="toggleStatusDropdown()" class="flex items-center justify-between w-48 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <span id="selected-status-label">Tous les statuts</span>
-        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-    </button>
+                <div class="relative inline-block text-left" id="multi-select-container">
+                    <button type="button" onclick="toggleStatusDropdown()" class="flex items-center justify-between w-48 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="selected-status-label">Tous les statuts</span>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
 
-    <div id="status-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl p-2">
-        <div class="flex flex-col gap-2">
-            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
-                <input type="checkbox" class="status-filter" value="À faire" checked> À faire
-            </label>
-            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
-                <input type="checkbox" class="status-filter" value="En cours" checked> En cours
-            </label>
-            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
-                <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
-            </label>
-        </div>
-    </div>
-</div>
+                    <div id="status-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl p-2">
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="À faire" checked> À faire
+                            </label>
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="En cours" checked> En cours
+                            </label>
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Priorité</label>
@@ -517,18 +544,18 @@
                             <option value="En cours" selected>En cours</option>
                             <option value="Terminé">Terminé</option>
                         </select>
-                        <div>
-                            <label
-                                class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Priorité</label>
-                            <select id="p-priority"
-                                class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
-                                <option value="1">🔴 P1 - Haute</option>
-                                <option value="2" selected>🟡 P2 - Moyenne</option>
-                                <option value="3">🔵 P3 - Basse</option>
-                            </select>
-                        </div>
-
                     </div>
+                </div>
+
+                <div>
+                    <label
+                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Priorité</label>
+                    <select id="p-priority"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
+                        <option value="1">🔴 P1 - Haute</option>
+                        <option value="2" selected>🟡 P2 - Moyenne</option>
+                        <option value="3">🔵 P3 - Basse</option>
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -556,6 +583,13 @@
                         class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                 </div>
 
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Notes détaillées</label>
+                    <textarea id="p-notes" rows="4"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-sm resize-none"
+                        placeholder="Ajoutez des notes, remarques ou détails sur ce projet..."></textarea>
+                </div>
+
                 <div class="flex flex-col gap-3 pt-6">
                     <button onclick="addOrUpdateProject()"
                         class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">ENREGISTRER</button>
@@ -574,7 +608,7 @@
         </aside>
     </div>
 
-<script src="script_Index.js"></script>
+    <script src="script_Index.js"></script>
 
     <div id="confirm-modal"
         class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
