@@ -73,8 +73,9 @@
         }
 
         .task-bar {
-            height: 28px;
+            height: 26px;
             position: absolute;
+            top: 24px;
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -283,6 +284,8 @@
                     class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-time" placeholder="Hrs"
                     class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="number" id="task-duree" placeholder="Jours" min="1" value="1"
+                    class="w-20 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <select id="task-who"
                     class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
                 <select id="task-prio"
@@ -363,9 +366,10 @@
                         class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm"></select>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="edit-task-time" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                    <input type="date" id="edit-task-date" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <input type="number" id="edit-task-time" placeholder="Heures" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <input type="number" id="edit-task-duree" placeholder="Jours" min="1" class="p-3 rounded-lg bg-slate-50 border border-slate-200">
                 </div>
+                <input type="date" id="edit-task-date" class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200">
                 <textarea id="edit-task-note" rows="3"
                     class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm"
                     placeholder="Notes..."></textarea>
@@ -433,8 +437,12 @@
             const dateString = newDate.toISOString().split('T')[0];
 
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + taskId), {
-                date: dateString
+                dateDebut: dateString
             });
+
+            // Réinitialiser l'opacité après le drop
+            const taskElement = document.querySelector(`[ondragstart*="${taskId}"]`);
+            if (taskElement) taskElement.style.opacity = "1";
         }
 
         // --- FONCTIONS EXISTANTES ---
@@ -530,10 +538,19 @@
                 filteredTasks = filteredTasks.filter(t => t.desc.toLowerCase().includes(searchQuery));
             }
 
-            filteredTasks.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+            filteredTasks.sort((a, b) => {
+                const dateA = a.dateDebut || a.date || 0;
+                const dateB = b.dateDebut || b.date || 0;
+                return new Date(dateA) - new Date(dateB);
+            });
 
-            // Retards
-            const delayed = allTasks.filter(t => !t.done && t.date && new Date(t.date) < today);
+            // Retards - utilise dateDebut en priorité, sinon date
+            const delayed = allTasks.filter(t => {
+                if (t.done) return false;
+                const taskDate = t.dateDebut || t.date;
+                return taskDate && new Date(taskDate) < today;
+            });
+            
             const delayContainer = document.getElementById('delay-container');
             if (delayContainer) {
                 delayContainer.classList.toggle('hidden', delayed.length === 0);
@@ -543,81 +560,87 @@
                 if (delayListEl) delayListEl.innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
             }
 
-
             // --- SYSTÈME D'ALERTE PERSONNALISÉ ---
             const currentUser = window.auth.currentUser;
             if (currentUser && currentUser.email) {
-                // 1. On identifie quel responsable correspond à l'email de session
-                const monProfil = responsables.find(r => r.email.toLowerCase() === currentUser.email.toLowerCase());
+                const monProfil = responsables.find(r => r.email && r.email.toLowerCase() === currentUser.email.toLowerCase());
 
                 if (monProfil) {
-                    // 2. On filtre les retards qui appartiennent uniquement à cette personne
                     const mesRetards = delayed.filter(t => t.who === monProfil.id);
 
                     let banner = document.getElementById('alerte-retard-perso');
 
                     if (mesRetards.length > 0) {
-                        // 3. Création ou mise à jour du bandeau clignotant
                         if (!banner) {
                             banner = document.createElement('div');
                             banner.id = 'alerte-retard-perso';
-                            // Style : Rouge SNCF, texte gras, clignotant, reste en haut au scroll
                             banner.className = "bg-[#E2001A] text-white text-center p-3 font-black animate-pulse sticky top-0 z-[100] cursor-pointer shadow-2xl border-b-2 border-white";
                             document.body.prepend(banner);
                         }
                         banner.innerHTML = `⚠️ ATTENTION ${monProfil.name.toUpperCase()} : VOUS AVEZ ${mesRetards.length} TÂCHE(S) EN RETARD !`;
 
-                        // 4. Action au clic : filtre automatiquement sur "Mes tâches"
                         banner.onclick = () => {
                             const selectWho = document.getElementById('filter-who');
                             const selectStatus = document.getElementById('filter-status');
                             if (selectWho) selectWho.value = monProfil.id;
                             if (selectStatus) selectStatus.value = 'active';
-                            renderTasks(); // Relance le rendu avec les filtres
+                            renderTasks();
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         };
                     } else if (banner) {
-                        banner.remove(); // Plus de retard ? On enlève l'alerte
+                        banner.remove();
                     }
                 }
             }
 
-
-
-
+            // Couleurs par responsable
+            const couleurs = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-teal-500'];
 
             // Génération lignes
             let totalHrs = 0;
             const tasksHTML = filteredTasks.map((t) => {
                 totalHrs += parseFloat(t.time || 0);
-                const tDate = t.date ? new Date(t.date) : today;
+                
+                // Utilise dateDebut en priorité, sinon date (compatibilité)
+                const taskDate = t.dateDebut || t.date;
+                const tDate = taskDate ? new Date(taskDate) : today;
+                const dureeJours = t.dureeJours || 1;
+                const barWidth = dureeJours * dayWidth;
 
                 let leftPosPx = ((tDate - viewStart) / (1000 * 60 * 60 * 24)) * dayWidth;
 
                 const respo = responsables.find(r => r.id === t.who)?.name || "??";
-                const isLate = !t.done && t.date && new Date(t.date) < today;
+                const initiales = respo.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                const responsableIndex = responsables.findIndex(r => r.id === t.who);
+                const couleur = responsableIndex >= 0 ? couleurs[responsableIndex % couleurs.length] : 'bg-indigo-600';
+                
+                const isLate = !t.done && taskDate && new Date(taskDate) < today;
                 const prioClass = `prio-${t.priority || 'moyenne'}`;
 
                 const hasNote = t.note && t.note.trim() !== "";
                 const tooltipText = hasNote ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
 
                 return `
-            <div class="gantt-row ${t.done ? 'done' : ''}" style="min-height: 50px; height: auto;">
+            <div class="gantt-row ${t.done ? 'done' : ''}" style="min-height: 50px; position: relative;">
                 <div class="task-label" title="${tooltipText}">${t.desc}</div>
                 
-                <div class="task-bar ${prioClass} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                     style="left: calc(${labelWidth}px + ${leftPosPx}px); width: 120px;" 
-                     draggable="true"
-                     ondragstart="handleDragStart(event, '${t.id}')"
-                     onclick="openEditModal('${t.id}')"
-                     title="${tooltipText}"> 
-                    <span class="truncate text-[9px] uppercase pointer-events-none">${respo}</span>
-                    ${hasNote ? '<span class="ml-auto text-[10px] pointer-events-none">📝</span>' : ''}
+                <!-- NOM RESPONSABLE AU-DESSUS -->
+                <div class="absolute text-[9px] font-black text-slate-700 whitespace-nowrap" 
+                     style="left: calc(${labelWidth}px + ${leftPosPx}px); top: 4px; z-index: 15;">
+                    ${respo}
                 </div>
                 
-                <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" 
-                     style="left: calc(${labelWidth + 125}px + ${leftPosPx}px);">
-                    ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
+                <!-- BARRE AVEC INITIALES -->
+                <div class="task-bar ${couleur} ${prioClass} ${isLate ? '!bg-red-500' : ''}" 
+                     style="left: calc(${labelWidth}px + ${leftPosPx}px); width: ${barWidth}px; justify-content: center; gap: 4px;" 
+                     draggable="true"
+                     ondragstart="handleDragStart(event, '${t.id}')"
+                     ondragend="this.style.opacity='1'"
+                     onclick="openEditModal('${t.id}')"
+                     title="${tooltipText}"> 
+                    <span class="text-[10px] font-black text-white drop-shadow pointer-events-none">${initiales}</span>
+                    ${hasNote ? '<span class="text-[11px] pointer-events-none">📝</span>' : ''}
                 </div>
             </div>`;
             }).join('');
@@ -626,10 +649,6 @@
 
             const totalHoursEl = document.getElementById('total-hours');
             if (totalHoursEl) totalHoursEl.innerText = `${totalHrs} h total`;
-
-
-
-
         }
 
         async function addTask() {
@@ -640,12 +659,15 @@
                 id: taskId,
                 desc: desc,
                 time: document.getElementById('task-time').value || 0,
+                dureeJours: parseInt(document.getElementById('task-duree').value) || 1,
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
-                date: document.getElementById('task-date').value || new Date().toISOString().split('T')[0],
+                dateDebut: document.getElementById('task-date').value || new Date().toISOString().split('T')[0],
                 done: false
             });
             document.getElementById('task-desc').value = '';
+            document.getElementById('task-time').value = '';
+            document.getElementById('task-duree').value = '1';
         }
 
         function openEditModal(id) {
@@ -653,7 +675,8 @@
             currentEditingId = id;
             document.getElementById('edit-task-desc').value = t.desc;
             document.getElementById('edit-task-time').value = t.time;
-            document.getElementById('edit-task-date').value = t.date || '';
+            document.getElementById('edit-task-duree').value = t.dureeJours || 1;
+            document.getElementById('edit-task-date').value = t.dateDebut || t.date || '';
             document.getElementById('edit-task-who').value = t.who;
             document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
             document.getElementById('edit-task-done').checked = t.done || false;
@@ -669,7 +692,8 @@
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, DB_FOLDER + '/' + currentEditingId), {
                 desc: document.getElementById('edit-task-desc').value,
                 time: document.getElementById('edit-task-time').value,
-                date: document.getElementById('edit-task-date').value,
+                dureeJours: parseInt(document.getElementById('edit-task-duree').value) || 1,
+                dateDebut: document.getElementById('edit-task-date').value,
                 who: document.getElementById('edit-task-who').value,
                 priority: document.getElementById('edit-task-prio').value,
                 done: document.getElementById('edit-task-done').checked,
