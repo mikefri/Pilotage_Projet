@@ -551,12 +551,15 @@
                 if (!taskDate) return false;
                 
                 const dateDebut = new Date(taskDate);
+                dateDebut.setHours(0, 0, 0, 0);
+                
                 const dureeJours = t.dureeJours || 1;
                 const dateFin = new Date(dateDebut);
-                dateFin.setDate(dateDebut.getDate() + dureeJours - 1); // -1 car le premier jour est inclus
+                dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                dateFin.setHours(23, 59, 59, 999); // Fin de journée
                 
-                // Alerte si aujourd'hui est APRÈS la date de fin
-                return dateFin < today;
+                // Alerte si aujourd'hui est APRÈS la fin de journée de la date de fin
+                return today > dateFin;
             });
             
             const delayContainer = document.getElementById('delay-container');
@@ -626,7 +629,8 @@
                 // Calcul de la date de fin pour isLate
                 const dateFin = new Date(tDate);
                 dateFin.setDate(tDate.getDate() + dureeJours - 1);
-                const isLate = !t.done && taskDate && dateFin < today;
+                dateFin.setHours(23, 59, 59, 999);
+                const isLate = !t.done && taskDate && today > dateFin;
                 
                 const prioClass = `prio-${t.priority || 'moyenne'}`;
 
