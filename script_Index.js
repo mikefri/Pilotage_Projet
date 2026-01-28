@@ -171,61 +171,63 @@ function renderGantt(view = currentView) {
     });
 
     // --- 5. PERSONNALISATION POST-RENDU ---
-    setTimeout(() => {
-        // Créer la tooltip une seule fois
-        let tooltip = document.querySelector('.project-tooltip');
-        if (!tooltip) {
-            tooltip = document.createElement('div');
-            tooltip.className = 'project-tooltip';
-            document.body.appendChild(tooltip);
+setTimeout(() => {
+    // Créer la tooltip une seule fois
+    let tooltip = document.querySelector('.project-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.className = 'project-tooltip';
+        document.body.appendChild(tooltip);
+    }
+
+    filteredProjects.forEach(p => {
+        // Application de la couleur par STATUT
+        const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
+        if (bar) {
+            let color = '#94a3b8';
+            if (p.status === "En cours") {
+                color = '#3b82f6';
+            } else if (p.status === "Terminé") {
+                color = '#22c55e';
+            }
+            bar.style.setProperty('fill', color, 'important');
         }
 
-        filteredProjects.forEach(p => {
-            // Application de la couleur par STATUT
-            const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
-            if (bar) {
-                let color = '#94a3b8';
-                if (p.status === "En cours") {
-                    color = '#3b82f6';
-                } else if (p.status === "Terminé") {
-                    color = '#22c55e';
-                }
-                bar.style.setProperty('fill', color, 'important');
+        // Ajouter les événements de survol UNIQUEMENT si des notes existent
+        if (p.notes && p.notes.trim() !== '') {
+            // On cible la barre complète (.bar) au lieu de .bar-wrapper
+            const barElement = document.querySelector(`[data-id="${p.id}"] .bar`);
+            
+            if (barElement) {
+                barElement.style.cursor = 'help'; // Curseur avec point d'interrogation
+                
+                barElement.addEventListener('mouseenter', (e) => {
+                    tooltip.innerHTML = `<p>${p.notes}</p>`;
+                    tooltip.classList.add('visible');
+                });
+                
+                barElement.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.pageX + 15) + 'px';
+                    tooltip.style.top = (e.pageY + 15) + 'px';
+                });
+                
+                barElement.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('visible');
+                });
             }
+        }
+    });
 
-            // Ajouter les événements de survol UNIQUEMENT si des notes existent
-            if (p.notes && p.notes.trim() !== '') {
-                const barWrapper = document.querySelector(`[data-id="${p.id}"] .bar-wrapper`);
-                if (barWrapper) {
-                    barWrapper.style.cursor = 'help'; // Curseur avec point d'interrogation
-                    
-                    barWrapper.addEventListener('mouseenter', (e) => {
-                        tooltip.innerHTML = `<p>${p.notes}</p>`;
-                        tooltip.classList.add('visible');
-                    });
-                    
-                    barWrapper.addEventListener('mousemove', (e) => {
-                        tooltip.style.left = (e.pageX + 15) + 'px';
-                        tooltip.style.top = (e.pageY + 15) + 'px';
-                    });
-                    
-                    barWrapper.addEventListener('mouseleave', () => {
-                        tooltip.classList.remove('visible');
-                    });
-                }
-            }
-        });
-
-        // Gestion du clic sur les textes pour ouvrir la modale d'édition
-        document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
-            el.style.cursor = 'pointer';
-            el.onclick = (e) => {
-                e.stopPropagation();
-                const taskId = el.closest('.grid-row').getAttribute('data-id');
-                if (taskId) editProject(taskId);
-            };
-        });
-    }, 150);
+    // Gestion du clic sur les textes pour ouvrir la modale d'édition
+    document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
+        el.style.cursor = 'pointer';
+        el.onclick = (e) => {
+            e.stopPropagation();
+            const taskId = el.closest('.grid-row').getAttribute('data-id');
+            if (taskId) editProject(taskId);
+        };
+    });
+}, 150);;
 }
 
 async function updateQuick(id, data) {
