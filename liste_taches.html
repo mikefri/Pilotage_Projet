@@ -307,6 +307,8 @@
                     class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-time" placeholder="Hrs"
                     class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="number" id="task-duree" placeholder="Jours" min="1" value="1"
+                    class="w-20 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <select id="task-who"
                     class="w-32 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm"></select>
                 <select id="task-prio"
@@ -372,10 +374,16 @@
                     </div>
                     <div>
                         <label
-                            class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Échéance</label>
-                        <input type="date" id="edit-task-date"
+                            class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Durée (Jours)</label>
+                        <input type="number" id="edit-task-duree" min="1"
                             class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                     </div>
+                </div>
+                <div>
+                    <label
+                        class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Date de début</label>
+                    <input type="date" id="edit-task-date"
+                        class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes /
@@ -563,7 +571,19 @@
             if (fSearch) filtered = filtered.filter(t => t.desc.toLowerCase().includes(fSearch));
             filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            const delayed = filtered.filter(t => !t.done && t.date && new Date(t.date) < today);
+            // Calcul des retards basé sur la date de fin (date + duree)
+            const delayed = filtered.filter(t => {
+                if (t.done) return false;
+                if (!t.date) return false;
+                const dateDebut = new Date(t.date);
+                dateDebut.setHours(0, 0, 0, 0);
+                const dureeJours = t.dureeJours || 1;
+                const dateFin = new Date(dateDebut);
+                dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                dateFin.setHours(23, 59, 59, 999);
+                return today > dateFin;
+            });
+            
             document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
             document.getElementById('delay-count').innerText = delayed.length;
             document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
@@ -573,8 +593,19 @@
                 totalHrs += parseFloat(t.time || 0);
                 const tDate = new Date(t.date || pStart);
                 const leftPx = ((tDate - pStart) / 86400000) * dayWidth;
+                
+                // Calcul de la largeur de la barre en fonction de la durée en jours
+                const dureeJours = t.dureeJours || 1;
+                const barWidth = dureeJours * dayWidth;
+                
                 const respo = responsables.find(r => r.id === t.who)?.name || t.who;
-                const isLate = !t.done && t.date && new Date(t.date) < today;
+                
+                // Calcul de la date de fin pour isLate
+                const dateFin = new Date(tDate);
+                dateFin.setDate(tDate.getDate() + dureeJours - 1);
+                dateFin.setHours(23, 59, 59, 999);
+                const isLate = !t.done && t.date && today > dateFin;
+                
                 const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
 
                 return `
@@ -584,7 +615,7 @@
                      ondrop="onDrop(event)">
                     <div class="task-label" title="${tooltip}">${t.desc}</div>
                     <div class="task-bar prio-${t.priority || 'moyenne'} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                         style="left: calc(${labelWidth}px + ${leftPx}px); width: 130px;" 
+                         style="left: calc(${labelWidth}px + ${leftPx}px); width: ${barWidth}px;" 
                          onclick="openEditModal('${t.id}')" 
                          title="${tooltip}"
                          draggable="true"
@@ -593,7 +624,7 @@
                         <span class="truncate text-[9px] uppercase opacity-90">${respo}</span>
                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
                     </div>
-                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${labelWidth + 140}px + ${leftPx}px);">
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${labelWidth + barWidth + 5}px + ${leftPx}px);">
                         ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
                     </div>
                 </div>`;
@@ -613,14 +644,21 @@
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
             const taskId = "TASK-" + Date.now();
             await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), {
-                id: taskId, projectId: currentProjectId, desc,
+                id: taskId, 
+                projectId: currentProjectId, 
+                desc,
                 time: document.getElementById('task-time').value || 0,
+                dureeJours: parseInt(document.getElementById('task-duree').value) || 1,
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
                 date: document.getElementById('task-date').value || currentProject.start,
-                done: false, lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+                done: false, 
+                lastEditedBy: editorName, 
+                lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             document.getElementById('task-desc').value = '';
+            document.getElementById('task-time').value = '';
+            document.getElementById('task-duree').value = '1';
         }
 
         function openEditModal(id) {
@@ -628,6 +666,7 @@
             currentEditingId = id;
             document.getElementById('edit-task-desc').value = t.desc;
             document.getElementById('edit-task-time').value = t.time;
+            document.getElementById('edit-task-duree').value = t.dureeJours || 1;
             document.getElementById('edit-task-date').value = t.date || '';
             document.getElementById('edit-task-who').value = t.who;
             document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
@@ -651,12 +690,14 @@
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
                 desc: document.getElementById('edit-task-desc').value,
                 time: document.getElementById('edit-task-time').value,
+                dureeJours: parseInt(document.getElementById('edit-task-duree').value) || 1,
                 date: document.getElementById('edit-task-date').value,
                 who: document.getElementById('edit-task-who').value,
                 priority: document.getElementById('edit-task-prio').value,
                 done: document.getElementById('edit-task-done').checked,
                 note: document.getElementById('edit-task-note').value,
-                lastEditedBy: editorName, lastEditedAt: new Date().toLocaleString('fr-FR')
+                lastEditedBy: editorName, 
+                lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             closeEditModal();
         }
