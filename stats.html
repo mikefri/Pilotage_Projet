@@ -390,9 +390,26 @@
             // Filtrer les tâches actives uniquement
             const activeTasks = allTasks.filter(t => !t.done);
 
-            // Calculer les KPI globaux
-            const totalDelays = activeTasks.filter(t => t.date && new Date(t.date) < today).length;
-            const upcomingTasks = activeTasks.filter(t => t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek).length;
+            // Calculer les KPI globaux avec la nouvelle logique de date de fin
+            const totalDelays = activeTasks.filter(t => {
+                const taskDate = t.dateDebut || t.date;
+                if (!taskDate) return false;
+                const dateDebut = new Date(taskDate);
+                dateDebut.setHours(0, 0, 0, 0);
+                const dureeJours = t.dureeJours || 1;
+                const dateFin = new Date(dateDebut);
+                dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                dateFin.setHours(23, 59, 59, 999);
+                return today > dateFin;
+            }).length;
+
+            const upcomingTasks = activeTasks.filter(t => {
+                const taskDate = t.dateDebut || t.date;
+                if (!taskDate) return false;
+                const dateTask = new Date(taskDate);
+                return dateTask >= today && dateTask <= nextWeek;
+            }).length;
+
             const totalHours = activeTasks.reduce((acc, t) => acc + parseFloat(t.time || 0), 0);
 
             document.getElementById('stat-total-delays').innerText = totalDelays;
@@ -404,7 +421,7 @@
             document.getElementById('last-update').innerText =
                 `Mis à jour : ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
 
-            // Grouper par responsable
+            // Grouper par responsable avec la nouvelle logique
             const tasksByPerson = {};
 
             activeTasks.forEach(t => {
@@ -419,11 +436,18 @@
 
                 tasksByPerson[t.who].all.push(t);
 
-                if (t.date) {
-                    const taskDate = new Date(t.date);
-                    if (taskDate < today) {
+                const taskDate = t.dateDebut || t.date;
+                if (taskDate) {
+                    const dateDebut = new Date(taskDate);
+                    dateDebut.setHours(0, 0, 0, 0);
+                    const dureeJours = t.dureeJours || 1;
+                    const dateFin = new Date(dateDebut);
+                    dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                    dateFin.setHours(23, 59, 59, 999);
+                    
+                    if (today > dateFin) {
                         tasksByPerson[t.who].retards.push(t);
-                    } else if (taskDate >= today && taskDate <= nextWeek) {
+                    } else if (dateFin >= today && dateDebut <= nextWeek) {
                         tasksByPerson[t.who].upcoming.push(t);
                     }
                 }
@@ -561,8 +585,25 @@
                 ...allTasksLibres.map(t => ({ ...t, source: 'libre' }))
             ].filter(t => t.who === personId && !t.done);
 
-            const retards = allTasks.filter(t => t.date && new Date(t.date) < today);
-            const upcoming = allTasks.filter(t => t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek);
+            // Calculer les retards avec la nouvelle logique
+            const retards = allTasks.filter(t => {
+                const taskDate = t.dateDebut || t.date;
+                if (!taskDate) return false;
+                const dateDebut = new Date(taskDate);
+                dateDebut.setHours(0, 0, 0, 0);
+                const dureeJours = t.dureeJours || 1;
+                const dateFin = new Date(dateDebut);
+                dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                dateFin.setHours(23, 59, 59, 999);
+                return today > dateFin;
+            });
+
+            const upcoming = allTasks.filter(t => {
+                const taskDate = t.dateDebut || t.date;
+                if (!taskDate) return false;
+                const dateTask = new Date(taskDate);
+                return dateTask >= today && dateTask <= nextWeek;
+            });
 
             document.getElementById('modal-person-name').innerText = person.name;
             document.getElementById('modal-person-subtitle').innerText =
@@ -618,15 +659,34 @@
             let tasksToShow = [];
 
             if (currentTab === 'retards') {
-                tasksToShow = allTasks.filter(t => t.date && new Date(t.date) < today);
+                tasksToShow = allTasks.filter(t => {
+                    const taskDate = t.dateDebut || t.date;
+                    if (!taskDate) return false;
+                    const dateDebut = new Date(taskDate);
+                    dateDebut.setHours(0, 0, 0, 0);
+                    const dureeJours = t.dureeJours || 1;
+                    const dateFin = new Date(dateDebut);
+                    dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                    dateFin.setHours(23, 59, 59, 999);
+                    return today > dateFin;
+                });
             } else if (currentTab === 'upcoming') {
-                tasksToShow = allTasks.filter(t => t.date && new Date(t.date) >= today && new Date(t.date) <= nextWeek);
+                tasksToShow = allTasks.filter(t => {
+                    const taskDate = t.dateDebut || t.date;
+                    if (!taskDate) return false;
+                    const dateTask = new Date(taskDate);
+                    return dateTask >= today && dateTask <= nextWeek;
+                });
             } else {
                 tasksToShow = allTasks;
             }
 
             // Trier par date
-            tasksToShow.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+            tasksToShow.sort((a, b) => {
+                const dateA = a.dateDebut || a.date || 0;
+                const dateB = b.dateDebut || b.date || 0;
+                return new Date(dateA) - new Date(dateB);
+            });
 
             const container = document.getElementById('modal-tasks-list');
             container.innerHTML = '';
@@ -637,11 +697,29 @@
             }
 
             tasksToShow.forEach(t => {
-                const taskDate = t.date ? new Date(t.date) : null;
-                const isLate = taskDate && taskDate < today;
-                const daysInfo = isLate ?
-                    `-${Math.floor((today - taskDate) / (1000 * 60 * 60 * 24))}j` :
-                    taskDate ? `Dans ${Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24))}j` : 'Pas de date';
+                const taskDate = t.dateDebut || t.date;
+                const taskDateObj = taskDate ? new Date(taskDate) : null;
+                
+                // Calculer la date de fin pour l'affichage
+                let isLate = false;
+                let daysInfo = 'Pas de date';
+                
+                if (taskDateObj) {
+                    const dateDebut = new Date(taskDateObj);
+                    dateDebut.setHours(0, 0, 0, 0);
+                    const dureeJours = t.dureeJours || 1;
+                    const dateFin = new Date(dateDebut);
+                    dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                    dateFin.setHours(23, 59, 59, 999);
+                    
+                    isLate = today > dateFin;
+                    
+                    if (isLate) {
+                        daysInfo = `-${Math.floor((today - dateFin) / (1000 * 60 * 60 * 24))}j`;
+                    } else {
+                        daysInfo = `Dans ${Math.ceil((dateDebut - today) / (1000 * 60 * 60 * 24))}j`;
+                    }
+                }
 
                 const project = t.source === 'projet' ?
                     allProjects.find(p => p.id === t.projectId) : null;
@@ -666,7 +744,7 @@
                         </div>
                         <div class="flex items-center gap-4 text-xs text-slate-600 font-semibold mt-3 pt-3 border-t border-slate-200">
                             <span>⏱️ ${t.time || 0}h</span>
-                            <span>📅 ${taskDate ? taskDate.toLocaleDateString('fr-FR') : 'Non défini'}</span>
+                            <span>📅 ${taskDateObj ? taskDateObj.toLocaleDateString('fr-FR') : 'Non défini'}</span>
                             <span class="px-2 py-0.5 rounded ${t.priority === 'haute' ? 'bg-red-100 text-red-600' : t.priority === 'moyenne' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}">
                                 ${t.priority || 'moyenne'}
                             </span>
@@ -705,10 +783,27 @@
                 ['Responsable', 'Tâche', 'Source', 'Projet', 'Priorité', 'Heures', 'Échéance', 'Statut', 'Retard (jours)'],
                 ...allTasks.map(t => {
                     const person = allResponsables[t.who];
-                    const taskDate = t.date ? new Date(t.date) : null;
-                    const isLate = taskDate && taskDate < today;
-                    const daysLate = isLate ? Math.floor((today - taskDate) / (1000 * 60 * 60 * 24)) : 0;
-                    const status = isLate ? 'RETARD' : (taskDate && taskDate <= nextWeek) ? 'À VENIR 7J' : 'NORMAL';
+                    const taskDate = t.dateDebut || t.date;
+                    const taskDateObj = taskDate ? new Date(taskDate) : null;
+                    
+                    let isLate = false;
+                    let daysLate = 0;
+                    
+                    if (taskDateObj) {
+                        const dateDebut = new Date(taskDateObj);
+                        dateDebut.setHours(0, 0, 0, 0);
+                        const dureeJours = t.dureeJours || 1;
+                        const dateFin = new Date(dateDebut);
+                        dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
+                        dateFin.setHours(23, 59, 59, 999);
+                        
+                        isLate = today > dateFin;
+                        if (isLate) {
+                            daysLate = Math.floor((today - dateFin) / (1000 * 60 * 60 * 24));
+                        }
+                    }
+                    
+                    const status = isLate ? 'RETARD' : (taskDateObj && taskDateObj <= nextWeek) ? 'À VENIR 7J' : 'NORMAL';
                     const project = t.source === 'Projet' ? allProjects.find(p => p.id === t.projectId) : null;
 
                     return [
@@ -718,7 +813,7 @@
                         project ? `"${project.name}"` : 'N/A',
                         t.priority || 'moyenne',
                         t.time || 0,
-                        taskDate ? taskDate.toLocaleDateString('fr-FR') : 'Non défini',
+                        taskDateObj ? taskDateObj.toLocaleDateString('fr-FR') : 'Non défini',
                         status,
                         daysLate
                     ];
