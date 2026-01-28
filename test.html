@@ -544,11 +544,19 @@
                 return new Date(dateA) - new Date(dateB);
             });
 
-            // Retards - utilise dateDebut en priorité, sinon date
+            // Retards - calcule la date de fin (dateDebut + dureeJours)
             const delayed = allTasks.filter(t => {
                 if (t.done) return false;
                 const taskDate = t.dateDebut || t.date;
-                return taskDate && new Date(taskDate) < today;
+                if (!taskDate) return false;
+                
+                const dateDebut = new Date(taskDate);
+                const dureeJours = t.dureeJours || 1;
+                const dateFin = new Date(dateDebut);
+                dateFin.setDate(dateDebut.getDate() + dureeJours - 1); // -1 car le premier jour est inclus
+                
+                // Alerte si aujourd'hui est APRÈS la date de fin
+                return dateFin < today;
             });
             
             const delayContainer = document.getElementById('delay-container');
@@ -615,7 +623,11 @@
                 const responsableIndex = responsables.findIndex(r => r.id === t.who);
                 const couleur = responsableIndex >= 0 ? couleurs[responsableIndex % couleurs.length] : 'bg-indigo-600';
                 
-                const isLate = !t.done && taskDate && new Date(taskDate) < today;
+                // Calcul de la date de fin pour isLate
+                const dateFin = new Date(tDate);
+                dateFin.setDate(tDate.getDate() + dureeJours - 1);
+                const isLate = !t.done && taskDate && dateFin < today;
+                
                 const prioClass = `prio-${t.priority || 'moyenne'}`;
 
                 const hasNote = t.note && t.note.trim() !== "";
