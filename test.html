@@ -280,7 +280,9 @@
     <main class="max-w-full mx-auto mt-6 px-4">
         <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
             <div class="flex gap-2 items-center flex-wrap mb-4 border-b pb-4">
-                <input type="text" id="task-desc" placeholder="Nouvelle tâche libre..."
+                <input type="text" id="task-desc" placeholder="Nouvelle tâche..."
+                    class="w-48 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                <input type="text" id="task-note" placeholder="Détails / Notes..."
                     class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-time" placeholder="Hrs"
                     class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
@@ -679,9 +681,11 @@
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
                 dateDebut: document.getElementById('task-date').value || new Date().toISOString().split('T')[0],
+                note: document.getElementById('task-note').value.trim() || '',
                 done: false
             });
             document.getElementById('task-desc').value = '';
+            document.getElementById('task-note').value = '';
             document.getElementById('task-time').value = '';
             document.getElementById('task-duree').value = '1';
         }
