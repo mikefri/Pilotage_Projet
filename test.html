@@ -3,352 +3,23 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PILOTAGE PERFORMANCE LOGISTIQUE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="icon" type="image/png" href="./icon.png">
+    <title>Pilotage Projet</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --dark-teal: #004d4d;
-            --bright-green: #2ecc71;
-            --border-color: #333;
-            --cell-bg: #e9e9e9;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            min-height: 100vh;
-        }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 350px;
-            background-color: white;
-            border-right: 4px solid var(--dark-teal);
-            padding: 20px;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: -350px;
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
-            box-shadow: 10px 0 20px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-        }
-
-        .sidebar.open { left: 0; }
-
-        .toggle-tab {
-            position: fixed;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            background: var(--dark-teal);
-            color: white;
-            padding: 20px 8px;
-            cursor: pointer;
-            z-index: 1001;
-            border-radius: 0 10px 10px 0;
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: bold;
-        }
-
-        .sidebar.open+.toggle-tab { left: 350px; }
-
-        .project-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-        }
-
-        .project-item:hover { background-color: #f9f9f9; }
-
-        .project-item span { font-weight: 700; color: #333; }
-
-        /* --- TABLEAU --- */
-        .container {
-            width: 95%;
-            max-width: 1450px;
-            margin: 20px auto;
-            background: white;
-            border: 2px solid var(--border-color);
-            padding: 30px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        th {
-            border: 2px solid var(--border-color);
-            padding: 12px;
-            background: white;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        td {
-            border: 1px solid white;
-            background: var(--cell-bg);
-            height: 95px;
-            vertical-align: middle;
-        }
-
-        .project-cell-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 95px;
-            width: 100%;
-        }
-
-        .table-textarea {
-            width: 100%;
-            border: none;
-            background: transparent;
-            padding: 5px 10px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            resize: none;
-            outline: none;
-            overflow: hidden;
-            display: block;
-            text-align: center;
-        }
-
-        .main-title {
-            background: var(--bright-green);
-            color: white;
-            padding: 18px;
-            font-weight: 900;
-            font-size: 1.8rem;
-            text-align: center;
-            text-transform: uppercase;
-            border: 2px solid var(--dark-teal);
-        }
-
-        .section-header {
-            background: var(--dark-teal);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-top: 15px;
-        }
-
-        .smiley-icon { width: 55px; height: 55px; margin: auto; }
-
-        .status-ok { background-color: #c6efce !important; }
-        .status-encours { background-color: #ffeb9c !important; }
-        .status-nok { background-color: #ffc7ce !important; }
-
-        /* --- LÉGENDE --- */
-        .legend-container {
-            margin-top: 30px;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        .legend-title {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        .legend-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border-radius: 8px;
-            transition: transform 0.2s;
-        }
-
-        .legend-item:hover {
-            transform: translateY(-2px);
-        }
-
-        .legend-item.green {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border-left: 4px solid #28a745;
-        }
-
-        .legend-item.orange {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border-left: 4px solid #ffc107;
-        }
-
-        .legend-item.red {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            border-left: 4px solid #dc3545;
-        }
-
-        .legend-smiley {
-            width: 35px;
-            height: 35px;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .legend-text {
-            flex-grow: 1;
-        }
-
-        .legend-status {
-            font-weight: bold;
-            font-size: 1em;
-            color: #333;
-            margin-bottom: 3px;
-        }
-
-        .legend-description {
-            color: #555;
-            font-size: 0.85em;
-        }
-
-        #login-screen {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
-            z-index: 2000; display: flex; align-items: center; justify-content: center;
-        }
-
-        .hidden { display: none !important; }
-
-        @media print {
-            @page { size: A4 portrait; margin: 0.5in; }
-            .sidebar, #toggle-tab, .btn-retour, #login-screen, .legend-container { display: none !important; }
-            html, body { height: 100%; background-color: white !important; }
-            .container {
-                display: flex !important; flex-direction: column !important;
-                height: 98vh !important; width: 100% !important; max-width: none !important;
-                border: 3px solid black !important; padding: 15px !important; margin: 0 !important;
-            }
-            table { flex: 1 !important; width: 100% !important; border-collapse: collapse !important; }
-            th { font-size: 1.2rem !important; border: 2px solid black !important; padding: 10px !important; }
-            td { border: 1px solid black !important; background-color: #e9e9e9 !important; padding: 0 !important; }
-            .project-cell-wrapper { height: 100% !important; }
-            td:nth-child(1) .table-textarea { font-size: 1.5rem !important; font-weight: 900 !important; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-
-        @media (max-width: 768px) {
-            .legend-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div id="sidebar" class="sidebar">
-        <div class="flex justify-between items-center mb-6 border-b-2 border-black pb-2">
-            <h2 class="font-black text-xl uppercase italic">Projets</h2>
-            <a href="index.html" class="btn-retour text-red-600 font-bold text-sm"></a>
-        </div>
-        <div id="project-list-sidebar"></div>
-    </div>
-
-    <div id="toggle-tab" class="toggle-tab" onclick="toggleSidebar()">▶</div>
-
-    <div class="main-content">
-        <div id="login-screen" class="hidden">
-            <div class="bg-white p-10 rounded shadow-2xl w-96">
-                <h2 class="text-2xl font-black mb-6 text-center uppercase">Connexion</h2>
-                <input type="email" id="login-email" placeholder="Email" class="w-full p-3 border mb-4">
-                <input type="password" id="login-password" placeholder="Mot de passe" class="w-full p-3 border mb-6">
-                <button onclick="login()" class="w-full bg-emerald-600 text-white p-3 font-black">ENTRER</button>
-            </div>
-        </div>
-
-        <div class="container">
-            <div class="grid grid-cols-[120px_1fr_120px] items-center mb-6 gap-6">
-                <a href="index.html" target="_blank">
-                    <img src="asset/spmi.png" style="width:110px" onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'" title="Retour">
-                </a>
-                <div class="main-title">Comprendre pour Performer</div>
-                <div class="flex justify-end">
-                    <img src="asset/M00.png" style="width:80px; cursor:pointer;" onclick="window.print()" title="Imprimer le rapport">
-                </div>
-            </div>
-
-            <div class="section-header">Performance - Méthode Logistique</div>
-            <div class="border-2 border-black p-4 text-center font-black text-2xl uppercase bg-yellow-50 mb-4">
-                Tournée Terrain : DET / DUO / DPX
-            </div>
-
-            <div class="section-header">Objectif</div>
-            <div class="flex justify-center mb-4">
-                <div class="bg-[#2ecc71] text-white border-2 border-[#004d4d] p-4 w-3/4 font-black text-center text-3xl shadow-lg">
-                    0 PROJET EN RETARD
-                </div>
-            </div>
-
-            <div class="section-header">Situation Actuelle</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 24%;">Projets</th>
-                        <th style="width: 12%;">Statut</th>
-                        <th style="width: 15%;">Responsable</th>
-                        <th style="width: 31%;">Observation</th>
-                        <th style="width: 8%;">AV%</th>
-                        <th style="width: 10%;">Tendance</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body"></tbody>
-            </table>
-
-            <!-- LÉGENDE -->
-            <div class="legend-container">
-                <div class="legend-title">🚦 Légende Management Contrôle</div>
-                <div class="legend-grid">
-                    <div class="legend-item green">
-                        <img src="https://mikefri.github.io/Pilotage_Projet/asset/smiley_vert.png" alt="Smiley vert" class="legend-smiley">
-                        <div class="legend-text">
-                            <div class="legend-status">VERT</div>
-                            <div class="legend-description">Tout va bien</div>
-                        </div>
-                    </div>
-
-                    <div class="legend-item orange">
-                        <img src="https://mikefri.github.io/Pilotage_Projet/asset/smiley_orange.png" alt="Smiley orange" class="legend-smiley">
-                        <div class="legend-text">
-                            <div class="legend-status">ORANGE</div>
-                            <div class="legend-description">Situation de vigilance</div>
-                        </div>
-                    </div>
-
-                    <div class="legend-item red">
-                        <img src="https://mikefri.github.io/Pilotage_Projet/asset/smiley_rouge.png" alt="Smiley rouge" class="legend-smiley">
-                        <div class="legend-text">
-                            <div class="legend-status">ROUGE</div>
-                            <div class="legend-description">Situation de conflit/blocage → Escalade DUO/DET</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+    <link rel="manifest" href="./manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDfFtIqMSOddPS6NG4AQqDJ2W3KaBfKzUE",
@@ -364,158 +35,607 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        let projectsData = [];
-        let responsablesMap = {};
-        let reportingData = {};
-        let selectedProjectIds = [];
+        window.auth = auth;
+        window.fbDB = db;
+        window.fbMethods = { ref, set, onValue, update, remove };
 
-        window.toggleSidebar = () => {
-            const sb = document.getElementById('sidebar');
-            const tab = document.getElementById('toggle-tab');
-            sb.classList.toggle('open');
-            tab.innerText = sb.classList.contains('open') ? "◀" : "▶";
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                errorEl.classList.add('hidden');
+            } catch (e) {
+                errorEl.innerText = "Identifiants incorrects";
+                errorEl.classList.remove('hidden');
+            }
         };
 
-        window.login = () => {
-            const e = document.getElementById('login-email').value;
-            const p = document.getElementById('login-password').value;
-            signInWithEmailAndPassword(auth, e, p).catch(() => alert("Erreur"));
+        window.logout = async () => {
+            const logoutScreen = document.getElementById('logout-screen');
+
+            // 1. Videsss immédiatement les champs de texte.
+            document.getElementById('login-email').value = "";
+            document.getElementById('login-password').value = "";
+
+            try {
+                logoutScreen.classList.remove('hidden');
+                setTimeout(() => {
+                    logoutScreen.classList.remove('opacity-0');
+                    logoutScreen.classList.add('opacity-100');
+                }, 10);
+
+                await signOut(auth);
+
+                // 2. On attend la fin du message d'au revoir
+                setTimeout(() => {
+                    // Le reload réinitialise tout le contexte JavaScript
+                    window.location.reload();
+                }, 2500);
+
+            } catch (e) {
+                window.location.reload();
+            }
         };
 
         onAuthStateChanged(auth, (user) => {
-            if (user) { 
-                document.getElementById('login-screen').classList.add('hidden'); 
-                initApp(); 
-            }
-            else { 
-                document.getElementById('login-screen').classList.remove('hidden'); 
+            const loginScreen = document.getElementById('login-screen');
+            if (user) {
+                if (loginScreen) loginScreen.classList.add('hidden');
+
+                // Déclenchement du chargement et du statut
+                loadAllData();
+                setupConnectionStatus();
+
+                const statusId = btoa(user.email).replace(/[/+=]/g, "");
+                const userStatusRef = ref(db, 'status/' + statusId);
+                onValue(ref(db, '.info/connected'), (snap) => {
+                    if (snap.val() === true) {
+                        onDisconnect(userStatusRef).set({ state: 'offline' });
+                        set(userStatusRef, { state: 'online' });
+                    }
+                });
+            } else {
+                if (loginScreen) loginScreen.classList.remove('hidden');
             }
         });
 
-        function initApp() {
-            const user = auth.currentUser;
-
-            // 1. Récupérer la sélection enregistrée pour cet utilisateur
-            onValue(ref(db, `selections/${user.uid}`), (s) => {
-                const data = s.val();
-                if (data && data.selectedIds) {
-                    selectedProjectIds = data.selectedIds;
+        function setupConnectionStatus() {
+            onValue(ref(db, ".info/connected"), (snap) => {
+                const dot = document.getElementById('workflow-dot');
+                const txt = document.getElementById('workflow-text');
+                if (dot && txt) {
+                    dot.className = snap.val() ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+                    txt.innerText = snap.val() ? "CLOUD : ONLINE" : "CLOUD : OFFLINE";
                 }
-                renderSidebar();
-                renderTable();
-            });
-
-            // 2. Récupérer les responsables
-            onValue(ref(db, 'responsables'), (s) => {
-                responsablesMap = {};
-                if (s.val()) Object.values(s.val()).forEach(r => responsablesMap[r.id] = r.name);
-                renderTable();
-            });
-
-            // 3. Récupérer les observations/tendances
-            onValue(ref(db, 'reporting'), (s) => { 
-                reportingData = s.val() || {}; 
-                renderTable(); 
-            });
-
-            // 4. Récupérer les projets
-            onValue(ref(db, 'projects'), (s) => {
-                projectsData = s.val() ? Object.values(s.val()) : [];
-                projectsData.sort((a, b) => (a.status === 'Terminé' ? 1 : -1));
-                
-                // On ne force plus la sélection des 8 premiers ici pour respecter le choix utilisateur
-                renderSidebar();
-                renderTable();
             });
         }
-
-        function renderSidebar() {
-            const list = document.getElementById('project-list-sidebar');
-            if (!list) return;
-            list.innerHTML = '';
-            const sortedProjects = [...projectsData].sort((a, b) => (parseInt(a.priority) || 2) - (parseInt(b.priority) || 2));
-            
-            sortedProjects.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'project-item';
-                const isChecked = selectedProjectIds.includes(p.id);
-                const prioText = p.priority === "1" ? "(P1)" : p.priority === "3" ? "(P3)" : "(P2)";
-                div.innerHTML = `
-                    <div class="w-[30px] flex justify-center flex-shrink-0">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} class="w-4 h-4" onclick="event.stopPropagation(); toggleProject('${p.id}')">
-                    </div>
-                    <span class="text-[10px] text-gray-500 mr-2 flex-shrink-0">${prioText}</span>
-                    <span class="text-[14px] leading-tight">${p.name}</span>
-                `;
-                div.onclick = () => toggleProject(p.id);
-                list.appendChild(div);
-            });
-        }
-
-        window.toggleProject = (id) => {
-            const user = auth.currentUser;
-            // Mise à jour locale
-            selectedProjectIds = selectedProjectIds.includes(id) 
-                ? selectedProjectIds.filter(i => i !== id) 
-                : [...selectedProjectIds, id];
-            
-            // Sauvegarde immédiate dans Firebase pour cet utilisateur
-            if (user) {
-                set(ref(db, `selections/${user.uid}`), {
-                    selectedIds: selectedProjectIds
-                });
-            }
-            
-            renderSidebar();
-            renderTable();
-        };
-
-        function renderTable() {
-            const body = document.getElementById('table-body');
-            if (!body) return;
-            body.innerHTML = '';
-            const filtered = projectsData.filter(p => selectedProjectIds.includes(p.id));
-
-            filtered.forEach((p) => {
-                const report = reportingData[p.id] || {};
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <div class="project-cell-wrapper">
-                            <textarea class="table-textarea text-[#004d4d]" readonly>${p.name}</textarea>
-                        </div>
-                    </td>
-                    <td><div class="flex items-center justify-center h-[95px] font-black uppercase text-center text-xs px-2">${p.status}</div></td>
-                    <td><div class="flex items-center justify-center h-[95px] text-center font-bold text-sm px-2">${responsablesMap[p.owner] || ''}</div></td>
-                    <td>
-                        <div class="project-cell-wrapper">
-                            <textarea class="table-textarea" onchange="saveData('${p.id}', 'obs', this.value)">${report.obs || ''}</textarea>
-                        </div>
-                    </td>
-                    <td><div class="flex items-center justify-center h-[95px] font-black text-xl">${p.progress}%</div></td>
-                    <td class="${report.trend ? 'status-' + report.trend : ''}" onclick="cycleTrend('${p.id}', '${report.trend || ''}')">
-                        <div class="flex items-center justify-center h-[95px] cursor-pointer">
-                            <img src="${report.trendImg || ''}" class="smiley-icon" style="${report.trendImg ? '' : 'display:none'}">
-                        </div>
-                    </td>
-                `;
-                body.appendChild(tr);
-            });
-        }
-
-        window.cycleTrend = (pId, current) => {
-            const trends = [
-                { val: 'ok', img: 'asset/smiley_vert.png' },
-                { val: 'encours', img: 'asset/smiley_orange.png' },
-                { val: 'nok', img: 'asset/smiley_rouge.png' },
-                { val: '', img: '' }
-            ];
-            let idx = trends.findIndex(t => t.val === current);
-            let next = trends[(idx + 1) % trends.length];
-            update(ref(db, `reporting/${pId}`), { trend: next.val, trendImg: next.img });
-        };
-
-        window.saveData = (pId, f, v) => update(ref(db, `reporting/${pId}`), { [f]: v });
     </script>
+
+    <style>
+        body {
+            background-color: #F8FAFC !important;
+        }
+
+        .resizable-gantt {
+            resize: vertical;
+            overflow: auto;
+            max-height: 80vh;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-active {
+            display: flex !important;
+            animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .gantt .grid-row text {
+            cursor: pointer;
+            fill: #6366f1;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .gantt .grid-row text:hover {
+            fill: #4338ca;
+            text-decoration: underline;
+        }
+
+        .gantt .bar-label {
+            font-weight: 700;
+            font-size: 11px;
+            fill: #1e293b;
+        }
+
+        .gantt .bar-progress {
+            stroke-width: 0;
+        }
+
+        .btn-stats {
+            background-color: #e0e7ff;
+            /* Bleu très léger */
+            color: #4338ca;
+            /* Indigo */
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-stats:hover {
+            background-color: #c7d2fe;
+            transform: translateY(-1px);
+        }
+
+        /* Animation d'entrée pour la modale */
+        .animate-in {
+            animation: modalScale 0.2s ease-out forwards;
+        }
+
+        @keyframes modalScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+
+        .resizable-gantt {
+            overflow: auto;
+            width: 100%;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Force le SVG à ne pas prendre plus de place que nécessaire */
+        #gantt-chart svg {
+            vertical-align: top;
+            display: block;
+        }
+
+        /* Pour que le scroll soit collé au contenu du Gantt */
+        #gantt-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 0;
+        }
+        
+        .gantt {
+            display: block;
+            overflow: visible;
+        }
+        
+        /* Réduit l'espace en bas du conteneur Gantt */
+        #gantt-chart {
+            padding-bottom: 0;
+            margin-bottom: 0;
+            line-height: 0;
+        }
+
+        /* Styles pour la tooltip des notes */
+        .project-tooltip {
+            position: absolute;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 12px 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 1000;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .project-tooltip.visible {
+            opacity: 1;
+        }
+
+        .project-tooltip p {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.5;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body class="text-slate-900 font-sans">
+
+    <div id="update-banner"
+        class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 z-[999] hidden">
+        <span>Une nouvelle version est disponible !</span>
+        <button onclick="window.location.reload()"
+            class="bg-white text-blue-600 px-4 py-1 rounded font-bold hover:bg-gray-100 transition">
+            Actualiser
+        </button>
+    </div>
+
+
+
+    <div id="login-screen"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] hidden">
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-white/20 text-center">
+
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-4 opacity-80">Méthode
+                Logistique</p>
+
+            <div class="w-20 h-20 rounded-3xl mx-auto shadow-xl shadow-indigo-100 mb-6 overflow-hidden">
+                <img src="icon.png" class="w-full h-full object-cover block scale-105" alt="Logo"
+                    onerror="this.src='https://cdn-icons-png.flaticon.com/512/711/711769.png'">
+            </div>
+
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage Projet</h1>
+            <p class="text-slate-400 text-sm mt-2 mb-8">Accès sécurisé réservé</p>
+
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email professionnel" autocomplete="off"
+                    class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+
+                <div class="relative">
+                    <input type="password" id="login-password" placeholder="Mot de passe"
+                        autocomplete="current-password"
+                        class="w-full p-4 pr-12 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+
+                    <button type="button" onclick="togglePasswordVisibility()"
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">
+                        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <button onclick="login()"
+                    class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                    SE CONNECTER
+                </button>
+
+                <p id="login-error" class="text-red-500 text-xs font-bold hidden bg-red-50 py-3 rounded-xl"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="logout-screen"
+        class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-500">
+        <div class="text-center">
+            <div
+                class="bg-indigo-500/20 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/20">
+                <span class="text-5xl animate-bounce">👋</span>
+            </div>
+            <h2 class="text-3xl font-black text-white tracking-tight">Au revoir !</h2>
+            <p class="text-indigo-300/60 font-bold uppercase text-[10px] tracking-[0.3em] mt-4">Déconnexion sécurisée en
+                cours</p>
+        </div>
+    </div>
+
+
+    <nav
+        class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+        <div class="flex items-center gap-5">
+            <div class="flex items-center gap-3">
+                <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
+                <div class="flex flex-col leading-none hidden md:flex">
+                    <span class="text-xl font-black text-slate-800 tracking-tight">Gestion de projet</span>
+                    <span id="app-version" class="text-[10px] text-slate-400 font-medium mt-0.5">Chargement...</span>
+                </div>
+            </div>
+            <div id="workflow-status"
+                class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                <span id="workflow-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                <span id="workflow-text">Sync...</span>
+            </div>
+        </div>
+
+        <div
+            class="flex items-center gap-8 bg-white/80 backdrop-blur-md p-2 rounded-3xl border border-slate-200 shadow-xl shadow-slate-100/50">
+
+            <nav class="flex items-center gap-1">
+                <a href="stats.html"
+                    class="group relative px-4 py-2.5 flex items-center gap-3 transition-all duration-300">
+                    <div class="absolute inset-0 bg-indigo-50 rounded-2xl scale-100 transition-transform"></div>
+                    <svg class="relative w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path d="M18 20V10M12 20V4M6 20v-6"></path>
+                    </svg>
+                    <span class="relative text-sm font-bold text-indigo-700">Stats</span>
+                </a>
+
+                <a href="manager.html"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+
+                    <span class="text-xl group-hover:scale-110 transition-transform duration-200 ease-out">
+                        💼
+                    </span>
+
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900 antialiased">
+                        Manager Dashboard
+                    </span>
+                </a>
+
+
+                <a href="liste_taches_hors_projet.html"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+                    <span class="text-xl group-hover:scale-125 transition-transform duration-200">📝</span>
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900">Libres</span>
+                </a>
+
+                <a href="responsables.html"
+                    class="group px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-2xl transition-all duration-200">
+                    <span class="text-xl group-hover:scale-125 transition-transform duration-200">👥</span>
+                    <span class="text-sm font-medium text-slate-500 group-hover:text-slate-900">Équipe</span>
+                </a>
+            </nav>
+
+            <div class="h-8 w-[1px] bg-slate-200"></div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="openForm()"
+                    class="group relative flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm tracking-wide overflow-hidden transition-all hover:pr-8 active:scale-95">
+                    <span class="relative z-10">+ PROJET</span>
+                    <span
+                        class="absolute right-2 opacity-0 group-hover:opacity-100 group-hover:right-3 transition-all">→</span>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500">
+                    </div>
+                </button>
+
+                <button onclick="logout()"
+                    class="group flex items-center justify-center w-11 h-11 rounded-2xl border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:rotate-12 transition-transform"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="w-full px-2 md:px-4 py-4 mx-auto">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 px-2">
+            <div>
+
+
+                <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                    Performance <span class="text-indigo-600">Méthodes Logistique Industrielle</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+                <div id="save-status"
+                    class="flex items-center gap-2 text-[10px] font-black text-emerald-500 bg-emerald-50/50 px-3 py-1.5 rounded-xl border border-emerald-100 opacity-0 transition-opacity">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    SYNC
+                </div>
+
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                    <button onclick="changeView('Day')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm">Jour</button>
+                    <button onclick="changeView('Week')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm border-x border-slate-200">Semaine</button>
+                    <button onclick="changeView('Month')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm">Mois</button>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="flex flex-wrap items-center gap-6 mb-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mx-2">
+            <div class="flex items-center gap-3">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsable</label>
+                <select id="filter-owner" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all">Tous les membres</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</label>
+                <div class="relative inline-block text-left" id="multi-select-container">
+                    <button type="button" onclick="toggleStatusDropdown()" class="flex items-center justify-between w-48 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="selected-status-label">Tous les statuts</span>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <div id="status-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl p-2">
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="À faire" checked> À faire
+                            </label>
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="En cours" checked> En cours
+                            </label>
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Priorité</label>
+                <select id="filter-priority" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all" selected>Toutes les priorités</option>
+                    <option value="1">🔴 P1 - Haute</option>
+                    <option value="2">🟡 P2 - Moyenne</option>
+                    <option value="3">🔵 P3 - Basse</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="w-full bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
+            <div id="gantt-container" class="resizable-gantt !border-none">
+                <div id="gantt-chart" class="w-full"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="form-overlay"
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
+        <aside
+            class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-white animate-in zoom-in duration-300">
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+                <h2 class="font-black text-2xl text-slate-800 tracking-tight">Édition Projet</h2>
+                <button onclick="closeForm()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">&times;</button>
+            </div>
+
+            <div class="mb-8 p-5 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100">
+                <label
+                    class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 ml-1">Sélection
+                    Rapide</label>
+                <select id="project-selector" onchange="loadProjectInForm(this.value)"
+                    class="w-full p-3 rounded-xl bg-white border border-indigo-200 outline-none text-sm font-bold text-slate-700 shadow-sm">
+                    <option value="">-- Nouveau Projet --</option>
+                </select>
+            </div>
+
+            <input type="hidden" id="p-id">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom du
+                        projet</label>
+                    <input type="text" id="p-name"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Responsable</label>
+                        <select id="p-owner"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none"></select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Statut</label>
+                        <select id="p-status"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none">
+                            <option value="À faire">À faire</option>
+                            <option value="En cours" selected>En cours</option>
+                            <option value="Terminé">Terminé</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Priorité</label>
+                    <select id="p-priority"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
+                        <option value="1">🔴 P1 - Haute</option>
+                        <option value="2" selected>🟡 P2 - Moyenne</option>
+                        <option value="3">🔵 P3 - Basse</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Début</label>
+                        <input type="date" id="p-start"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fin</label>
+                        <input type="date" id="p-end"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label
+                            class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Avancement</label>
+                        <span class="text-indigo-600 font-black text-sm" id="prog-val">0%</span>
+                    </div>
+                    <input type="range" id="p-progress" min="0" max="100"
+                        class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Notes détaillées</label>
+                    <textarea id="p-notes" rows="4"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-sm resize-none"
+                        placeholder="Ajoutez des notes, remarques ou détails sur ce projet..."></textarea>
+                </div>
+
+                <div class="flex flex-col gap-3 pt-6">
+                    <button onclick="addOrUpdateProject()"
+                        class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">ENREGISTRER</button>
+                    <button id="btn-delete" onclick="showDeleteConfirm()"
+                        class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER
+                        LE PROJET</button>
+                </div>
+            </div>
+
+
+            <div id="edit-info" class="mt-6 pt-4 border-t border-slate-50 text-[10px] text-slate-400 italic hidden">
+                Dernière modif : <span id="last-edit-text">-</span>
+            </div>
+
+
+        </aside>
+    </div>
+
+    <script src="script_Index.js"></script>
+
+    <div id="confirm-modal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
+        <div
+            class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-white text-center animate-in zoom-in duration-200">
+            <div
+                class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                ⚠️</div>
+            <h3 class="text-xl font-black text-slate-800 mb-2 tracking-tight">Supprimer ce projet ?</h3>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Action Irréversible : Vous allez supprimer ce projet
+                et toutes les tâches qui lui sont liées.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteConfirm()"
+                    class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+                <button onclick="confirmDeleteProject()"
+                    class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+
 </body>
+
 </html>
