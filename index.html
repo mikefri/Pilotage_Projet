@@ -121,6 +121,7 @@
         .resizable-gantt {
             resize: vertical;
             overflow: auto;
+            min-height: 500px;
             max-height: 80vh;
             width: 100%;
             border: 1px solid #e2e8f0;
@@ -214,6 +215,7 @@
             border-radius: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0;
+            /* On retire le min-height fixe pour éviter l'espace blanc */
         }
 
         /* Force le SVG à ne pas prendre plus de place que nécessaire */
@@ -226,27 +228,11 @@
         #gantt-container {
             overflow-x: auto;
             overflow-y: hidden;
+            /* Évite le double scroll */
         }
-        
         .gantt {
+            /* Évite que le SVG ne réserve de l'espace blanc en bas */
             display: block;
-        }
-        
-        /* Réduit l'espace en bas du conteneur Gantt */
-        #gantt-chart {
-            padding-bottom: 10px !important;
-            margin-bottom: 0;
-        }
-        
-        /* Cible spécifiquement le conteneur du Gantt de Frappe */
-        .gantt-container {
-            padding-bottom: 0 !important;
-            margin-bottom: 0 !important;
-        }
-        
-        /* Réduit la hauteur du conteneur SVG */
-        #gantt-chart > svg {
-            margin-bottom: 0 !important;
         }
 
         /* Styles pour la tooltip des notes */
