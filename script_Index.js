@@ -174,18 +174,27 @@ function renderGantt(view = currentView) {
     setTimeout(() => {
         const svg = document.querySelector('#gantt-chart svg');
         if (svg) {
+            // Récupérer la hauteur actuelle du SVG générée par Frappe Gantt
+            const currentHeight = parseFloat(svg.getAttribute('height'));
+            
             // Récupérer tous les éléments visibles du Gantt
             const allBars = svg.querySelectorAll('.bar-wrapper');
             const allGridRows = svg.querySelectorAll('.grid-row');
+            const allHeaders = svg.querySelectorAll('.upper-text, .lower-text');
             
             if (allBars.length > 0 || allGridRows.length > 0) {
                 let maxY = 0;
                 
                 // Trouver la position Y maximale des barres
                 allBars.forEach(bar => {
-                    const y = parseFloat(bar.getAttribute('y') || 0);
-                    const height = parseFloat(bar.getAttribute('height') || 0);
-                    maxY = Math.max(maxY, y + height);
+                    const transform = bar.getAttribute('transform');
+                    if (transform) {
+                        const match = transform.match(/translate\([\d.]+,\s*([\d.]+)\)/);
+                        if (match) {
+                            const y = parseFloat(match[1]);
+                            maxY = Math.max(maxY, y + 60); // 60 pour la hauteur de la barre + marge
+                        }
+                    }
                 });
                 
                 // Trouver la position Y maximale des lignes de grille
@@ -198,20 +207,31 @@ function renderGantt(view = currentView) {
                     }
                 });
                 
-                // Ajouter un petit padding en bas (20px) et ajuster la hauteur du SVG
-                const newHeight = maxY + 20;
-                svg.setAttribute('height', newHeight);
+                // Vérifier aussi les en-têtes de dates
+                allHeaders.forEach(header => {
+                    const y = parseFloat(header.getAttribute('y') || 0);
+                    maxY = Math.max(maxY, y);
+                });
                 
-                // Ajuster aussi le viewBox si présent
-                const viewBox = svg.getAttribute('viewBox');
-                if (viewBox) {
-                    const parts = viewBox.split(' ');
-                    parts[3] = newHeight;
-                    svg.setAttribute('viewBox', parts.join(' '));
+                // Ajouter un padding raisonnable en bas (50px)
+                const newHeight = maxY + 50;
+                
+                // Ne réduire la hauteur que si elle est significativement plus petite
+                // pour éviter de couper du contenu
+                if (newHeight < currentHeight && (currentHeight - newHeight) > 100) {
+                    svg.setAttribute('height', newHeight);
+                    
+                    // Ajuster aussi le viewBox si présent
+                    const viewBox = svg.getAttribute('viewBox');
+                    if (viewBox) {
+                        const parts = viewBox.split(' ');
+                        parts[3] = newHeight;
+                        svg.setAttribute('viewBox', parts.join(' '));
+                    }
                 }
             }
         }
-    }, 100);
+    }, 200);
 
     // --- 5. PERSONNALISATION POST-RENDU ---
 setTimeout(() => {
