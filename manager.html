@@ -148,6 +148,80 @@
         .status-encours { background-color: #ffeb9c !important; }
         .status-nok { background-color: #ffc7ce !important; }
 
+        /* --- LÉGENDE --- */
+        .legend-container {
+            margin-top: 30px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .legend-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .legend-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .legend-item.green {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+        }
+
+        .legend-item.orange {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left: 4px solid #ffc107;
+        }
+
+        .legend-item.red {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 4px solid #dc3545;
+        }
+
+        .legend-smiley {
+            width: 35px;
+            height: 35px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .legend-text {
+            flex-grow: 1;
+        }
+
+        .legend-status {
+            font-weight: bold;
+            font-size: 1em;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .legend-description {
+            color: #555;
+            font-size: 0.85em;
+        }
+
         #login-screen {
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
             z-index: 2000; display: flex; align-items: center; justify-content: center;
@@ -157,7 +231,7 @@
 
         @media print {
             @page { size: A4 portrait; margin: 0.5in; }
-            .sidebar, #toggle-tab, .btn-retour, #login-screen { display: none !important; }
+            .sidebar, #toggle-tab, .btn-retour, #login-screen, .legend-container { display: none !important; }
             html, body { height: 100%; background-color: white !important; }
             .container {
                 display: flex !important; flex-direction: column !important;
@@ -170,6 +244,12 @@
             .project-cell-wrapper { height: 100% !important; }
             td:nth-child(1) .table-textarea { font-size: 1.5rem !important; font-weight: 900 !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+
+        @media (max-width: 768px) {
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -232,6 +312,36 @@
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
+
+            <!-- LÉGENDE -->
+            <div class="legend-container">
+                <div class="legend-title">🚦 Légende Management Contrôle</div>
+                <div class="legend-grid">
+                    <div class="legend-item green">
+                        <img src="https://mikefri.github.io/Pilotage_Projet/asset/smiley_vert.png" alt="Smiley vert" class="legend-smiley">
+                        <div class="legend-text">
+                            <div class="legend-status">VERT</div>
+                            <div class="legend-description">Tout va bien</div>
+                        </div>
+                    </div>
+
+                    <div class="legend-item orange">
+                        <img src="https://mikefri.github.io/Pilotage_Projet/asset/smiley_orange.png" alt="Smiley orange" class="legend-smiley">
+                        <div class="legend-text">
+                            <div class="legend-status">ORANGE</div>
+                            <div class="legend-description">Situation de vigilance</div>
+                        </div>
+                    </div>
+
+                    <div class="legend-item red">
+                        <img src="https://mikefri.github.io/Pilotage_Projet/asset/smiley_rouge.png" alt="Smiley rouge" class="legend-smiley">
+                        <div class="legend-text">
+                            <div class="legend-status">ROUGE</div>
+                            <div class="legend-description">Situation de conflit/blocage → Escalade DUO/DET</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
