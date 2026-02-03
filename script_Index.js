@@ -170,6 +170,49 @@ function renderGantt(view = currentView) {
         }
     });
 
+    // --- AJUSTEMENT DE LA HAUTEUR DU SVG POUR ÉLIMINER L'ESPACE BLANC ---
+    setTimeout(() => {
+        const svg = document.querySelector('#gantt-chart svg');
+        if (svg) {
+            // Récupérer tous les éléments visibles du Gantt
+            const allBars = svg.querySelectorAll('.bar-wrapper');
+            const allGridRows = svg.querySelectorAll('.grid-row');
+            
+            if (allBars.length > 0 || allGridRows.length > 0) {
+                let maxY = 0;
+                
+                // Trouver la position Y maximale des barres
+                allBars.forEach(bar => {
+                    const y = parseFloat(bar.getAttribute('y') || 0);
+                    const height = parseFloat(bar.getAttribute('height') || 0);
+                    maxY = Math.max(maxY, y + height);
+                });
+                
+                // Trouver la position Y maximale des lignes de grille
+                allGridRows.forEach(row => {
+                    const rect = row.querySelector('rect');
+                    if (rect) {
+                        const y = parseFloat(rect.getAttribute('y') || 0);
+                        const height = parseFloat(rect.getAttribute('height') || 0);
+                        maxY = Math.max(maxY, y + height);
+                    }
+                });
+                
+                // Ajouter un petit padding en bas (20px) et ajuster la hauteur du SVG
+                const newHeight = maxY + 20;
+                svg.setAttribute('height', newHeight);
+                
+                // Ajuster aussi le viewBox si présent
+                const viewBox = svg.getAttribute('viewBox');
+                if (viewBox) {
+                    const parts = viewBox.split(' ');
+                    parts[3] = newHeight;
+                    svg.setAttribute('viewBox', parts.join(' '));
+                }
+            }
+        }
+    }, 100);
+
     // --- 5. PERSONNALISATION POST-RENDU ---
 setTimeout(() => {
     // Créer la tooltip une seule fois
