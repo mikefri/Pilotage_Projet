@@ -384,4 +384,258 @@
                 </a>
             </nav>
 
+            <div class="h-8 w-[1px] bg-slate-200"></div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="openForm()"
+                    class="group relative flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm tracking-wide overflow-hidden transition-all hover:pr-8 active:scale-95">
+                    <span class="relative z-10">+ PROJET</span>
+                    <span
+                        class="absolute right-2 opacity-0 group-hover:opacity-100 group-hover:right-3 transition-all">→</span>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500">
+                    </div>
+                </button>
+
+                <button onclick="logout()"
+                    class="group flex items-center justify-center w-11 h-11 rounded-2xl border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:rotate-12 transition-transform"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="w-full px-2 md:px-4 py-4 mx-auto">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 px-2">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                    Performance <span class="text-indigo-600">Méthodes Logistique Industrielle</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+                <div id="save-status"
+                    class="flex items-center gap-2 text-[10px] font-black text-emerald-500 bg-emerald-50/50 px-3 py-1.5 rounded-xl border border-emerald-100 opacity-0 transition-opacity">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    SYNC
+                </div>
+
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                    <button onclick="changeView('Day')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm">Jour</button>
+                    <button onclick="changeView('Week')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm border-x border-slate-200">Semaine</button>
+                    <button onclick="changeView('Month')"
+                        class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all hover:text-indigo-600 focus:bg-white focus:text-indigo-600 focus:shadow-sm">Mois</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION FILTRES AVEC RECHERCHE -->
+        <div class="flex flex-wrap items-center gap-6 mb-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mx-2">
             
+            <!-- Filtre Responsable -->
+            <div class="flex items-center gap-3">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsable</label>
+                <select id="filter-owner" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all">Tous les membres</option>
+                </select>
+            </div>
+
+            <!-- Filtre Statut -->
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</label>
+                <div class="relative inline-block text-left" id="multi-select-container">
+                    <button type="button" onclick="toggleStatusDropdown()" class="flex items-center justify-between w-48 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="selected-status-label">Tous les statuts</span>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <div id="status-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl p-2">
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="À faire" checked> À faire
+                            </label>
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="En cours" checked> En cours
+                            </label>
+                            <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-sm">
+                                <input type="checkbox" class="status-filter" value="Terminé" checked> Terminé
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtre Priorité -->
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Priorité</label>
+                <select id="filter-priority" onchange="renderGantt()"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 px-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                    <option value="all" selected>Toutes les priorités</option>
+                    <option value="1">🔴 P1 - Haute</option>
+                    <option value="2">🟡 P2 - Moyenne</option>
+                    <option value="3">🔵 P3 - Basse</option>
+                </select>
+            </div>
+
+            <!-- 🆕 NOUVEAU : Champ de recherche -->
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recherche</label>
+                <div class="relative">
+                    <input type="text" id="filter-search" placeholder="Rechercher un projet..."
+                        class="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-1.5 pl-9 pr-8 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none w-56 transition-all duration-300">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <button type="button" id="clear-search" onclick="clearSearch()" 
+                        class="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 text-slate-500 hover:bg-red-100 hover:text-red-500 items-center justify-center text-xs font-bold transition-all"
+                        style="display: none;">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
+            <div id="gantt-container" class="resizable-gantt !border-none">
+                <div id="gantt-chart" class="w-full"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="form-overlay"
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
+        <aside
+            class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-white animate-in zoom-in duration-300">
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+                <h2 class="font-black text-2xl text-slate-800 tracking-tight">Édition Projet</h2>
+                <button onclick="closeForm()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">&times;</button>
+            </div>
+
+            <div class="mb-8 p-5 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100">
+                <label
+                    class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 ml-1">Sélection
+                    Rapide</label>
+                <select id="project-selector" onchange="loadProjectInForm(this.value)"
+                    class="w-full p-3 rounded-xl bg-white border border-indigo-200 outline-none text-sm font-bold text-slate-700 shadow-sm">
+                    <option value="">-- Nouveau Projet --</option>
+                </select>
+            </div>
+
+            <input type="hidden" id="p-id">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom du
+                        projet</label>
+                    <input type="text" id="p-name"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Responsable</label>
+                        <select id="p-owner"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none"></select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Statut</label>
+                        <select id="p-status"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none">
+                            <option value="À faire">À faire</option>
+                            <option value="En cours" selected>En cours</option>
+                            <option value="Terminé">Terminé</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Priorité</label>
+                    <select id="p-priority"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
+                        <option value="1">🔴 P1 - Haute</option>
+                        <option value="2" selected>🟡 P2 - Moyenne</option>
+                        <option value="3">🔵 P3 - Basse</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Début</label>
+                        <input type="date" id="p-start"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fin</label>
+                        <input type="date" id="p-end"
+                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label
+                            class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Avancement</label>
+                        <span class="text-indigo-600 font-black text-sm" id="prog-val">0%</span>
+                    </div>
+                    <input type="range" id="p-progress" min="0" max="100"
+                        class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Notes détaillées</label>
+                    <textarea id="p-notes" rows="4"
+                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-sm resize-none"
+                        placeholder="Ajoutez des notes, remarques ou détails sur ce projet..."></textarea>
+                </div>
+
+                <div class="flex flex-col gap-3 pt-6">
+                    <button onclick="addOrUpdateProject()"
+                        class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">ENREGISTRER</button>
+                    <button id="btn-delete" onclick="showDeleteConfirm()"
+                        class="hidden w-full bg-red-50 text-red-500 py-3 rounded-2xl font-black text-xs hover:bg-red-100 transition-all">SUPPRIMER
+                        LE PROJET</button>
+                </div>
+            </div>
+
+            <div id="edit-info" class="mt-6 pt-4 border-t border-slate-50 text-[10px] text-slate-400 italic hidden">
+                Dernière modif : <span id="last-edit-text">-</span>
+            </div>
+        </aside>
+    </div>
+
+    <script src="script_Index.js"></script>
+
+    <div id="confirm-modal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-[250] p-4">
+        <div
+            class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-white text-center animate-in zoom-in duration-200">
+            <div
+                class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                ⚠️</div>
+            <h3 class="text-xl font-black text-slate-800 mb-2 tracking-tight">Supprimer ce projet ?</h3>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Action Irréversible : Vous allez supprimer ce projet
+                et toutes les tâches qui lui sont liées.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteConfirm()"
+                    class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+                <button onclick="confirmDeleteProject()"
+                    class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
