@@ -95,6 +95,7 @@ function renderGantt(view = currentView) {
     // --- 1. RÉCUPÉRATION DES FILTRES ---
     const filterOwnerVal = document.getElementById('filter-owner')?.value || 'all';
     const filterPriorityValue = document.getElementById('filter-priority')?.value || 'all';
+    const searchValue = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
 
     // Logique pour les statuts multiples via cases à cocher
     const selectedStatusElements = document.querySelectorAll('.status-filter:checked');
@@ -104,15 +105,38 @@ function renderGantt(view = currentView) {
     let filteredProjects = projects.filter(p => {
         const matchOwner = (filterOwnerVal === 'all' || p.owner === filterOwnerVal);
         const matchPriority = (filterPriorityValue === 'all' || (p.priority || "2") === filterPriorityValue);
-        
-        // Si aucune case n'est cochée, on ne montre rien, sinon on vérifie la présence du statut
         const matchStatus = selectedStatuses.includes(p.status || "À faire");
 
-        return matchOwner && matchStatus && matchPriority;
+        // 🆕 NOUVEAU : Filtre de recherche textuelle
+        let matchSearch = true;
+        if (searchValue !== '') {
+            const projectName = (p.name || '').toLowerCase();
+            const projectNotes = (p.notes || '').toLowerCase();
+            const respoFound = responsables.find(r => r.id === p.owner);
+            const ownerName = respoFound ? respoFound.name.toLowerCase() : '';
+            
+            // Recherche dans le nom, les notes et le responsable
+            matchSearch = projectName.includes(searchValue) || 
+                          projectNotes.includes(searchValue) || 
+                          ownerName.includes(searchValue);
+        }
+
+        return matchOwner && matchStatus && matchPriority && matchSearch;
     });
 
+    // Affichage du bouton "clear" si recherche active
+    const clearBtn = document.getElementById('clear-search');
+    if (clearBtn) {
+        clearBtn.style.display = searchValue !== '' ? 'flex' : 'none';
+    }
+
     if (filteredProjects.length === 0) {
-        chartEl.innerHTML = `<div class="p-20 text-center text-slate-400">Aucun projet ne correspond à ces critères.</div>`;
+        chartEl.innerHTML = `
+            <div class="p-20 text-center">
+                <div class="text-6xl mb-4">🔍</div>
+                <p class="text-slate-400 font-bold">Aucun projet ne correspond à "${searchValue || 'ces critères'}"</p>
+                ${searchValue ? '<button onclick="clearSearch()" class="mt-4 text-indigo-600 font-bold hover:underline">Effacer la recherche</button>' : ''}
+            </div>`;
         return;
     }
 
@@ -124,19 +148,16 @@ function renderGantt(view = currentView) {
         const progress = p.progress || 0;
         const priority = p.priority || "2";
 
-        // On garde vos badges de priorité pour le texte
         let prioBadge = "🟡 P2";
         if (priority === "1") prioBadge = "🔴 P1";
         if (priority === "3") prioBadge = "🔵 P3";
 
-        // --- NOUVELLE LOGIQUE : Class basée sur le statut ---
         let customClass = "status-a-faire";
         if (status === "En cours") customClass = "status-en-cours";
         if (status === "Terminé") customClass = "status-termine";
 
         return {
             id: p.id,
-            // On conserve le format du nom avec le responsable et la progression
             name: `${prioBadge} | ${status} | ${p.name} | ${displayName} | ${progress}%`,
             start: p.start || new Date().toISOString().split('T')[0],
             end: p.end || new Date().toISOString().split('T')[0],
@@ -171,63 +192,62 @@ function renderGantt(view = currentView) {
     });
 
     // --- 5. PERSONNALISATION POST-RENDU ---
-setTimeout(() => {
-    // Créer la tooltip une seule fois
-    let tooltip = document.querySelector('.project-tooltip');
-    if (!tooltip) {
-        tooltip = document.createElement('div');
-        tooltip.className = 'project-tooltip';
-        document.body.appendChild(tooltip);
-    }
-
-    filteredProjects.forEach(p => {
-        // Application de la couleur par STATUT
-        const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
-        if (bar) {
-            let color = '#94a3b8';
-            if (p.status === "En cours") {
-                color = '#3b82f6';
-            } else if (p.status === "Terminé") {
-                color = '#22c55e';
-            }
-            bar.style.setProperty('fill', color, 'important');
+    setTimeout(() => {
+        // Créer la tooltip une seule fois
+        let tooltip = document.querySelector('.project-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.className = 'project-tooltip';
+            document.body.appendChild(tooltip);
         }
 
-        // Ajouter les événements de survol UNIQUEMENT si des notes existent
-        if (p.notes && p.notes.trim() !== '') {
-            // On cible la barre complète (.bar) au lieu de .bar-wrapper
-            const barElement = document.querySelector(`[data-id="${p.id}"] .bar`);
-            
-            if (barElement) {
-                barElement.style.cursor = 'help'; // Curseur avec point d'interrogation
-                
-                barElement.addEventListener('mouseenter', (e) => {
-                    tooltip.innerHTML = `<p>${p.notes}</p>`;
-                    tooltip.classList.add('visible');
-                });
-                
-                barElement.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = (e.pageX + 15) + 'px';
-                    tooltip.style.top = (e.pageY + 15) + 'px';
-                });
-                
-                barElement.addEventListener('mouseleave', () => {
-                    tooltip.classList.remove('visible');
-                });
+        filteredProjects.forEach(p => {
+            // Application de la couleur par STATUT
+            const bar = document.querySelector(`[data-id="${p.id}"] .bar-progress`);
+            if (bar) {
+                let color = '#94a3b8';
+                if (p.status === "En cours") {
+                    color = '#3b82f6';
+                } else if (p.status === "Terminé") {
+                    color = '#22c55e';
+                }
+                bar.style.setProperty('fill', color, 'important');
             }
-        }
-    });
 
-    // Gestion du clic sur les textes pour ouvrir la modale d'édition
-    document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
-        el.style.cursor = 'pointer';
-        el.onclick = (e) => {
-            e.stopPropagation();
-            const taskId = el.closest('.grid-row').getAttribute('data-id');
-            if (taskId) editProject(taskId);
-        };
-    });
-}, 150);;
+            // Ajouter les événements de survol UNIQUEMENT si des notes existent
+            if (p.notes && p.notes.trim() !== '') {
+                const barElement = document.querySelector(`[data-id="${p.id}"] .bar`);
+                
+                if (barElement) {
+                    barElement.style.cursor = 'help';
+                    
+                    barElement.addEventListener('mouseenter', (e) => {
+                        tooltip.innerHTML = `<p>${p.notes}</p>`;
+                        tooltip.classList.add('visible');
+                    });
+                    
+                    barElement.addEventListener('mousemove', (e) => {
+                        tooltip.style.left = (e.pageX + 15) + 'px';
+                        tooltip.style.top = (e.pageY + 15) + 'px';
+                    });
+                    
+                    barElement.addEventListener('mouseleave', () => {
+                        tooltip.classList.remove('visible');
+                    });
+                }
+            }
+        });
+
+        // Gestion du clic sur les textes pour ouvrir la modale d'édition
+        document.querySelectorAll('.gantt .grid-row text').forEach((el) => {
+            el.style.cursor = 'pointer';
+            el.onclick = (e) => {
+                e.stopPropagation();
+                const taskId = el.closest('.grid-row').getAttribute('data-id');
+                if (taskId) editProject(taskId);
+            };
+        });
+    }, 150);
 }
 
 async function updateQuick(id, data) {
@@ -452,7 +472,7 @@ window.onclick = function(event) {
     }
 }
 
-// Optionnel : Mettre à jour le texte du bouton (ex: "2 sélectionnés")
+// Mettre à jour le texte du bouton (ex: "2 sélectionnés")
 document.querySelectorAll('.status-filter').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
         const checked = document.querySelectorAll('.status-filter:checked');
@@ -461,8 +481,45 @@ document.querySelectorAll('.status-filter').forEach(checkbox => {
         else if (checked.length === 3) label.innerText = "Tous les statuts";
         else label.innerText = checked.length + " statuts sélectionnés";
         
-        renderGantt(); // Garde ton appel existant pour mettre à jour le Gantt
+        renderGantt();
     });
+});
+
+// --- 🆕 NOUVEAU : FONCTION DE RECHERCHE ---
+function clearSearch() {
+    const searchInput = document.getElementById('filter-search');
+    if (searchInput) {
+        searchInput.value = '';
+        renderGantt();
+        searchInput.focus();
+    }
+}
+
+// Écouteur pour le champ de recherche avec debounce
+let searchTimeout;
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('filter-search');
+    if (searchInput) {
+        // Debounce : attend 300ms après la dernière frappe
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                renderGantt();
+            }, 300);
+        });
+
+        // Recherche immédiate sur Entrée
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                renderGantt();
+            }
+            // Effacer avec Escape
+            if (e.key === 'Escape') {
+                clearSearch();
+            }
+        });
+    }
 });
 
 // Initialisation
