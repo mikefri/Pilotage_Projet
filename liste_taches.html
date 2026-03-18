@@ -49,7 +49,6 @@
             align-items: center;
         }
 
-        /* Zone de drop sur toute la ligne */
         .gantt-row.drag-over {
             background-color: #f0f4ff;
         }
@@ -57,21 +56,34 @@
         .task-label {
             position: sticky;
             left: 0;
-            width: 160px;
-            min-width: 160px;
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
             font-size: 11px;
             font-weight: 700;
             color: #475569;
             z-index: 40;
             background: white;
             padding-left: 10px;
-            padding-right: 15px;
+            padding-right: 12px;
             height: 100%;
             display: flex;
             align-items: center;
             border-right: 2px solid #e2e8f0;
             box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
             cursor: help;
+            /* Fix texte long */
+            overflow: hidden;
+        }
+
+        .task-label-inner {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+            word-break: break-word;
+            white-space: normal;
         }
 
         .task-bar {
@@ -261,8 +273,7 @@
                 </div>
                 <div
                     class="absolute right-0 top-full mt-2 w-64 bg-white border shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
-                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées
-                    </p>
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
                     <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
                 </div>
             </div>
@@ -417,6 +428,10 @@
         let currentProjectId = new URLSearchParams(window.location.search).get('id');
         let currentEditingId = null;
 
+        // labelWidth augmenté à 200px pour mieux afficher les textes longs
+        const LABEL_WIDTH = 200;
+        const DAY_WIDTH = 45;
+
         function loadData() {
             if (!window.fbMethods) return setTimeout(loadData, 100);
             const { onValue, ref } = window.fbMethods;
@@ -456,13 +471,9 @@
             filterEl.value = currentSelection;
         }
 
-        // --- Fonctions Drag & Drop ---
         function onDragStart(event, taskId) {
             event.dataTransfer.setData("taskId", taskId);
-            // Petit délai pour l'effet visuel de transparence pendant le drag
-            setTimeout(() => {
-                event.target.style.opacity = "0.5";
-            }, 0);
+            setTimeout(() => { event.target.style.opacity = "0.5"; }, 0);
         }
 
         function onDragEnd(event) {
@@ -471,8 +482,7 @@
 
         function onDragOver(event) {
             event.preventDefault();
-            const row = event.currentTarget;
-            row.classList.add('drag-over');
+            event.currentTarget.classList.add('drag-over');
         }
 
         function onDragLeave(event) {
@@ -486,23 +496,15 @@
 
             const taskId = event.dataTransfer.getData("taskId");
             const rect = row.getBoundingClientRect();
+            const x = event.clientX - rect.left - LABEL_WIDTH;
+            if (x < 0) return;
 
-            // Calculer la position X relative à la grille de planning
-            const labelWidth = 160;
-            const dayWidth = 45;
-            const x = event.clientX - rect.left - labelWidth;
-
-            if (x < 0) return; // Drop sur le label, on ignore
-
-            // Calculer le nombre de jours à partir du début du projet
-            const dayOffset = Math.floor(x / dayWidth);
+            const dayOffset = Math.floor(x / DAY_WIDTH);
             const pStart = new Date(currentProject.start);
             const newDate = new Date(pStart);
             newDate.setDate(pStart.getDate() + dayOffset);
-
             const dateStr = newDate.toISOString().split('T')[0];
 
-            // Mise à jour Firebase
             const user = window.auth?.currentUser;
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
 
@@ -526,27 +528,24 @@
             const pStart = new Date(currentProject.start);
             const pEnd = new Date(currentProject.end);
             const duration = Math.ceil(Math.abs(pEnd - pStart) / 86400000) + 1;
-            const dayWidth = 45;
-            const labelWidth = 160;
 
-            let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; width: ${duration * dayWidth}px; overflow: visible;">`;
+            let headerHTML = `<div class="gantt-header" style="margin-left: ${LABEL_WIDTH}px; width: ${duration * DAY_WIDTH}px; overflow: visible;">`;
             let weekendColumnsHTML = '';
 
             for (let i = 0; i < duration; i++) {
                 const curr = new Date(pStart);
                 curr.setDate(pStart.getDate() + i);
                 const isToday = curr.getTime() === today.getTime();
-                const dayOfWeek = curr.getDay(); // 0 = dimanche, 6 = samedi
+                const dayOfWeek = curr.getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-                // Ajouter les colonnes de week-end
                 if (isWeekend) {
-                    const leftPos = labelWidth + (i * dayWidth);
-                    weekendColumnsHTML += `<div class="weekend-column" style="left: ${leftPos}px; width: ${dayWidth}px;"></div>`;
+                    const leftPos = LABEL_WIDTH + (i * DAY_WIDTH);
+                    weekendColumnsHTML += `<div class="weekend-column" style="left: ${leftPos}px; width: ${DAY_WIDTH}px;"></div>`;
                 }
 
                 headerHTML += `
-                <div class="header-day relative" style="width: ${dayWidth}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
+                <div class="header-day relative" style="width: ${DAY_WIDTH}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
                     ${isToday ? `
                         <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ef4444] text-white text-[9px] px-2 py-0.5 rounded-md font-bold shadow-md" style="z-index: 100; white-space: nowrap;">
                             Aujourd'hui
@@ -559,7 +558,7 @@
 
             let timelineHTML = '';
             if (today >= pStart && today <= pEnd) {
-                const leftPos = labelWidth + ((today - pStart) / 86400000) * dayWidth;
+                const leftPos = LABEL_WIDTH + ((today - pStart) / 86400000) * DAY_WIDTH;
                 timelineHTML = `<div class="today-line" style="left: ${leftPos}px;"><div class="today-label">Aujourd'hui</div></div>`;
             }
 
@@ -571,19 +570,16 @@
             if (fSearch) filtered = filtered.filter(t => t.desc.toLowerCase().includes(fSearch));
             filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Calcul des retards basé sur la date de fin (date + duree)
             const delayed = filtered.filter(t => {
-                if (t.done) return false;
-                if (!t.date) return false;
-                const dateDebut = new Date(t.date);
-                dateDebut.setHours(0, 0, 0, 0);
+                if (t.done || !t.date) return false;
+                const dateDebut = new Date(t.date); dateDebut.setHours(0, 0, 0, 0);
                 const dureeJours = t.dureeJours || 1;
                 const dateFin = new Date(dateDebut);
                 dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
                 dateFin.setHours(23, 59, 59, 999);
                 return today > dateFin;
             });
-            
+
             document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
             document.getElementById('delay-count').innerText = delayed.length;
             document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
@@ -592,47 +588,47 @@
             const tasksHTML = filtered.map(t => {
                 totalHrs += parseFloat(t.time || 0);
                 const tDate = new Date(t.date || pStart);
-                const leftPx = ((tDate - pStart) / 86400000) * dayWidth;
-                
-                // Calcul de la largeur de la barre en fonction de la durée en jours
+                const leftPx = ((tDate - pStart) / 86400000) * DAY_WIDTH;
                 const dureeJours = t.dureeJours || 1;
-                const barWidth = dureeJours * dayWidth;
-                
+                const barWidth = dureeJours * DAY_WIDTH;
                 const respo = responsables.find(r => r.id === t.who)?.name || t.who;
-                
-                // Calcul de la date de fin pour isLate
+
                 const dateFin = new Date(tDate);
                 dateFin.setDate(tDate.getDate() + dureeJours - 1);
                 dateFin.setHours(23, 59, 59, 999);
                 const isLate = !t.done && t.date && today > dateFin;
-                
+
                 const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
+                // Escape pour l'attribut title HTML
+                const tooltipEscaped = tooltip.replace(/"/g, '&quot;');
 
                 return `
-                <div class="gantt-row ${t.done ? 'done' : ''}" 
-                     ondragover="onDragOver(event)" 
-                     ondragleave="onDragLeave(event)" 
+                <div class="gantt-row ${t.done ? 'done' : ''}"
+                     ondragover="onDragOver(event)"
+                     ondragleave="onDragLeave(event)"
                      ondrop="onDrop(event)">
-                    <div class="task-label" title="${tooltip}">${t.desc}</div>
-                    <div class="task-bar prio-${t.priority || 'moyenne'} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}" 
-                         style="left: calc(${labelWidth}px + ${leftPx}px); width: ${barWidth}px;" 
-                         onclick="openEditModal('${t.id}')" 
-                         title="${tooltip}"
+                    <div class="task-label" title="${tooltipEscaped}">
+                        <span class="task-label-inner">${t.desc}</span>
+                    </div>
+                    <div class="task-bar prio-${t.priority || 'moyenne'} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}"
+                         style="left: calc(${LABEL_WIDTH}px + ${leftPx}px); width: ${barWidth}px;"
+                         onclick="openEditModal('${t.id}')"
+                         title="${tooltipEscaped}"
                          draggable="true"
                          ondragstart="onDragStart(event, '${t.id}')"
                          ondragend="onDragEnd(event)">
                         <span class="truncate text-[9px] uppercase opacity-90">${respo}</span>
                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
                     </div>
-                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${labelWidth + barWidth + 5}px + ${leftPx}px);">
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${LABEL_WIDTH + barWidth + 5}px + ${leftPx}px);">
                         ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
                     </div>
                 </div>`;
             }).join('');
 
-            container.style.width = `${(duration * dayWidth) + labelWidth}px`;
-            container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `${labelWidth}px 0`;
+            container.style.width = `${(duration * DAY_WIDTH) + LABEL_WIDTH}px`;
+            container.style.backgroundSize = `${DAY_WIDTH}px 100%`;
+            container.style.backgroundPosition = `${LABEL_WIDTH}px 0`;
             container.innerHTML = headerHTML + weekendColumnsHTML + timelineHTML + tasksHTML;
             document.getElementById('total-hours').innerText = totalHrs + " h total";
         }
@@ -644,16 +640,16 @@
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
             const taskId = "TASK-" + Date.now();
             await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), {
-                id: taskId, 
-                projectId: currentProjectId, 
+                id: taskId,
+                projectId: currentProjectId,
                 desc,
                 time: document.getElementById('task-time').value || 0,
                 dureeJours: parseInt(document.getElementById('task-duree').value) || 1,
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
                 date: document.getElementById('task-date').value || currentProject.start,
-                done: false, 
-                lastEditedBy: editorName, 
+                done: false,
+                lastEditedBy: editorName,
                 lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             document.getElementById('task-desc').value = '';
@@ -696,7 +692,7 @@
                 priority: document.getElementById('edit-task-prio').value,
                 done: document.getElementById('edit-task-done').checked,
                 note: document.getElementById('edit-task-note').value,
-                lastEditedBy: editorName, 
+                lastEditedBy: editorName,
                 lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             closeEditModal();
@@ -708,8 +704,8 @@
                 closeEditModal();
             }
         }
+
         window.addEventListener('resize', renderTasks);
     </script>
 </body>
-
 </html>
