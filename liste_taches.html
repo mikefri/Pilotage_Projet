@@ -49,7 +49,6 @@
             align-items: center;
         }
 
-        /* Zone de drop sur toute la ligne */
         .gantt-row.drag-over {
             background-color: #f0f4ff;
         }
@@ -57,30 +56,39 @@
         .task-label {
             position: sticky;
             left: 0;
-            width: 160px;
-            min-width: 160px;
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
             font-size: 11px;
             font-weight: 700;
             color: #475569;
             z-index: 40;
             background: white;
-            padding: 8px 15px 8px 10px;
-            min-height: 100%;
+            padding-left: 10px;
+            padding-right: 12px;
+            height: 100%;
             display: flex;
             align-items: center;
             border-right: 2px solid #e2e8f0;
             box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
             cursor: help;
-            white-space: normal;
+            /* Fix texte long */
+            overflow: hidden;
+        }
+
+        .task-label-inner {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
             word-break: break-word;
-            overflow: visible;
-            line-height: 1.2;
+            white-space: normal;
         }
 
         .task-bar {
-            height: 26px;
+            height: 28px;
             position: absolute;
-            top: 24px;
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -89,7 +97,7 @@
             font-weight: bold;
             color: white;
             cursor: grab;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 10;
@@ -161,8 +169,6 @@
             justify-content: center;
             font-size: 9px;
             font-weight: 800;
-            color: #64748b;
-            background: white;
         }
 
         .weekend-column {
@@ -187,17 +193,6 @@
             font-size: 13px;
             transition: all 0.2s;
             text-decoration: none;
-        }
-
-        .btn-retour:hover {
-            background-color: #e2e8f0;
-            transform: translateY(-1px);
-        }
-
-        #gantt-scroll-container {
-            max-height: 70vh;
-            overflow: auto;
-            position: relative;
         }
     </style>
 
@@ -267,25 +262,18 @@
 
     <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold flex items-center gap-3">
-            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm"
-                onerror="this.src='https://via.placeholder.com/40'">
+            <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
             <span class="text-slate-800">Gestion des tâches</span>
         </h1>
         <div class="flex items-center gap-4">
             <div id="delay-container" class="hidden relative group">
                 <div
-                    class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer hover:bg-red-100 transition">
-                    <span class="relative flex h-2 w-2">
-                        <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
+                    class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer">
                     <span id="delay-count">0</span> RETARD(S)
                 </div>
                 <div
-                    class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
-                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées
-                    </p>
+                    class="absolute right-0 top-full mt-2 w-64 bg-white border shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
                     <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
                 </div>
             </div>
@@ -300,12 +288,34 @@
                 <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
                 <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
             </header>
+
+            <div class="flex gap-2 items-center flex-wrap bg-slate-50 p-2 rounded-xl border border-slate-200">
+                <input type="text" id="search-task" oninput="renderTasks()" placeholder="🔍 Chercher une tâche..."
+                    class="p-2 rounded-lg border text-sm w-40 outline-none">
+                <select id="filter-status" onchange="renderTasks()"
+                    class="p-2 rounded-lg border text-sm font-bold text-indigo-600 outline-none">
+                    <option value="all">👁️ Tout voir</option>
+                    <option value="active" selected>⏳ En cours</option>
+                    <option value="done">✅ Terminées</option>
+                </select>
+                <select id="filter-prio-global" onchange="renderTasks()"
+                    class="p-2 rounded-lg border text-sm font-bold text-indigo-600 outline-none">
+                    <option value="all">🚩 Priorités</option>
+                    <option value="haute">🔴 Haute</option>
+                    <option value="moyenne">🟠 Moyenne</option>
+                    <option value="basse">🟢 Basse</option>
+                </select>
+                <select id="filter-who" onchange="renderTasks()"
+                    class="p-2 rounded-lg border text-sm font-bold text-indigo-600 outline-none">
+                    <option value="all">👥 Tous les responsables</option>
+                </select>
+            </div>
         </div>
 
         <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
-            <div class="flex gap-2 items-center flex-wrap mb-4 border-b pb-4">
+            <div class="flex gap-2 items-center flex-wrap">
                 <input type="text" id="task-desc" placeholder="Nouvelle tâche..."
-                    class="w-48 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
+                    class="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-time" placeholder="Hrs"
                     class="w-16 p-2 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm">
                 <input type="number" id="task-duree" placeholder="Jours" min="1" value="1"
@@ -323,28 +333,6 @@
                 <button onclick="addTask()"
                     class="bg-indigo-600 text-white w-10 h-10 rounded-lg font-bold hover:bg-indigo-700 shadow-sm transition">+</button>
             </div>
-
-            <div class="flex gap-2 items-center flex-wrap">
-                <input type="text" id="search-task" oninput="renderTasks()" placeholder="🔍 Chercher une tâche..."
-                    class="p-2 rounded-lg bg-white border border-slate-200 outline-none text-sm w-64">
-                <select id="filter-status" onchange="renderTasks()"
-                    class="p-2 rounded-lg bg-slate-100 border border-slate-200 text-sm font-bold text-indigo-600 outline-none">
-                    <option value="all">👁️ Tout voir</option>
-                    <option value="active" selected>⏳ En cours</option>
-                    <option value="done">✅ Terminées</option>
-                </select>
-                <select id="filter-prio-global" onchange="renderTasks()"
-                    class="p-2 rounded-lg bg-slate-100 border border-slate-200 text-sm font-bold text-indigo-600 outline-none">
-                    <option value="all">🚩 Toutes Priorités</option>
-                    <option value="haute">🔴 Haute</option>
-                    <option value="moyenne">🟠 Moyenne</option>
-                    <option value="basse">🟢 Basse</option>
-                </select>
-                <select id="filter-who" onchange="renderTasks()"
-                    class="p-2 rounded-lg bg-slate-100 border border-slate-200 text-sm font-bold text-indigo-600 outline-none">
-                    <option value="all">👥 Tous les responsables</option>
-                </select>
-            </div>
         </section>
 
         <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -353,8 +341,8 @@
                 <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h
                     total</div>
             </div>
-            <div id="gantt-scroll-container">
-                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid pt-10"></div>
+            <div id="gantt-scroll-container" class="overflow-auto max-h-[70vh]">
+                <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid"></div>
             </div>
         </section>
     </main>
@@ -365,13 +353,7 @@
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-800">Détails de la tâche</h3>
                 <button onclick="deleteTask()"
-                    class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-5 h-5">
-                        <path
-                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                </button>
+                    class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">🗑️</button>
             </div>
             <div class="space-y-4">
                 <input type="text" id="edit-task-desc"
@@ -439,18 +421,6 @@
         </div>
     </div>
 
-    <div id="confirm-modal"
-        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl p-6 text-center max-w-xs w-full shadow-2xl">
-            <h3 class="text-lg font-bold mb-4">Supprimer cette tâche ?</h3>
-            <div class="flex gap-3">
-                <button onclick="closeConfirm()" class="flex-1 py-2 bg-slate-100 rounded-xl">Non</button>
-                <button onclick="confirmDeletion()" class="flex-1 py-2 bg-red-500 text-white rounded-xl">Oui,
-                    supprimer</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let allTasks = [];
         let responsables = [];
@@ -458,8 +428,9 @@
         let currentProjectId = new URLSearchParams(window.location.search).get('id');
         let currentEditingId = null;
 
-        // Couleurs par responsable
-        const couleurs = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-teal-500'];
+        // labelWidth augmenté à 200px pour mieux afficher les textes longs
+        const LABEL_WIDTH = 200;
+        const DAY_WIDTH = 45;
 
         function loadData() {
             if (!window.fbMethods) return setTimeout(loadData, 100);
@@ -468,7 +439,7 @@
             onValue(ref(window.fbDB, 'responsables'), (snap) => {
                 responsables = snap.val() ? Object.values(snap.val()) : [];
                 const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                document.getElementById('task-who').innerHTML = '<option value="" disabled selected>Qui ?</option>' + options;
+                document.getElementById('task-who').innerHTML = '<option value="" disabled selected>Choisir un responsable...</option>' + options;
                 document.getElementById('edit-task-who').innerHTML = options;
                 updateFilterDropdown();
             });
@@ -500,12 +471,9 @@
             filterEl.value = currentSelection;
         }
 
-        // --- Fonctions Drag & Drop ---
         function onDragStart(event, taskId) {
             event.dataTransfer.setData("taskId", taskId);
-            setTimeout(() => {
-                event.target.style.opacity = "0.5";
-            }, 0);
+            setTimeout(() => { event.target.style.opacity = "0.5"; }, 0);
         }
 
         function onDragEnd(event) {
@@ -514,8 +482,7 @@
 
         function onDragOver(event) {
             event.preventDefault();
-            const row = event.currentTarget;
-            row.classList.add('drag-over');
+            event.currentTarget.classList.add('drag-over');
         }
 
         function onDragLeave(event) {
@@ -529,18 +496,13 @@
 
             const taskId = event.dataTransfer.getData("taskId");
             const rect = row.getBoundingClientRect();
-
-            const labelWidth = 160;
-            const dayWidth = 45;
-            const x = event.clientX - rect.left - labelWidth;
-
+            const x = event.clientX - rect.left - LABEL_WIDTH;
             if (x < 0) return;
 
-            const dayOffset = Math.floor(x / dayWidth);
+            const dayOffset = Math.floor(x / DAY_WIDTH);
             const pStart = new Date(currentProject.start);
             const newDate = new Date(pStart);
             newDate.setDate(pStart.getDate() + dayOffset);
-
             const dateStr = newDate.toISOString().split('T')[0];
 
             const user = window.auth?.currentUser;
@@ -566,10 +528,8 @@
             const pStart = new Date(currentProject.start);
             const pEnd = new Date(currentProject.end);
             const duration = Math.ceil(Math.abs(pEnd - pStart) / 86400000) + 1;
-            const dayWidth = 45;
-            const labelWidth = 160;
 
-            let headerHTML = `<div class="gantt-header" style="margin-left: ${labelWidth}px; width: ${duration * dayWidth}px; overflow: visible;">`;
+            let headerHTML = `<div class="gantt-header" style="margin-left: ${LABEL_WIDTH}px; width: ${duration * DAY_WIDTH}px; overflow: visible;">`;
             let weekendColumnsHTML = '';
 
             for (let i = 0; i < duration; i++) {
@@ -580,12 +540,12 @@
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
                 if (isWeekend) {
-                    const leftPos = labelWidth + (i * dayWidth);
-                    weekendColumnsHTML += `<div class="weekend-column" style="left: ${leftPos}px; width: ${dayWidth}px;"></div>`;
+                    const leftPos = LABEL_WIDTH + (i * DAY_WIDTH);
+                    weekendColumnsHTML += `<div class="weekend-column" style="left: ${leftPos}px; width: ${DAY_WIDTH}px;"></div>`;
                 }
 
                 headerHTML += `
-                <div class="header-day relative" style="width: ${dayWidth}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
+                <div class="header-day relative" style="width: ${DAY_WIDTH}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
                     ${isToday ? `
                         <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ef4444] text-white text-[9px] px-2 py-0.5 rounded-md font-bold shadow-md" style="z-index: 100; white-space: nowrap;">
                             Aujourd'hui
@@ -598,8 +558,8 @@
 
             let timelineHTML = '';
             if (today >= pStart && today <= pEnd) {
-                const leftPos = labelWidth + ((today - pStart) / 86400000) * dayWidth;
-                timelineHTML = `<div class="today-line" style="left: ${leftPos}px; top: 40px;"><div class="today-label">Aujourd'hui</div></div>`;
+                const leftPos = LABEL_WIDTH + ((today - pStart) / 86400000) * DAY_WIDTH;
+                timelineHTML = `<div class="today-line" style="left: ${leftPos}px;"><div class="today-label">Aujourd'hui</div></div>`;
             }
 
             let filtered = allTasks.filter(t => t.projectId === currentProjectId);
@@ -610,111 +570,65 @@
             if (fSearch) filtered = filtered.filter(t => t.desc.toLowerCase().includes(fSearch));
             filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Calcul des retards basé sur la date de fin (date + duree)
             const delayed = filtered.filter(t => {
-                if (t.done) return false;
-                if (!t.date) return false;
-                const dateDebut = new Date(t.date);
-                dateDebut.setHours(0, 0, 0, 0);
+                if (t.done || !t.date) return false;
+                const dateDebut = new Date(t.date); dateDebut.setHours(0, 0, 0, 0);
                 const dureeJours = t.dureeJours || 1;
                 const dateFin = new Date(dateDebut);
                 dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
                 dateFin.setHours(23, 59, 59, 999);
                 return today > dateFin;
             });
-            
+
             document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
             document.getElementById('delay-count').innerText = delayed.length;
             document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
-
-            // --- SYSTÈME D'ALERTE PERSONNALISÉ ---
-            const currentUser = window.auth?.currentUser;
-            if (currentUser && currentUser.email) {
-                const monProfil = responsables.find(r => r.email && r.email.toLowerCase() === currentUser.email.toLowerCase());
-
-                if (monProfil) {
-                    const mesRetards = delayed.filter(t => t.who === monProfil.id);
-
-                    let banner = document.getElementById('alerte-retard-perso');
-
-                    if (mesRetards.length > 0) {
-                        if (!banner) {
-                            banner = document.createElement('div');
-                            banner.id = 'alerte-retard-perso';
-                            banner.className = "bg-[#E2001A] text-white text-center p-3 font-black animate-pulse sticky top-0 z-[100] cursor-pointer shadow-2xl border-b-2 border-white";
-                            document.body.prepend(banner);
-                        }
-                        banner.innerHTML = `⚠️ ATTENTION ${monProfil.name.toUpperCase()} : VOUS AVEZ ${mesRetards.length} TÂCHE(S) EN RETARD !`;
-
-                        banner.onclick = () => {
-                            const selectWho = document.getElementById('filter-who');
-                            const selectStatus = document.getElementById('filter-status');
-                            if (selectWho) selectWho.value = monProfil.id;
-                            if (selectStatus) selectStatus.value = 'active';
-                            renderTasks();
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        };
-                    } else if (banner) {
-                        banner.remove();
-                    }
-                }
-            }
 
             let totalHrs = 0;
             const tasksHTML = filtered.map(t => {
                 totalHrs += parseFloat(t.time || 0);
                 const tDate = new Date(t.date || pStart);
-                const leftPx = ((tDate - pStart) / 86400000) * dayWidth;
-                
+                const leftPx = ((tDate - pStart) / 86400000) * DAY_WIDTH;
                 const dureeJours = t.dureeJours || 1;
-                const barWidth = dureeJours * dayWidth;
-                
+                const barWidth = dureeJours * DAY_WIDTH;
                 const respo = responsables.find(r => r.id === t.who)?.name || t.who;
-                const initiales = respo.split(' ').map(n => n[0]).join('').toUpperCase();
-                
-                const responsableIndex = responsables.findIndex(r => r.id === t.who);
-                const couleur = responsableIndex >= 0 ? couleurs[responsableIndex % couleurs.length] : 'bg-indigo-600';
-                
-                // Calcul de la date de fin pour isLate
+
                 const dateFin = new Date(tDate);
                 dateFin.setDate(tDate.getDate() + dureeJours - 1);
                 dateFin.setHours(23, 59, 59, 999);
                 const isLate = !t.done && t.date && today > dateFin;
-                
-                const prioClass = `prio-${t.priority || 'moyenne'}`;
-                const hasNote = t.note && t.note.trim() !== "";
-                const tooltip = hasNote ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
+
+                const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
+                // Escape pour l'attribut title HTML
+                const tooltipEscaped = tooltip.replace(/"/g, '&quot;');
 
                 return `
-                <div class="gantt-row ${t.done ? 'done' : ''}" style="min-height: 50px; position: relative;"
-                     ondragover="onDragOver(event)" 
-                     ondragleave="onDragLeave(event)" 
+                <div class="gantt-row ${t.done ? 'done' : ''}"
+                     ondragover="onDragOver(event)"
+                     ondragleave="onDragLeave(event)"
                      ondrop="onDrop(event)">
-                    <div class="task-label" title="${tooltip}">${t.desc}</div>
-                    
-                    <!-- NOM RESPONSABLE AU-DESSUS -->
-                    <div class="absolute text-[9px] font-black text-slate-700 whitespace-nowrap" 
-                         style="left: calc(${labelWidth}px + ${leftPx}px); top: 4px; z-index: 15;">
-                        ${respo}
+                    <div class="task-label" title="${tooltipEscaped}">
+                        <span class="task-label-inner">${t.desc}</span>
                     </div>
-                    
-                    <!-- BARRE AVEC INITIALES -->
-                    <div class="task-bar ${couleur} ${prioClass} ${isLate ? '!bg-red-500' : ''}" 
-                         style="left: calc(${labelWidth}px + ${leftPx}px); width: ${barWidth}px; justify-content: center; gap: 4px;" 
-                         onclick="openEditModal('${t.id}')" 
-                         title="${tooltip}"
+                    <div class="task-bar prio-${t.priority || 'moyenne'} ${isLate ? 'bg-red-500' : 'bg-indigo-600'}"
+                         style="left: calc(${LABEL_WIDTH}px + ${leftPx}px); width: ${barWidth}px;"
+                         onclick="openEditModal('${t.id}')"
+                         title="${tooltipEscaped}"
                          draggable="true"
                          ondragstart="onDragStart(event, '${t.id}')"
                          ondragend="onDragEnd(event)">
-                        <span class="text-[10px] font-black text-white drop-shadow pointer-events-none">${initiales}</span>
-                        ${hasNote ? '<span class="text-[11px] pointer-events-none">📝</span>' : ''}
+                        <span class="truncate text-[9px] uppercase opacity-90">${respo}</span>
+                        ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
+                    </div>
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${LABEL_WIDTH + barWidth + 5}px + ${leftPx}px);">
+                        ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
                     </div>
                 </div>`;
             }).join('');
 
-            container.style.width = `${(duration * dayWidth) + labelWidth}px`;
-            container.style.backgroundSize = `${dayWidth}px 100%`;
-            container.style.backgroundPosition = `${labelWidth}px 0`;
+            container.style.width = `${(duration * DAY_WIDTH) + LABEL_WIDTH}px`;
+            container.style.backgroundSize = `${DAY_WIDTH}px 100%`;
+            container.style.backgroundPosition = `${LABEL_WIDTH}px 0`;
             container.innerHTML = headerHTML + weekendColumnsHTML + timelineHTML + tasksHTML;
             document.getElementById('total-hours').innerText = totalHrs + " h total";
         }
@@ -726,16 +640,16 @@
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
             const taskId = "TASK-" + Date.now();
             await window.fbMethods.set(window.fbMethods.ref(window.fbDB, 'taches/' + taskId), {
-                id: taskId, 
-                projectId: currentProjectId, 
+                id: taskId,
+                projectId: currentProjectId,
                 desc,
                 time: document.getElementById('task-time').value || 0,
                 dureeJours: parseInt(document.getElementById('task-duree').value) || 1,
                 who: document.getElementById('task-who').value,
                 priority: document.getElementById('task-prio').value,
                 date: document.getElementById('task-date').value || currentProject.start,
-                done: false, 
-                lastEditedBy: editorName, 
+                done: false,
+                lastEditedBy: editorName,
                 lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             document.getElementById('task-desc').value = '';
@@ -778,24 +692,17 @@
                 priority: document.getElementById('edit-task-prio').value,
                 done: document.getElementById('edit-task-done').checked,
                 note: document.getElementById('edit-task-note').value,
-                lastEditedBy: editorName, 
+                lastEditedBy: editorName,
                 lastEditedAt: new Date().toLocaleString('fr-FR')
             });
             closeEditModal();
         }
 
-        function deleteTask() {
-            document.getElementById('confirm-modal').classList.remove('hidden');
-        }
-
-        function closeConfirm() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-        }
-
-        async function confirmDeletion() {
-            await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
-            closeConfirm();
-            closeEditModal();
+        async function deleteTask() {
+            if (confirm("Action définitive. Supprimer cette tâche ?")) {
+                await window.fbMethods.remove(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId));
+                closeEditModal();
+            }
         }
 
         window.addEventListener('resize', renderTasks);
