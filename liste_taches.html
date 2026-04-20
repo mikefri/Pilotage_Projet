@@ -285,9 +285,22 @@
         <div
             class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
             <header>
-                <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
-                <p id="project-info" class="text-slate-500 text-[11px] italic"></p>
-            </header>
+    <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
+    <p id="project-info" class="text-slate-500 text-[11px] italic mb-2"></p>
+    <div class="flex items-center gap-2 flex-wrap">
+        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Début</label>
+        <input type="date" id="project-start-input"
+            class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px] font-bold text-slate-700">
+        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fin</label>
+        <input type="date" id="project-end-input"
+            class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px] font-bold text-slate-700">
+        <button onclick="saveProjectDates()"
+            class="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition shadow-sm">
+            Enregistrer
+        </button>
+        <span id="save-dates-feedback" class="text-[10px] text-emerald-500 font-bold hidden">✓ Sauvegardé</span>
+    </div>
+</header>
 
             <div class="flex gap-2 items-center flex-wrap bg-slate-50 p-2 rounded-xl border border-slate-200">
                 <input type="text" id="search-task" oninput="renderTasks()" placeholder="🔍 Chercher une tâche..."
@@ -436,13 +449,20 @@
             if (!window.fbMethods) return setTimeout(loadData, 100);
             const { onValue, ref } = window.fbMethods;
 
-            onValue(ref(window.fbDB, 'responsables'), (snap) => {
-                responsables = snap.val() ? Object.values(snap.val()) : [];
-                const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                document.getElementById('task-who').innerHTML = '<option value="" disabled selected>Choisir un responsable...</option>' + options;
-                document.getElementById('edit-task-who').innerHTML = options;
-                updateFilterDropdown();
-            });
+onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+    currentProject = snap.val();
+    if (currentProject) {
+        document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+        const respo = responsables.find(r => r.id === currentProject.owner);
+        document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
+
+        // ← AJOUT : remplir les champs date
+        document.getElementById('project-start-input').value = currentProject.start || '';
+        document.getElementById('project-end-input').value = currentProject.end || '';
+
+        renderTasks();
+    }
+});
 
             onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
                 currentProject = snap.val();
@@ -656,6 +676,23 @@
             document.getElementById('task-time').value = '';
             document.getElementById('task-duree').value = '1';
         }
+
+
+        async function saveProjectDates() {
+    const newStart = document.getElementById('project-start-input').value;
+    const newEnd = document.getElementById('project-end-input').value;
+    if (!newStart || !newEnd) return;
+
+    await window.fbMethods.update(
+        window.fbMethods.ref(window.fbDB, 'projects/' + currentProjectId),
+        { start: newStart, end: newEnd }
+    );
+
+    // Feedback visuel fugace
+    const fb = document.getElementById('save-dates-feedback');
+    fb.classList.remove('hidden');
+    setTimeout(() => fb.classList.add('hidden'), 2000);
+}
 
         function openEditModal(id) {
             const t = allTasks.find(x => x.id === id);
