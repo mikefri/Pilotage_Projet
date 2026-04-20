@@ -26,15 +26,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .gantt-grid {
@@ -72,7 +65,6 @@
             border-right: 2px solid #e2e8f0;
             box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
             cursor: help;
-            /* Fix texte long */
             overflow: hidden;
         }
 
@@ -103,26 +95,16 @@
             z-index: 10;
         }
 
-        .task-bar:active {
-            cursor: grabbing;
-        }
+        .task-bar:active { cursor: grabbing; }
 
         .task-bar:hover {
             transform: scale(1.02);
             z-index: 41;
         }
 
-        .prio-haute {
-            border-left: 5px solid #ef4444 !important;
-        }
-
-        .prio-moyenne {
-            border-left: 5px solid #f59e0b !important;
-        }
-
-        .prio-basse {
-            border-left: 5px solid #10b981 !important;
-        }
+        .prio-haute   { border-left: 5px solid #ef4444 !important; }
+        .prio-moyenne { border-left: 5px solid #f59e0b !important; }
+        .prio-basse   { border-left: 5px solid #10b981 !important; }
 
         .today-line {
             position: absolute;
@@ -245,6 +227,7 @@
 
 <body class="bg-[#F8FAFC] text-slate-900 font-sans">
 
+    <!-- LOGIN -->
     <div id="login-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-[200] hidden">
         <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200 text-center">
             <span class="bg-indigo-600 text-white p-3 rounded-2xl text-xl font-bold">GP</span>
@@ -254,12 +237,12 @@
             <input type="password" id="login-password" placeholder="Mot de passe"
                 class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 mb-6 outline-none">
             <button onclick="login()"
-                class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Se
-                connecter</button>
+                class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Se connecter</button>
             <p id="login-error" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
         </div>
     </div>
 
+    <!-- NAV -->
     <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold flex items-center gap-3">
             <img src="icon.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow-sm">
@@ -267,12 +250,10 @@
         </h1>
         <div class="flex items-center gap-4">
             <div id="delay-container" class="hidden relative group">
-                <div
-                    class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer">
+                <div class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 flex items-center gap-2 cursor-pointer">
                     <span id="delay-count">0</span> RETARD(S)
                 </div>
-                <div
-                    class="absolute right-0 top-full mt-2 w-64 bg-white border shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
+                <div class="absolute right-0 top-full mt-2 w-64 bg-white border shadow-xl rounded-xl p-3 hidden group-hover:block z-[60]">
                     <p class="text-[10px] font-black uppercase text-slate-400 mb-2 border-b pb-1">Tâches non terminées</p>
                     <div id="delay-list" class="max-h-40 overflow-y-auto space-y-2"></div>
                 </div>
@@ -282,25 +263,26 @@
     </nav>
 
     <main class="max-w-full mx-auto mt-6 px-4">
-        <div
-            class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+
+        <!-- HEADER PROJET + FILTRES -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
             <header>
-    <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
-    <p id="project-info" class="text-slate-500 text-[11px] italic mb-2"></p>
-    <div class="flex items-center gap-2 flex-wrap">
-        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Début</label>
-        <input type="date" id="project-start-input"
-            class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px] font-bold text-slate-700">
-        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fin</label>
-        <input type="date" id="project-end-input"
-            class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px] font-bold text-slate-700">
-        <button onclick="saveProjectDates()"
-            class="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition shadow-sm">
-            Enregistrer
-        </button>
-        <span id="save-dates-feedback" class="text-[10px] text-emerald-500 font-bold hidden">✓ Sauvegardé</span>
-    </div>
-</header>
+                <h1 id="project-title" class="text-lg font-bold text-slate-800 tracking-tight">Chargement...</h1>
+                <p id="project-info" class="text-slate-500 text-[11px] italic mb-2"></p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Début</label>
+                    <input type="date" id="project-start-input"
+                        class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px] font-bold text-slate-700">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fin</label>
+                    <input type="date" id="project-end-input"
+                        class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 outline-none text-[11px] font-bold text-slate-700">
+                    <button onclick="saveProjectDates()"
+                        class="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                        Enregistrer
+                    </button>
+                    <span id="save-dates-feedback" class="text-[10px] text-emerald-500 font-bold hidden">✓ Sauvegardé</span>
+                </div>
+            </header>
 
             <div class="flex gap-2 items-center flex-wrap bg-slate-50 p-2 rounded-xl border border-slate-200">
                 <input type="text" id="search-task" oninput="renderTasks()" placeholder="🔍 Chercher une tâche..."
@@ -325,6 +307,7 @@
             </div>
         </div>
 
+        <!-- AJOUT TÂCHE -->
         <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
             <div class="flex gap-2 items-center flex-wrap">
                 <input type="text" id="task-desc" placeholder="Nouvelle tâche..."
@@ -348,11 +331,11 @@
             </div>
         </section>
 
+        <!-- GANTT -->
         <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <h2 class="text-xs font-black uppercase text-slate-400 tracking-widest italic">Planning Projet</h2>
-                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h
-                    total</div>
+                <div id="total-hours" class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 h total</div>
             </div>
             <div id="gantt-scroll-container" class="overflow-auto max-h-[70vh]">
                 <div id="gantt-container" class="p-0 min-h-[400px] relative gantt-grid"></div>
@@ -360,21 +343,20 @@
         </section>
     </main>
 
+    <!-- MODAL ÉDITION TÂCHE -->
     <div id="edit-modal"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 modal-animate border border-slate-200">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-800">Détails de la tâche</h3>
-                <button onclick="deleteTask()"
-                    class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">🗑️</button>
+                <button onclick="deleteTask()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">🗑️</button>
             </div>
             <div class="space-y-4">
                 <input type="text" id="edit-task-desc"
                     class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none font-bold">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label
-                            class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Priorité</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Priorité</label>
                         <select id="edit-task-prio"
                             class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none">
                             <option value="basse">Basse</option>
@@ -383,35 +365,30 @@
                         </select>
                     </div>
                     <div>
-                        <label
-                            class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Responsable</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Responsable</label>
                         <select id="edit-task-who"
                             class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none"></select>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Temps
-                            (Hrs)</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Temps (Hrs)</label>
                         <input type="number" id="edit-task-time"
                             class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                     </div>
                     <div>
-                        <label
-                            class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Durée (Jours)</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Durée (Jours)</label>
                         <input type="number" id="edit-task-duree" min="1"
                             class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                     </div>
                 </div>
                 <div>
-                    <label
-                        class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Date de début</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Date de début</label>
                     <input type="date" id="edit-task-date"
                         class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes /
-                        Instructions</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes / Instructions</label>
                     <textarea id="edit-task-note" rows="3"
                         class="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 outline-none text-sm text-slate-600"
                         placeholder="Précisions sur la tâche..."></textarea>
@@ -421,8 +398,7 @@
                     <label for="edit-task-done" class="font-bold text-slate-700">Marquer comme terminé</label>
                 </div>
             </div>
-            <div id="task-edit-info"
-                class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 italic hidden">
+            <div id="task-edit-info" class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 italic hidden">
                 Dernière modif : <span id="task-last-edit-text">-</span>
             </div>
             <div class="flex gap-3 mt-8">
@@ -440,60 +416,64 @@
         let currentProject = null;
         let currentProjectId = new URLSearchParams(window.location.search).get('id');
         let currentEditingId = null;
+        let firstRender = true;
 
-        // labelWidth augmenté à 200px pour mieux afficher les textes longs
         const LABEL_WIDTH = 200;
         const DAY_WIDTH = 45;
 
-function loadData() {
-    if (!window.fbMethods) return setTimeout(loadData, 100);
-    const { onValue, ref } = window.fbMethods;
+        // ─── CHARGEMENT DES DONNÉES ───────────────────────────────────────────────
 
-    // 1. Responsables — on recharge les selects à chaque mise à jour
-    onValue(ref(window.fbDB, 'responsables'), (snap) => {
-        responsables = snap.val() ? Object.values(snap.val()) : [];
-        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        function loadData() {
+            if (!window.fbMethods) return setTimeout(loadData, 100);
+            const { onValue, ref } = window.fbMethods;
 
-        const taskWho = document.getElementById('task-who');
-        const editTaskWho = document.getElementById('edit-task-who');
+            // 1. Responsables
+            onValue(ref(window.fbDB, 'responsables'), (snap) => {
+                responsables = snap.val() ? Object.values(snap.val()) : [];
+                const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
-        if (taskWho) {
-            taskWho.innerHTML = '<option value="" disabled selected>Choisir un responsable...</option>' + options;
+                const taskWho = document.getElementById('task-who');
+                const editTaskWho = document.getElementById('edit-task-who');
+
+                if (taskWho) {
+                    taskWho.innerHTML = '<option value="" disabled selected>Choisir un responsable...</option>' + options;
+                }
+                if (editTaskWho) {
+                    const currentVal = editTaskWho.value;
+                    editTaskWho.innerHTML = options;
+                    if (currentVal) editTaskWho.value = currentVal;
+                }
+
+                updateFilterDropdown();
+                renderTasks();
+            });
+
+            // 2. Projet courant
+            onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+                currentProject = snap.val();
+                if (currentProject) {
+                    document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+                    const respo = responsables.find(r => r.id === currentProject.owner);
+                    document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
+
+                    const startInput = document.getElementById('project-start-input');
+                    const endInput = document.getElementById('project-end-input');
+                    if (startInput) startInput.value = currentProject.start || '';
+                    if (endInput) endInput.value = currentProject.end || '';
+
+                    renderTasks();
+                }
+            });
+
+            // 3. Tâches
+            onValue(ref(window.fbDB, 'taches'), (snap) => {
+                allTasks = snap.val() ? Object.values(snap.val()) : [];
+                updateFilterDropdown();
+                renderTasks();
+            });
         }
-        if (editTaskWho) {
-            const currentVal = editTaskWho.value; // garde la sélection en cours si modal ouverte
-            editTaskWho.innerHTML = options;
-            if (currentVal) editTaskWho.value = currentVal;
-        }
 
-        updateFilterDropdown();
-        renderTasks();
-    });
-
-    // 2. Projet courant
-    onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
-        currentProject = snap.val();
-        if (currentProject) {
-            document.getElementById('project-title').innerText = "📝 " + currentProject.name;
-            const respo = responsables.find(r => r.id === currentProject.owner);
-            document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
-
-            const startInput = document.getElementById('project-start-input');
-            const endInput = document.getElementById('project-end-input');
-            if (startInput) startInput.value = currentProject.start || '';
-            if (endInput) endInput.value = currentProject.end || '';
-
-            renderTasks();
-        }
-    });
-
-    // 3. Tâches
-    onValue(ref(window.fbDB, 'taches'), (snap) => {
-        allTasks = snap.val() ? Object.values(snap.val()) : [];
-        updateFilterDropdown();
-        renderTasks();
-    });
-}
+        // ─── FILTRE RESPONSABLES ──────────────────────────────────────────────────
 
         function updateFilterDropdown() {
             const filterEl = document.getElementById('filter-who');
@@ -501,9 +481,12 @@ function loadData() {
             const idsActifs = [...new Set(allTasks.filter(t => t.projectId === currentProjectId).map(t => t.who))];
             const responsablesActifs = responsables.filter(r => idsActifs.includes(r.id));
             const currentSelection = filterEl.value;
-            filterEl.innerHTML = '<option value="all">👥 Tous les responsables</option>' + responsablesActifs.map(r => `<option value="${r.id}">👤 ${r.name}</option>`).join('');
+            filterEl.innerHTML = '<option value="all">👥 Tous les responsables</option>'
+                + responsablesActifs.map(r => `<option value="${r.id}">👤 ${r.name}</option>`).join('');
             filterEl.value = currentSelection;
         }
+
+        // ─── DRAG & DROP ──────────────────────────────────────────────────────────
 
         function onDragStart(event, taskId) {
             event.dataTransfer.setData("taskId", taskId);
@@ -549,27 +532,46 @@ function loadData() {
             });
         }
 
+        // ─── SCROLL TO TODAY ──────────────────────────────────────────────────────
+
+        function scrollToToday() {
+            if (!currentProject) return;
+            const container = document.getElementById('gantt-scroll-container');
+            const pStart = new Date(currentProject.start);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayLeft = LABEL_WIDTH + ((today - pStart) / 86400000) * DAY_WIDTH;
+            const containerWidth = container.clientWidth;
+            const scrollTarget = todayLeft - (containerWidth / 2);
+            container.scrollLeft = Math.max(0, scrollTarget);
+        }
+
+        // ─── RENDU GANTT ──────────────────────────────────────────────────────────
+
         function renderTasks() {
             if (!currentProject) return;
             const container = document.getElementById('gantt-container');
-            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            const fWho = document.getElementById('filter-who').value;
+            const fWho   = document.getElementById('filter-who').value;
             const fStatus = document.getElementById('filter-status').value;
-            const fPrio = document.getElementById('filter-prio-global').value;
+            const fPrio  = document.getElementById('filter-prio-global').value;
             const fSearch = document.getElementById('search-task').value.toLowerCase();
 
             const pStart = new Date(currentProject.start);
-            const pEnd = new Date(currentProject.end);
+            const pEnd   = new Date(currentProject.end);
             const duration = Math.ceil(Math.abs(pEnd - pStart) / 86400000) + 1;
 
+            // En-tête jours
             let headerHTML = `<div class="gantt-header" style="margin-left: ${LABEL_WIDTH}px; width: ${duration * DAY_WIDTH}px; overflow: visible;">`;
             let weekendColumnsHTML = '';
 
             for (let i = 0; i < duration; i++) {
                 const curr = new Date(pStart);
                 curr.setDate(pStart.getDate() + i);
-                const isToday = curr.getTime() === today.getTime();
+                const isToday   = curr.getTime() === today.getTime();
                 const dayOfWeek = curr.getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
@@ -580,33 +582,34 @@ function loadData() {
 
                 headerHTML += `
                 <div class="header-day relative" style="width: ${DAY_WIDTH}px; ${isToday ? 'background: #fef2f2; overflow: visible;' : isWeekend ? 'background: #f1f5f9; color: #94a3b8;' : 'color: #64748b;'}">
-                    ${isToday ? `
-                        <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ef4444] text-white text-[9px] px-2 py-0.5 rounded-md font-bold shadow-md" style="z-index: 100; white-space: nowrap;">
-                            Aujourd'hui
-                        </div>` : ''}
+                    ${isToday ? `<div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ef4444] text-white text-[9px] px-2 py-0.5 rounded-md font-bold shadow-md" style="z-index: 100; white-space: nowrap;">Aujourd'hui</div>` : ''}
                     <span class="${isToday ? 'text-[#ef4444] font-black text-sm' : isWeekend ? 'font-black' : ''}">${curr.getDate()}</span>
                     <span style="font-size: 7px;" class="uppercase ${isToday ? 'text-red-400 font-bold' : ''}">${curr.toLocaleDateString('fr-FR', { month: 'short' })}</span>
                 </div>`;
             }
             headerHTML += `</div>`;
 
+            // Ligne "aujourd'hui"
             let timelineHTML = '';
             if (today >= pStart && today <= pEnd) {
                 const leftPos = LABEL_WIDTH + ((today - pStart) / 86400000) * DAY_WIDTH;
                 timelineHTML = `<div class="today-line" style="left: ${leftPos}px;"><div class="today-label">Aujourd'hui</div></div>`;
             }
 
+            // Filtrage
             let filtered = allTasks.filter(t => t.projectId === currentProjectId);
-            if (fWho !== 'all') filtered = filtered.filter(t => t.who === fWho);
-            if (fPrio !== 'all') filtered = filtered.filter(t => t.priority === fPrio);
+            if (fWho !== 'all')    filtered = filtered.filter(t => t.who === fWho);
+            if (fPrio !== 'all')   filtered = filtered.filter(t => t.priority === fPrio);
             if (fStatus === 'active') filtered = filtered.filter(t => !t.done);
             else if (fStatus === 'done') filtered = filtered.filter(t => t.done);
             if (fSearch) filtered = filtered.filter(t => t.desc.toLowerCase().includes(fSearch));
             filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+            // Retards
             const delayed = filtered.filter(t => {
                 if (t.done || !t.date) return false;
-                const dateDebut = new Date(t.date); dateDebut.setHours(0, 0, 0, 0);
+                const dateDebut = new Date(t.date);
+                dateDebut.setHours(0, 0, 0, 0);
                 const dureeJours = t.dureeJours || 1;
                 const dateFin = new Date(dateDebut);
                 dateFin.setDate(dateDebut.getDate() + dureeJours - 1);
@@ -616,16 +619,19 @@ function loadData() {
 
             document.getElementById('delay-container').classList.toggle('hidden', delayed.length === 0);
             document.getElementById('delay-count').innerText = delayed.length;
-            document.getElementById('delay-list').innerHTML = delayed.map(t => `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`).join('');
+            document.getElementById('delay-list').innerHTML = delayed.map(t =>
+                `<div class="text-[10px] p-2 bg-red-50 rounded border border-red-100 font-bold text-red-700">${t.desc}</div>`
+            ).join('');
 
+            // Barres
             let totalHrs = 0;
             const tasksHTML = filtered.map(t => {
                 totalHrs += parseFloat(t.time || 0);
-                const tDate = new Date(t.date || pStart);
-                const leftPx = ((tDate - pStart) / 86400000) * DAY_WIDTH;
+                const tDate    = new Date(t.date || pStart);
+                const leftPx   = ((tDate - pStart) / 86400000) * DAY_WIDTH;
                 const dureeJours = t.dureeJours || 1;
                 const barWidth = dureeJours * DAY_WIDTH;
-                const respo = responsables.find(r => r.id === t.who)?.name || t.who;
+                const respo    = responsables.find(r => r.id === t.who)?.name || t.who;
 
                 const dateFin = new Date(tDate);
                 dateFin.setDate(tDate.getDate() + dureeJours - 1);
@@ -633,7 +639,6 @@ function loadData() {
                 const isLate = !t.done && t.date && today > dateFin;
 
                 const tooltip = t.note ? `${t.desc}\n\nNOTE : ${t.note}` : t.desc;
-                // Escape pour l'attribut title HTML
                 const tooltipEscaped = tooltip.replace(/"/g, '&quot;');
 
                 return `
@@ -654,7 +659,8 @@ function loadData() {
                         <span class="truncate text-[9px] uppercase opacity-90">${respo}</span>
                         ${t.note ? '<span class="ml-auto text-[10px]">📝</span>' : ''}
                     </div>
-                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}" style="left: calc(${LABEL_WIDTH + barWidth + 5}px + ${leftPx}px);">
+                    <div class="absolute text-[9px] font-black ${isLate ? 'text-red-500' : 'text-slate-400'}"
+                         style="left: calc(${LABEL_WIDTH + barWidth + 5}px + ${leftPx}px);">
                         ${t.date ? new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '--/--'}
                     </div>
                 </div>`;
@@ -666,11 +672,14 @@ function loadData() {
             container.innerHTML = headerHTML + weekendColumnsHTML + timelineHTML + tasksHTML;
             document.getElementById('total-hours').innerText = totalHrs + " h total";
 
-// ← AJOUT juste après :
-if (window._firstRender !== false) {
-    window._firstRender = false;
-    setTimeout(scrollToToday, 50); // léger délai pour laisser le DOM se peindre
-}
+            // Scroll centré sur aujourd'hui au premier rendu uniquement
+            if (firstRender) {
+                firstRender = false;
+                setTimeout(scrollToToday, 50);
+            }
+        }
+
+        // ─── AJOUT TÂCHE ──────────────────────────────────────────────────────────
 
         async function addTask() {
             const desc = document.getElementById('task-desc').value.trim();
@@ -696,69 +705,72 @@ if (window._firstRender !== false) {
             document.getElementById('task-duree').value = '1';
         }
 
+        // ─── DATES PROJET ─────────────────────────────────────────────────────────
 
         async function saveProjectDates() {
-    const newStart = document.getElementById('project-start-input').value;
-    const newEnd = document.getElementById('project-end-input').value;
-    if (!newStart || !newEnd) return;
+            const newStart = document.getElementById('project-start-input').value;
+            const newEnd   = document.getElementById('project-end-input').value;
+            if (!newStart || !newEnd) return;
 
-    await window.fbMethods.update(
-        window.fbMethods.ref(window.fbDB, 'projects/' + currentProjectId),
-        { start: newStart, end: newEnd }
-    );
+            await window.fbMethods.update(
+                window.fbMethods.ref(window.fbDB, 'projects/' + currentProjectId),
+                { start: newStart, end: newEnd }
+            );
 
-    // Feedback visuel fugace
-    const fb = document.getElementById('save-dates-feedback');
-    fb.classList.remove('hidden');
-    setTimeout(() => fb.classList.add('hidden'), 2000);
-}
+            const fb = document.getElementById('save-dates-feedback');
+            fb.classList.remove('hidden');
+            setTimeout(() => fb.classList.add('hidden'), 2000);
+        }
 
-function openEditModal(id) {
-    const t = allTasks.find(x => x.id === id);
-    if (!t) return;
-    currentEditingId = id;
+        // ─── MODAL ÉDITION ────────────────────────────────────────────────────────
 
-    document.getElementById('edit-task-desc').value = t.desc;
-    document.getElementById('edit-task-time').value = t.time;
-    document.getElementById('edit-task-duree').value = t.dureeJours || 1;
-    document.getElementById('edit-task-date').value = t.date || '';
-    document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
-    document.getElementById('edit-task-done').checked = t.done || false;
-    document.getElementById('edit-task-note').value = t.note || '';
+        function openEditModal(id) {
+            const t = allTasks.find(x => x.id === id);
+            if (!t) return;
+            currentEditingId = id;
 
-    // Recharger les options si le select est vide, puis sélectionner
-    const editWho = document.getElementById('edit-task-who');
-    if (editWho.options.length === 0) {
-        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-        editWho.innerHTML = options;
-    }
-    editWho.value = t.who || '';
+            document.getElementById('edit-task-desc').value  = t.desc;
+            document.getElementById('edit-task-time').value  = t.time;
+            document.getElementById('edit-task-duree').value = t.dureeJours || 1;
+            document.getElementById('edit-task-date').value  = t.date || '';
+            document.getElementById('edit-task-prio').value  = t.priority || 'moyenne';
+            document.getElementById('edit-task-done').checked = t.done || false;
+            document.getElementById('edit-task-note').value  = t.note || '';
 
-    const infoBox = document.getElementById('task-edit-info');
-    if (t.lastEditedBy) {
-        infoBox.classList.remove('hidden');
-        document.getElementById('task-last-edit-text').innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
-    } else {
-        infoBox.classList.add('hidden');
-    }
+            // Recharger les options si nécessaire, puis sélectionner le bon responsable
+            const editWho = document.getElementById('edit-task-who');
+            if (editWho.options.length === 0) {
+                editWho.innerHTML = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            }
+            editWho.value = t.who || '';
 
-    document.getElementById('edit-modal').classList.remove('hidden');
-}
+            const infoBox = document.getElementById('task-edit-info');
+            if (t.lastEditedBy) {
+                infoBox.classList.remove('hidden');
+                document.getElementById('task-last-edit-text').innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
+            } else {
+                infoBox.classList.add('hidden');
+            }
 
-        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
 
         async function saveTaskEdit() {
             const user = window.auth?.currentUser;
             const editorName = user ? user.email.split('@')[0] : "Anonyme";
             await window.fbMethods.update(window.fbMethods.ref(window.fbDB, 'taches/' + currentEditingId), {
-                desc: document.getElementById('edit-task-desc').value,
-                time: document.getElementById('edit-task-time').value,
-                dureeJours: parseInt(document.getElementById('edit-task-duree').value) || 1,
-                date: document.getElementById('edit-task-date').value,
-                who: document.getElementById('edit-task-who').value,
-                priority: document.getElementById('edit-task-prio').value,
-                done: document.getElementById('edit-task-done').checked,
-                note: document.getElementById('edit-task-note').value,
+                desc:        document.getElementById('edit-task-desc').value,
+                time:        document.getElementById('edit-task-time').value,
+                dureeJours:  parseInt(document.getElementById('edit-task-duree').value) || 1,
+                date:        document.getElementById('edit-task-date').value,
+                who:         document.getElementById('edit-task-who').value,
+                priority:    document.getElementById('edit-task-prio').value,
+                done:        document.getElementById('edit-task-done').checked,
+                note:        document.getElementById('edit-task-note').value,
                 lastEditedBy: editorName,
                 lastEditedAt: new Date().toLocaleString('fr-FR')
             });
@@ -771,21 +783,6 @@ function openEditModal(id) {
                 closeEditModal();
             }
         }
-
-        
-        function scrollToToday() {
-    if (!currentProject) return;
-    const container = document.getElementById('gantt-scroll-container');
-    const pStart = new Date(currentProject.start);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-
-    const todayLeft = LABEL_WIDTH + ((today - pStart) / 86400000) * DAY_WIDTH;
-    const containerWidth = container.clientWidth;
-
-    // Centre today dans la fenêtre visible, en soustrayant le label fixe
-    const scrollTarget = todayLeft - (containerWidth / 2);
-    container.scrollLeft = Math.max(0, scrollTarget);
-}
 
         window.addEventListener('resize', renderTasks);
     </script>
