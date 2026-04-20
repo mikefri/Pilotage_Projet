@@ -445,41 +445,55 @@
         const LABEL_WIDTH = 200;
         const DAY_WIDTH = 45;
 
-        function loadData() {
-            if (!window.fbMethods) return setTimeout(loadData, 100);
-            const { onValue, ref } = window.fbMethods;
+function loadData() {
+    if (!window.fbMethods) return setTimeout(loadData, 100);
+    const { onValue, ref } = window.fbMethods;
 
-onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
-    currentProject = snap.val();
-    if (currentProject) {
-        document.getElementById('project-title').innerText = "📝 " + currentProject.name;
-        const respo = responsables.find(r => r.id === currentProject.owner);
-        document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
+    // 1. Responsables — on recharge les selects à chaque mise à jour
+    onValue(ref(window.fbDB, 'responsables'), (snap) => {
+        responsables = snap.val() ? Object.values(snap.val()) : [];
+        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
-        // ← AJOUT : remplir les champs date
-        document.getElementById('project-start-input').value = currentProject.start || '';
-        document.getElementById('project-end-input').value = currentProject.end || '';
+        const taskWho = document.getElementById('task-who');
+        const editTaskWho = document.getElementById('edit-task-who');
 
-        renderTasks();
-    }
-});
-
-            onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
-                currentProject = snap.val();
-                if (currentProject) {
-                    document.getElementById('project-title').innerText = "📝 " + currentProject.name;
-                    const respo = responsables.find(r => r.id === currentProject.owner);
-                    document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
-                    renderTasks();
-                }
-            });
-
-            onValue(ref(window.fbDB, 'taches'), (snap) => {
-                allTasks = snap.val() ? Object.values(snap.val()) : [];
-                updateFilterDropdown();
-                renderTasks();
-            });
+        if (taskWho) {
+            taskWho.innerHTML = '<option value="" disabled selected>Choisir un responsable...</option>' + options;
         }
+        if (editTaskWho) {
+            const currentVal = editTaskWho.value; // garde la sélection en cours si modal ouverte
+            editTaskWho.innerHTML = options;
+            if (currentVal) editTaskWho.value = currentVal;
+        }
+
+        updateFilterDropdown();
+        renderTasks();
+    });
+
+    // 2. Projet courant
+    onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
+        currentProject = snap.val();
+        if (currentProject) {
+            document.getElementById('project-title').innerText = "📝 " + currentProject.name;
+            const respo = responsables.find(r => r.id === currentProject.owner);
+            document.getElementById('project-info').innerText = "Responsable : " + (respo ? respo.name : currentProject.owner);
+
+            const startInput = document.getElementById('project-start-input');
+            const endInput = document.getElementById('project-end-input');
+            if (startInput) startInput.value = currentProject.start || '';
+            if (endInput) endInput.value = currentProject.end || '';
+
+            renderTasks();
+        }
+    });
+
+    // 3. Tâches
+    onValue(ref(window.fbDB, 'taches'), (snap) => {
+        allTasks = snap.val() ? Object.values(snap.val()) : [];
+        updateFilterDropdown();
+        renderTasks();
+    });
+}
 
         function updateFilterDropdown() {
             const filterEl = document.getElementById('filter-who');
@@ -694,26 +708,37 @@ onValue(ref(window.fbDB, 'projects/' + currentProjectId), (snap) => {
     setTimeout(() => fb.classList.add('hidden'), 2000);
 }
 
-        function openEditModal(id) {
-            const t = allTasks.find(x => x.id === id);
-            currentEditingId = id;
-            document.getElementById('edit-task-desc').value = t.desc;
-            document.getElementById('edit-task-time').value = t.time;
-            document.getElementById('edit-task-duree').value = t.dureeJours || 1;
-            document.getElementById('edit-task-date').value = t.date || '';
-            document.getElementById('edit-task-who').value = t.who;
-            document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
-            document.getElementById('edit-task-done').checked = t.done || false;
-            document.getElementById('edit-task-note').value = t.note || '';
+function openEditModal(id) {
+    const t = allTasks.find(x => x.id === id);
+    if (!t) return;
+    currentEditingId = id;
 
-            const infoBox = document.getElementById('task-edit-info');
-            if (t.lastEditedBy) {
-                infoBox.classList.remove('hidden');
-                document.getElementById('task-last-edit-text').innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
-            } else infoBox.classList.add('hidden');
+    document.getElementById('edit-task-desc').value = t.desc;
+    document.getElementById('edit-task-time').value = t.time;
+    document.getElementById('edit-task-duree').value = t.dureeJours || 1;
+    document.getElementById('edit-task-date').value = t.date || '';
+    document.getElementById('edit-task-prio').value = t.priority || 'moyenne';
+    document.getElementById('edit-task-done').checked = t.done || false;
+    document.getElementById('edit-task-note').value = t.note || '';
 
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
+    // Recharger les options si le select est vide, puis sélectionner
+    const editWho = document.getElementById('edit-task-who');
+    if (editWho.options.length === 0) {
+        const options = responsables.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        editWho.innerHTML = options;
+    }
+    editWho.value = t.who || '';
+
+    const infoBox = document.getElementById('task-edit-info');
+    if (t.lastEditedBy) {
+        infoBox.classList.remove('hidden');
+        document.getElementById('task-last-edit-text').innerText = `${t.lastEditedBy} le ${t.lastEditedAt}`;
+    } else {
+        infoBox.classList.add('hidden');
+    }
+
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
 
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
