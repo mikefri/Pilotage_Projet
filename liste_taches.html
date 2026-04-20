@@ -665,7 +665,12 @@ function loadData() {
             container.style.backgroundPosition = `${LABEL_WIDTH}px 0`;
             container.innerHTML = headerHTML + weekendColumnsHTML + timelineHTML + tasksHTML;
             document.getElementById('total-hours').innerText = totalHrs + " h total";
-        }
+
+// ← AJOUT juste après :
+if (window._firstRender !== false) {
+    window._firstRender = false;
+    setTimeout(scrollToToday, 50); // léger délai pour laisser le DOM se peindre
+}
 
         async function addTask() {
             const desc = document.getElementById('task-desc').value.trim();
@@ -766,6 +771,21 @@ function openEditModal(id) {
                 closeEditModal();
             }
         }
+
+        
+        function scrollToToday() {
+    if (!currentProject) return;
+    const container = document.getElementById('gantt-scroll-container');
+    const pStart = new Date(currentProject.start);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    const todayLeft = LABEL_WIDTH + ((today - pStart) / 86400000) * DAY_WIDTH;
+    const containerWidth = container.clientWidth;
+
+    // Centre today dans la fenêtre visible, en soustrayant le label fixe
+    const scrollTarget = todayLeft - (containerWidth / 2);
+    container.scrollLeft = Math.max(0, scrollTarget);
+}
 
         window.addEventListener('resize', renderTasks);
     </script>
